@@ -14,7 +14,7 @@ public class Main {
 
     // Spawn master thread for GameMasterHandler instance
     MasterGameHandler masterGameHandler = MasterGameHandler.getInstance();
-    Thread masterGameHandlerThread = new Thread(masterGameHandler, "Master");
+    Thread masterGameHandlerThread = new Thread(masterGameHandler, "MasterHandler");
     masterGameHandlerThread.start();
 
     try {
