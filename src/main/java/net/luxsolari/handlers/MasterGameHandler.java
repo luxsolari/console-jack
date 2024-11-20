@@ -3,6 +3,7 @@ package net.luxsolari.handlers;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
@@ -23,8 +24,8 @@ public class MasterGameHandler implements SystemHandler {
   private static final Logger LOGGER = Logger.getLogger(TAG);
   private static MasterGameHandler INSTANCE;
 
-  private static final int TARGET_UPS = 4;  // 4 updates per second
-  private static final int TARGET_FPS = 2; //  2 frames per second
+  private static final int TARGET_UPS = 1;  // 4 updates per second
+  private static final int TARGET_FPS = 10; //  2 frames per second
 
   private static final long UPDATE_INTERVAL = 1000L / TARGET_UPS; // ~250ms per update
   private static final long RENDER_INTERVAL = 1000L / TARGET_FPS; // ~500ms per render
@@ -152,39 +153,11 @@ public class MasterGameHandler implements SystemHandler {
           // the game state at each iteration of the loop. This is called the "game loop" pattern.
           // In this case, we're running the game loop at 30 frames per second (FPS), which means we update the game state 30 times per second.
           // And we're running the game logic at 60 updates per second (UPS), which means we update the game state 60 times per second.
-
           // simulate work by drawing a card from a deck with a random value in the range [1, 19] using lanterna
           // this is just a placeholder for actual game logic
           // first, draw a 3x5 rectangle with white color representing the card border and black as its inner color.
           // then, draw the card value in the center of the rectangle.
-
-          TextColor white = TextColor.ANSI.WHITE;
-          TextColor black = TextColor.ANSI.BLACK;
-
-          TextCharacter borderCharacter = new TextCharacter(' ', white, white);
-          TextCharacter innerCharacter = new TextCharacter(' ', black, black);
-          for (int row = 0; row < 7; row++) {
-            for (int column = 0; column < 9; column++) {
-              if (row == 0 || row == 6 || column == 0 || column == 8) {
-                screen.setCharacter(column + 2, row + 2, borderCharacter);
-              } else {
-                screen.setCharacter(column + 2, row + 2, innerCharacter);
-              }
-            }
-          }
-
-          String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
-          int cardValueIndex = (int) (Math.random() * cardValues.length);
-          String cardValue = cardValues[cardValueIndex];
-          screen.newTextGraphics().putString(4, 4, cardValue);
-          // random suit for the card (hearts, diamonds, clubs, spades)
-          String[] suits = {"♥", "♦", "♣", "♠"};
-          int suitIndex = (int) (Math.random() * suits.length);
-          String suit = suits[suitIndex];
-          screen.newTextGraphics().putString(8, 6, suit);
-          String[] suitNames = {"HRT", "DIA", "CLB", "SPD"};
-          screen.newTextGraphics().putString(4, 7, suitNames[suitIndex]);
-
+          drawRandomCard();
           // END GAME LOGIC SECTION //
 
           updateCount++;
@@ -193,29 +166,13 @@ public class MasterGameHandler implements SystemHandler {
 
         if (running && (currentTime - previousRenderTime >= RENDER_INTERVAL * 1_000_000)) {
           // RENDERING SECTION //
-          // draw border around screen
-          this.screen.doResizeIfNecessary(); // resize screen if necessary (e.g. when window is resized)
-
-          for (int column = 0; column < screen.getTerminalSize().getColumns(); column++) {
-            TextColor red = TextColor.ANSI.RED;
-            TextCharacter borderCharacter = new TextCharacter(' ', red, red);
-            screen.setCharacter(column, 0, borderCharacter); // top border
-            screen.setCharacter(column, screen.getTerminalSize().getRows() - 1, borderCharacter); // bottom border
-          }
-          for (int row = 0; row < screen.getTerminalSize().getRows(); row++) {
-            TextColor red = TextColor.ANSI.RED;
-            TextCharacter borderCharacter = new TextCharacter(' ', red, red);
-            screen.setCharacter(0, row, borderCharacter); // left border
-            screen.setCharacter(screen.getTerminalSize().getColumns() - 1, row, borderCharacter); // right border
+          // draw border around screen using special border characters and color it red
+          if (this.screen.doResizeIfNecessary() != null) {
+            this.screen.clear();
           }
 
-          // Display FPS/UPS in top-right corner
-          String stats = String.format("FPS: %d | UPS: %d", currentFPS, currentUPS);
-          screen.newTextGraphics().putString(
-              screen.getTerminalSize().getColumns() - stats.length() - 2,
-              1,
-              stats
-          );
+          drawScreenBorders();
+          displayStatsCounters();
 
           this.screen.refresh();
           // END RENDERING SECTION //
@@ -229,6 +186,113 @@ public class MasterGameHandler implements SystemHandler {
         LOGGER.severe("[%s] Error while running Master Game Handler: %s".formatted(TAG, e.getMessage()));
       }
     }
+  }
+
+  private void displayStatsCounters() {
+    // Display FPS/UPS in top-right corner
+    String stats = "FPS: " + currentFPS + " | UPS: " + currentUPS;
+    screen.newTextGraphics().putString(
+        screen.getTerminalSize().getColumns() - stats.length() - 2,
+        1,
+        stats
+    );
+  }
+
+  private void drawScreenBorders() {
+    TextGraphics textGraphics = this.screen.newTextGraphics();
+    // draw top border
+    for (int i = 0; i < this.screen.getTerminalSize().getColumns(); i++) {
+      textGraphics.setCharacter(i, 0, new TextCharacter('─', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    }
+
+    // draw bottom border
+    for (int i = 0; i < this.screen.getTerminalSize().getColumns(); i++) {
+      textGraphics.setCharacter(i, this.screen.getTerminalSize().getRows() - 1, new TextCharacter('─', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    }
+
+    // draw left border
+    for (int i = 0; i < this.screen.getTerminalSize().getRows(); i++) {
+      textGraphics.setCharacter(0, i, new TextCharacter('│', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    }
+
+    // draw right border
+
+    for (int i = 0; i < this.screen.getTerminalSize().getRows(); i++) {
+      textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, i, new TextCharacter('│', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    }
+
+    // draw corners
+    textGraphics.setCharacter(0, 0, new TextCharacter('┌'));
+    textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, 0, new TextCharacter('┐'));
+    textGraphics.setCharacter(0, this.screen.getTerminalSize().getRows() - 1, new TextCharacter('└'));
+    textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, this.screen.getTerminalSize().getRows() - 1, new TextCharacter('┘'));
+  }
+
+  private void drawRandomCard() {
+
+    // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
+    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+    int cardValueIndex = (int) (Math.random() * cardValues.length);
+    String cardValue = cardValues[cardValueIndex];
+
+    // random suit for the card (hearts, diamonds, clubs, spades), represented by wide unicode characters
+    String[] suits = {"♥", "♦", "♣", "♠"};
+    String[] suitNames = {"heart", "diamond", "club", "spade"};
+    int suitIndex = (int) (Math.random() * suits.length);
+    String suit = suits[suitIndex];
+
+    // draw card frame using special border characters and color the card red if it's a heart or diamond, white otherwise
+    TextColor white = TextColor.ANSI.WHITE;
+    TextColor black = TextColor.ANSI.BLACK;
+    TextColor red = TextColor.ANSI.RED;
+    TextColor green = TextColor.ANSI.GREEN;
+    TextColor suitColor = (suitIndex < 2) ? red : white;
+
+    TextCharacter topLeftCorner = new TextCharacter('┌', suitColor, black);
+    TextCharacter topRightCorner = new TextCharacter('┐', suitColor, black);
+    TextCharacter bottomLeftCorner = new TextCharacter('└', suitColor, black);
+    TextCharacter bottomRightCorner = new TextCharacter('┘', suitColor, black);
+    TextCharacter horizontalBorder = new TextCharacter('─', suitColor, black);
+    TextCharacter verticalBorder = new TextCharacter('│', suitColor, black);
+
+    // draw top border
+    screen.newTextGraphics().setCharacter(2, 2, topLeftCorner);
+    for (int i = 3; i < 10; i++) {
+      screen.newTextGraphics().setCharacter(i, 2, horizontalBorder);
+    }
+    screen.newTextGraphics().setCharacter(10, 2, topRightCorner);
+
+    // draw bottom border
+    screen.newTextGraphics().setCharacter(2, 8, bottomLeftCorner);
+    for (int i = 3; i < 10; i++) {
+      screen.newTextGraphics().setCharacter(i, 8, horizontalBorder);
+    }
+
+    screen.newTextGraphics().setCharacter(10, 8, bottomRightCorner);
+
+    // draw left and right borders
+    for (int i = 3; i < 8; i++) {
+      screen.newTextGraphics().setCharacter(2, i, verticalBorder);
+      screen.newTextGraphics().setCharacter(10, i, verticalBorder);
+    }
+
+    // clear all the inner cells of the card
+    for (int i = 3; i < 8; i++) {
+      for (int j = 3; j < 10; j++) {
+        screen.newTextGraphics().setCharacter(j, i, new TextCharacter(' ', white, black));
+      }
+    }
+
+    screen.newTextGraphics().putString(3, 3, cardValue);
+    if (cardValue.equals("10")) {
+      screen.newTextGraphics().putString(8, 7, cardValue);
+    } else {
+      screen.newTextGraphics().putString(9, 7, cardValue);
+    }
+
+    screen.newTextGraphics().putString(3, 4, suit);
+    screen.newTextGraphics().putString(9, 6, suit);
+    screen.newTextGraphics().putString(3, 5, suitNames[suitIndex]);
   }
 
   @Override
