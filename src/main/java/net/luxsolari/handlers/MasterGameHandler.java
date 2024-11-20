@@ -1,5 +1,6 @@
 package net.luxsolari.handlers;
 
+import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
@@ -24,8 +25,8 @@ public class MasterGameHandler implements SystemHandler {
   private static final Logger LOGGER = Logger.getLogger(TAG);
   private static MasterGameHandler INSTANCE;
 
-  private static final int TARGET_UPS = 1;  // 4 updates per second
-  private static final int TARGET_FPS = 10; //  2 frames per second
+  private static final int TARGET_UPS = 4;  // 4 updates per second
+  private static final int TARGET_FPS = 2; //  2 frames per second
 
   private static final long UPDATE_INTERVAL = 1000L / TARGET_UPS; // ~250ms per update
   private static final long RENDER_INTERVAL = 1000L / TARGET_FPS; // ~500ms per render
@@ -64,13 +65,13 @@ public class MasterGameHandler implements SystemHandler {
       // Set custom font for the terminal, load font from resources
       Font font =
           Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/fonts/FiraCode.ttf"))
-              .deriveFont(Font.PLAIN, 18);
+              .deriveFont(Font.PLAIN, 20);
       SwingTerminalFontConfiguration fontConfig =
           new SwingTerminalFontConfiguration(true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
       terminalFactory.setTerminalEmulatorFontConfiguration(fontConfig);
 
-      int targetWidth = 1280;
-      int targetHeight = 720;
+      int targetWidth = 800;
+      int targetHeight = 600;
 
       // calculate columns and rows based on font size using a rough scaling factor of 0.575 for width and 1.2 for height
       float fontPixelWidth = font.getSize() * .58f;   // width scaling factor - could be a configuration parameter for different fonts
@@ -128,7 +129,10 @@ public class MasterGameHandler implements SystemHandler {
         }
 
         // calculate elapsed time since last update/render
-        long elapsedTime = currentTime - previousUpdateTime;
+        // this "delta time" is used to update the game state and render the game screen and can be passed to the game logic
+        // and rendering methods to make sure that the game runs at a consistent speed on different systems and hardware.
+        long elapsedTime = currentTime - previousUpdateTime; // delta time in nanoseconds
+
         updateLag += elapsedTime;
         previousUpdateTime = currentTime;
 
@@ -146,15 +150,13 @@ public class MasterGameHandler implements SystemHandler {
           // END INPUT HANDLING SECTION //
 
           // GAME LOGIC SECTION //
-          // I know what you're thinking, but since this is scaffolding code, it's going to get replaced
-          // with actual game logic in the future. Don't worry about it.
-          // For now, we just "simulate" game logic by sleeping for a bit.
+          // For now, we just "simulate" game logic by doing some random drawing on the screen.
           // This is a common pattern in game development, where you have a game loop that runs at a fixed rate, and you update
           // the game state at each iteration of the loop. This is called the "game loop" pattern.
-          // In this case, we're running the game loop at 30 frames per second (FPS), which means we update the game state 30 times per second.
-          // And we're running the game logic at 60 updates per second (UPS), which means we update the game state 60 times per second.
-          // simulate work by drawing a card from a deck with a random value in the range [1, 19] using lanterna
-          // this is just a placeholder for actual game logic
+          // In this case, we're running the game logic at 4 updates per second (UPS), which means we update the game state 4 times per second.
+          // And we're running the rendering at 2 frames per second (FPS), which means we render the game screen 2 times per second.
+          // This is a very simple example, but it shows the basic structure of a game loop.
+
           // first, draw a 3x5 rectangle with white color representing the card border and black as its inner color.
           // then, draw the card value in the center of the rectangle.
           drawRandomCard();
@@ -180,8 +182,13 @@ public class MasterGameHandler implements SystemHandler {
           previousRenderTime = currentTime;
         }
 
-        Thread.yield(); // let other threads run while we sleep
-      } catch (IOException e) {
+        // sleep for a short time to avoid busy-waiting. This is a standard game development pattern.
+        // Specifying 1ms signals our intent to yield CPU time to other processes,
+        // though the actual sleep time is subject to OS timer resolution.
+        // noinspection BusyWait
+        Thread.sleep(1);
+
+      } catch (InterruptedException | IOException e) {
         this.stop();
         LOGGER.severe("[%s] Error while running Master Game Handler: %s".formatted(TAG, e.getMessage()));
       }
@@ -231,13 +238,13 @@ public class MasterGameHandler implements SystemHandler {
   private void drawRandomCard() {
 
     // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
-    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "JOKER"};
     int cardValueIndex = (int) (Math.random() * cardValues.length);
     String cardValue = cardValues[cardValueIndex];
 
     // random suit for the card (hearts, diamonds, clubs, spades), represented by wide unicode characters
-    String[] suits = {"♥", "♦", "♣", "♠"};
-    String[] suitNames = {"heart", "diamond", "club", "spade"};
+    String[] suits = {"♥", "♦", "♣", "♠", "?"};
+    String[] suitNames = {"HRT", "DIA", "CLB", "SPD", "JOK"};
     int suitIndex = (int) (Math.random() * suits.length);
     String suit = suits[suitIndex];
 
@@ -246,14 +253,14 @@ public class MasterGameHandler implements SystemHandler {
     TextColor black = TextColor.ANSI.BLACK;
     TextColor red = TextColor.ANSI.RED;
     TextColor green = TextColor.ANSI.GREEN;
-    TextColor suitColor = (suitIndex < 2) ? red : white;
+    TextColor suitColor = (suitIndex < 2) ? red : black;
 
-    TextCharacter topLeftCorner = new TextCharacter('┌', suitColor, black);
-    TextCharacter topRightCorner = new TextCharacter('┐', suitColor, black);
-    TextCharacter bottomLeftCorner = new TextCharacter('└', suitColor, black);
-    TextCharacter bottomRightCorner = new TextCharacter('┘', suitColor, black);
-    TextCharacter horizontalBorder = new TextCharacter('─', suitColor, black);
-    TextCharacter verticalBorder = new TextCharacter('│', suitColor, black);
+    TextCharacter topLeftCorner = new TextCharacter('┌', suitColor, white);
+    TextCharacter topRightCorner = new TextCharacter('┐', suitColor, white);
+    TextCharacter bottomLeftCorner = new TextCharacter('└', suitColor, white);
+    TextCharacter bottomRightCorner = new TextCharacter('┘', suitColor, white);
+    TextCharacter horizontalBorder = new TextCharacter('─', suitColor, white);
+    TextCharacter verticalBorder = new TextCharacter('│', suitColor, white);
 
     // draw top border
     screen.newTextGraphics().setCharacter(2, 2, topLeftCorner);
@@ -279,20 +286,25 @@ public class MasterGameHandler implements SystemHandler {
     // clear all the inner cells of the card
     for (int i = 3; i < 8; i++) {
       for (int j = 3; j < 10; j++) {
-        screen.newTextGraphics().setCharacter(j, i, new TextCharacter(' ', white, black));
+        screen.newTextGraphics().setCharacter(j, i, new TextCharacter(' ', white, white));
       }
     }
 
-    screen.newTextGraphics().putString(3, 3, cardValue);
+    // draw card value and suit in the center of the card
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(3, 3, cardValue);
     if (cardValue.equals("10")) {
-      screen.newTextGraphics().putString(8, 7, cardValue);
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(8, 7, cardValue);
+    } else if (cardValue.equals("JOKER")) {
+      screen.newTextGraphics().setForegroundColor(suitColor)
+          .setBackgroundColor(white)
+          .putString(5, 7, cardValue);
     } else {
-      screen.newTextGraphics().putString(9, 7, cardValue);
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(9, 7, cardValue);
     }
 
-    screen.newTextGraphics().putString(3, 4, suit);
-    screen.newTextGraphics().putString(9, 6, suit);
-    screen.newTextGraphics().putString(3, 5, suitNames[suitIndex]);
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(3, 4, suit);
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(9, 6, suit);
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(5, 5, suitNames[suitIndex]);
   }
 
   @Override
