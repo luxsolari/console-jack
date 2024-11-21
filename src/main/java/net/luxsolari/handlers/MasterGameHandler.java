@@ -1,6 +1,5 @@
 package net.luxsolari.handlers;
 
-import com.googlecode.lanterna.SGR;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
@@ -32,14 +31,20 @@ public class MasterGameHandler implements SystemHandler {
   private static final long RENDER_INTERVAL = 1000L / TARGET_FPS; // ~500ms per render
 
   // tracking statistics for FPS and UPS counters
-  int frameCount = 0;
-  int updateCount = 0;
-  long lastStatsTime = System.nanoTime();
-  int currentFPS = 0;
-  int currentUPS = 0;
+  private int frameCount = 0;
+  private int updateCount = 0;
+  private long lastStatsTime = System.nanoTime();
+  private int currentFPS = 0;
+  private int currentUPS = 0;
+  private int effectivePxWidth;
+  private int effectivePxHeight;
+  private int screenColumns;
+  private int screenRows;
 
   private boolean running = false;
   private Screen screen;
+  private float fontPixelWidth;
+  private float fontPixelHeight;
 
   private MasterGameHandler() {
   }
@@ -64,37 +69,36 @@ public class MasterGameHandler implements SystemHandler {
 
       // Set custom font for the terminal, load font from resources
       Font font =
-          Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/fonts/FiraCode.ttf"))
+          Font.createFont(Font.PLAIN, getClass().getResourceAsStream("/fonts/InputMono-Regular.ttf"))
               .deriveFont(Font.PLAIN, 20);
       SwingTerminalFontConfiguration fontConfig =
           new SwingTerminalFontConfiguration(true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
       terminalFactory.setTerminalEmulatorFontConfiguration(fontConfig);
 
-      int targetWidth = 800;
-      int targetHeight = 600;
+      int targetWidth = 1280;
+      int targetHeight = 720;
 
-      // calculate columns and rows based on font size using a rough scaling factor of 0.575 for width and 1.2 for height
-      float fontPixelWidth = font.getSize() * .58f;   // width scaling factor - could be a configuration parameter for different fonts
-      float fontPixelHeight = font.getSize() * 1.25f; // height scaling factor - same as above
+      // calculate columns and rows based on font size using a rough scaling factor of 0.58 for width and 1.25 for height
+      // width scaling factor - could be a configuration parameter for different fonts
+      fontPixelWidth = font.getSize() * .58f;
+      // height scaling factor - same as above
+      fontPixelHeight = font.getSize() * 1.25f;
 
-      int columns = Math.round(targetWidth / fontPixelWidth);
-      int rows = Math.round(targetHeight / fontPixelHeight);
+      screenColumns = Math.round(targetWidth / fontPixelWidth);
+      screenRows = Math.round(targetHeight / fontPixelHeight);
 
-      int finalPxWidth = Math.round(columns * fontPixelWidth);
-      int finalPxHeight = Math.round(rows * fontPixelHeight);
+      effectivePxWidth = Math.round(screenColumns * fontPixelWidth);
+      effectivePxHeight = Math.round(screenRows * fontPixelHeight);
 
       // add some padding to the terminal size
-      columns = Math.max(1, columns);
-      rows = Math.max(1, rows);
+      screenColumns = Math.max(1, screenColumns);
+      screenRows = Math.max(1, screenRows);
 
-      terminalFactory.setInitialTerminalSize(new TerminalSize(columns, rows));
+      terminalFactory.setInitialTerminalSize(new TerminalSize(screenColumns, screenRows));
 
       this.screen = terminalFactory.createScreen();
       this.screen.startScreen();
       this.screen.setCursorPosition(null); // we don't need a cursor
-      this.screen.doResizeIfNecessary();
-
-      // set custom font size
 
     } catch (IOException | FontFormatException e) {
       LOGGER.severe("[%s] Error while initializing Master Game Handler: %s".formatted(TAG, e.getMessage()));
@@ -116,6 +120,9 @@ public class MasterGameHandler implements SystemHandler {
     long previousRenderTime = System.nanoTime();
     long updateLag = 0;
 
+    long cardDrawClock = System.nanoTime();
+    long timeToDrawCardSeconds = 1;
+
     while (running) {
       try {
         long currentTime = System.nanoTime();
@@ -128,11 +135,12 @@ public class MasterGameHandler implements SystemHandler {
           lastStatsTime = currentTime;
         }
 
-        // calculate elapsed time since last update/render
-        // this "delta time" is used to update the game state and render the game screen and can be passed to the game logic
-        // and rendering methods to make sure that the game runs at a consistent speed on different systems and hardware.
-        long elapsedTime = currentTime - previousUpdateTime; // delta time in nanoseconds
+        // calculate elapsed time since last update and render
+        long elapsedTime = currentTime - previousUpdateTime;
+        long renderElapsedTime = currentTime - previousRenderTime;
 
+        // update lag is the time that has passed since the last update, and we need to keep track of it
+        // so we can update the game logic at a fixed rate, even if the rendering is slower or faster
         updateLag += elapsedTime;
         previousUpdateTime = currentTime;
 
@@ -150,31 +158,50 @@ public class MasterGameHandler implements SystemHandler {
           // END INPUT HANDLING SECTION //
 
           // GAME LOGIC SECTION //
-          // For now, we just "simulate" game logic by doing some random drawing on the screen.
+          // In a real game, this is where you would update the game state.
           // This is a common pattern in game development, where you have a game loop that runs at a fixed rate, and you update
           // the game state at each iteration of the loop. This is called the "game loop" pattern.
           // In this case, we're running the game logic at 4 updates per second (UPS), which means we update the game state 4 times per second.
           // And we're running the rendering at 2 frames per second (FPS), which means we render the game screen 2 times per second.
           // This is a very simple example, but it shows the basic structure of a game loop.
 
-          // first, draw a 3x5 rectangle with white color representing the card border and black as its inner color.
-          // then, draw the card value in the center of the rectangle.
-          drawRandomCard();
           // END GAME LOGIC SECTION //
 
           updateCount++;
           updateLag -= UPDATE_INTERVAL * 1_000_000;
         }
 
-        if (running && (currentTime - previousRenderTime >= RENDER_INTERVAL * 1_000_000)) {
+        if (running && (renderElapsedTime >= RENDER_INTERVAL * 1_000_000)) {
           // RENDERING SECTION //
           // draw border around screen using special border characters and color it red
           if (this.screen.doResizeIfNecessary() != null) {
             this.screen.clear();
+
+            // recalculate screen size
+            screenColumns = this.screen.getTerminalSize().getColumns();
+            screenRows = this.screen.getTerminalSize().getRows();
+
+            // recalculate effective pixel size
+            effectivePxWidth = Math.round(screenColumns * fontPixelWidth);
+            effectivePxHeight = Math.round(screenRows * fontPixelHeight);
           }
 
           drawScreenBorders();
-          displayStatsCounters();
+          displayStatsCounters(currentFPS, currentUPS, effectivePxWidth, effectivePxHeight, screenColumns, screenRows);
+
+          // the update logic of this method should be decoupled from the rendering logic, but for now, we'll keep it simple
+          // and do both in the same method, just to test things out. Of course this is not ideal for a real game,
+          // and it means that the rendering logic will be tied to the logic that updates the model of the card, and that
+          // WILL cause memory leaks, but we'll fix that later when we divide all the concerns of this system into separate classes.
+          // draw a random card at a random position on the screen (x, y) every second
+          if (currentTime - cardDrawClock >= timeToDrawCardSeconds * 1_000_000_000) {
+            int x = (int) (Math.random() * (screenColumns - 10));
+            int y = (int) (Math.random() * (screenRows - 10));
+            int width = 10;
+            int height = 8;
+            drawRandomCard(x, y, width, height, (int) (Math.random() * 13), (int) (Math.random() * 4));
+            cardDrawClock = currentTime;
+          }
 
           this.screen.refresh();
           // END RENDERING SECTION //
@@ -187,6 +214,7 @@ public class MasterGameHandler implements SystemHandler {
         // though the actual sleep time is subject to OS timer resolution.
         // noinspection BusyWait
         Thread.sleep(1);
+        Thread.yield();
 
       } catch (InterruptedException | IOException e) {
         this.stop();
@@ -195,13 +223,25 @@ public class MasterGameHandler implements SystemHandler {
     }
   }
 
-  private void displayStatsCounters() {
+  private void displayStatsCounters(int currentFPS, int currentUPS, int effectivePxWidth, int effectivePxHeight, int screenColumns, int screenRows) {
     // Display FPS/UPS in top-right corner
     String stats = "FPS: " + currentFPS + " | UPS: " + currentUPS;
+    String resolution = "RES: " + effectivePxWidth + "x" + effectivePxHeight;
+    String canvasSize = "SCR: " + screenColumns + "x" + screenRows;
     screen.newTextGraphics().putString(
         screen.getTerminalSize().getColumns() - stats.length() - 2,
         1,
         stats
+    );
+    screen.newTextGraphics().putString(
+        screen.getTerminalSize().getColumns() - resolution.length() - 2,
+        2,
+        resolution
+    );
+    screen.newTextGraphics().putString(
+        screen.getTerminalSize().getColumns() - canvasSize.length() - 2,
+        3,
+        canvasSize
     );
   }
 
@@ -235,17 +275,15 @@ public class MasterGameHandler implements SystemHandler {
     textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, this.screen.getTerminalSize().getRows() - 1, new TextCharacter('┘'));
   }
 
-  private void drawRandomCard() {
+  private void drawRandomCard(int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
 
     // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
-    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "JOKER"};
-    int cardValueIndex = (int) (Math.random() * cardValues.length);
+    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
     String cardValue = cardValues[cardValueIndex];
 
     // random suit for the card (hearts, diamonds, clubs, spades), represented by wide unicode characters
-    String[] suits = {"♥", "♦", "♣", "♠", "?"};
-    String[] suitNames = {"HRT", "DIA", "CLB", "SPD", "JOK"};
-    int suitIndex = (int) (Math.random() * suits.length);
+    String[] suits = {"♥", "♦", "♣", "♠"};
+    String[] suitNames = {"HEARTS", "DIAMONDS", "CLUBS", "SPADES"};
     String suit = suits[suitIndex];
 
     // draw card frame using special border characters and color the card red if it's a heart or diamond, white otherwise
@@ -255,56 +293,202 @@ public class MasterGameHandler implements SystemHandler {
     TextColor green = TextColor.ANSI.GREEN;
     TextColor suitColor = (suitIndex < 2) ? red : black;
 
-    TextCharacter topLeftCorner = new TextCharacter('┌', suitColor, white);
-    TextCharacter topRightCorner = new TextCharacter('┐', suitColor, white);
-    TextCharacter bottomLeftCorner = new TextCharacter('└', suitColor, white);
-    TextCharacter bottomRightCorner = new TextCharacter('┘', suitColor, white);
-    TextCharacter horizontalBorder = new TextCharacter('─', suitColor, white);
-    TextCharacter verticalBorder = new TextCharacter('│', suitColor, white);
+    // I still fail to comprehend why the author of the lanterna library decided to use a 2D array for the TextCharacter class...
+    TextCharacter topLeftCorner = TextCharacter.fromCharacter('┌', suitColor, white)[0];
+    TextCharacter topRightCorner = TextCharacter.fromCharacter('┐', suitColor, white)[0];
+    TextCharacter bottomLeftCorner = TextCharacter.fromCharacter('└', suitColor, white)[0];
+    TextCharacter bottomRightCorner = TextCharacter.fromCharacter('┘', suitColor, white)[0];
+    TextCharacter horizontalBorder = TextCharacter.fromCharacter('─', suitColor, white)[0];
+    TextCharacter verticalBorder = TextCharacter.fromCharacter('│', suitColor, white)[0];
+    TextCharacter blank = TextCharacter.fromCharacter(' ', white, white)[0];
 
-    // draw top border
-    screen.newTextGraphics().setCharacter(2, 2, topLeftCorner);
-    for (int i = 3; i < 10; i++) {
-      screen.newTextGraphics().setCharacter(i, 2, horizontalBorder);
-    }
-    screen.newTextGraphics().setCharacter(10, 2, topRightCorner);
-
-    // draw bottom border
-    screen.newTextGraphics().setCharacter(2, 8, bottomLeftCorner);
-    for (int i = 3; i < 10; i++) {
-      screen.newTextGraphics().setCharacter(i, 8, horizontalBorder);
+    // draw top border of the card at specified position (x, y) using special border characters
+    screen.newTextGraphics().setCharacter(x, y, topLeftCorner);
+    screen.newTextGraphics().setCharacter(x + width, y, topRightCorner);
+    for (int i = 1; i < width; i++) {
+      screen.newTextGraphics().setCharacter(x + i, y, horizontalBorder);
     }
 
-    screen.newTextGraphics().setCharacter(10, 8, bottomRightCorner);
-
-    // draw left and right borders
-    for (int i = 3; i < 8; i++) {
-      screen.newTextGraphics().setCharacter(2, i, verticalBorder);
-      screen.newTextGraphics().setCharacter(10, i, verticalBorder);
+    // draw bottom border of the card at specified position (x, y) using special border characters
+    screen.newTextGraphics().setCharacter(x, y + height, bottomLeftCorner);
+    screen.newTextGraphics().setCharacter(x + width, y + height, bottomRightCorner);
+    for (int i = 1; i < width; i++) {
+      screen.newTextGraphics().setCharacter(x + i, y + height, horizontalBorder);
     }
 
-    // clear all the inner cells of the card
-    for (int i = 3; i < 8; i++) {
-      for (int j = 3; j < 10; j++) {
-        screen.newTextGraphics().setCharacter(j, i, new TextCharacter(' ', white, white));
+    // draw left border of the card at specified position (x, y) using special border characters
+    for (int i = 1; i < height; i++) {
+      screen.newTextGraphics().setCharacter(x, y + i, verticalBorder);
+    }
+
+    // draw right border of the card at specified position (x, y) using special border characters
+    for (int i = 1; i < height; i++) {
+      screen.newTextGraphics().setCharacter(x + width, y + i, verticalBorder);
+    }
+
+    // clear the inside of the card
+    for (int i = 1; i < width; i++) {
+      for (int j = 1; j < height; j++) {
+        screen.newTextGraphics().setCharacter(x + i, y + j, blank);
       }
     }
 
+
     // draw card value and suit in the center of the card
-    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(3, 3, cardValue);
-    if (cardValue.equals("10")) {
-      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(8, 7, cardValue);
-    } else if (cardValue.equals("JOKER")) {
-      screen.newTextGraphics().setForegroundColor(suitColor)
-          .setBackgroundColor(white)
-          .putString(5, 7, cardValue);
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x, y + 1, cardValue);
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x, y + 2, suit);
+
+    // draw card value and suit at the opposite corner of the card
+    if (!cardValue.equals("10")) {
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + width, y + height - 2, cardValue);
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + width, y + height - 1, suit);
     } else {
-      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(9, 7, cardValue);
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + width - 1, y + height - 2, cardValue);
+      screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + width, y + height - 1, suit);
     }
 
-    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(3, 4, suit);
-    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(9, 6, suit);
-    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(5, 5, suitNames[suitIndex]);
+    // draw card value and suit in the center of the card
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + 2, y + 2, "┌");
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + 8, y + 2, "┐");
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + 2, y + 6, "└");;
+    screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white).putString(x + 8, y + 6, "┘");
+
+    switch (cardValue) {
+      case "A" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+      }
+      case "2" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 5, suit);
+      }
+      case "3" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 5, suit);
+      }
+      case "4" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+      }
+      case "5" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+      }
+      case "6" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+      }
+      case "7" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+      }
+      case "8" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 2, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 6, suit);
+      }
+      case "9" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 5, suit);
+      }
+      case "10" -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 4, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 3, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 7, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 2, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 3, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 5, suit);
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 6, suit);
+      }
+      default -> {
+        screen.newTextGraphics().setForegroundColor(suitColor).setBackgroundColor(white)
+            .putString(x + 5, y + 4, suit);
+      }
+    }
   }
 
   @Override
