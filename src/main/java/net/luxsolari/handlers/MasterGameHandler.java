@@ -227,6 +227,7 @@ public class MasterGameHandler implements SystemHandler {
     String stats = "FPS: " + currentFPS + " | UPS: " + currentUPS;
     String resolution = "RES: " + effectivePxWidth + "x" + effectivePxHeight;
     String canvasSize = "SCR: " + screenColumns + "x" + screenRows;
+    String instructions = "Press 'C' to clear screen, 'Q' to quit";
     screen.newTextGraphics().putString(
         screen.getTerminalSize().getColumns() - stats.length() - 2,
         1,
@@ -241,6 +242,13 @@ public class MasterGameHandler implements SystemHandler {
         screen.getTerminalSize().getColumns() - canvasSize.length() - 2,
         3,
         canvasSize
+    );
+
+    // put instructions at bottom of screen
+    screen.newTextGraphics().putString(
+        2,
+        screen.getTerminalSize().getRows() - 1,
+        instructions
     );
   }
 
