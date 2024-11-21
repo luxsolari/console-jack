@@ -144,7 +144,7 @@
                                         <argument>app-image</argument>
                                         <argument>--java-options</argument>
                                         <argument>--enable-preview</argument>
-                                        <argument>--win-console</argument>
+<!--                                        <argument>&#45;&#45;win-console</argument>-->
                                     </arguments>
                                 </configuration>
                             </execution>
