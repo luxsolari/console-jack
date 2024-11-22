@@ -1,10 +1,13 @@
 package net.luxsolari.handlers;
 
 import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.TextCharacter;
+import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.swing.AWTTerminalFontConfiguration;
 import com.googlecode.lanterna.terminal.swing.SwingTerminalFontConfiguration;
+import net.luxsolari.exceptions.ResourceCleanupException;
 import net.luxsolari.exceptions.ResourceInitializationException;
 
 import java.awt.Font;
@@ -18,15 +21,12 @@ public class RenderSystemHandler implements SystemHandler {
   private static final String TAG = RenderSystemHandler.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
-  private static final int TARGET_UPS = 4;  // 4 updates per second
-  private static final int TARGET_FPS = 2; //  2 frames per second
+  private static final int TARGET_FPS = 1;  // 4 updates per second
 
   private static final int SECOND_IN_NANOS = 1_000_000_000;
-  private static final long UPDATE_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_UPS); // ~250ms per update
-  private static final long RENDER_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~500ms per render
+  private static final long RENDER_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~250ms per update
 
   // tracking statistics for FPS and UPS counters
-  private long lastStatsTime = System.nanoTime();
   private int frameCount = 0;
   private int updateCount = 0;
   private int currentFPS = 0;
@@ -75,7 +75,7 @@ public class RenderSystemHandler implements SystemHandler {
       // Have to keep in mind these factors change depending on the font size and font family.
       fontPixelWidth = font.getSize() * .625f;
       // height scaling factor - same as above
-      fontPixelHeight = font.getSize() * 1.18f;
+      fontPixelHeight = font.getSize() * 1.175f;
 
       screenColumns = Math.round(targetWidth / fontPixelWidth);
       screenRows = Math.round(targetHeight / fontPixelHeight);
@@ -101,16 +101,73 @@ public class RenderSystemHandler implements SystemHandler {
 
   @Override
   public void update() {
-    
+    long lastDelta = System.nanoTime();
+    double sleepTime = 0;
+
+    while (running) {
+      long now = System.nanoTime(); // current time in nanoseconds
+      double deltaTime = (double) (now - lastDelta) / SECOND_IN_NANOS; // time passed since last update in seconds
+      double elapsedTime = now - deltaTime; // time elapsed since last render in nanoseconds
+
+      try {
+
+        if (this.screen.doResizeIfNecessary() != null) {
+          // resize the screen if the terminal size has changed
+          this.screen.doResizeIfNecessary();
+          this.screenColumns = this.screen.getTerminalSize().getColumns();
+          this.screenRows = this.screen.getTerminalSize().getRows();
+        }
+
+        if (running && (elapsedTime >= (RENDER_INTERVAL))) {
+          // draw a green background to simulate a game table
+          this.screen.clear();
+          for (int i = 0; i < screenColumns; i++) {
+            for (int j = 0; j < screenRows; j++) {
+              this.screen.setCharacter(i, j, TextCharacter.fromCharacter(' ', TextColor.ANSI.BLACK_BRIGHT, TextColor.ANSI.BLACK_BRIGHT)[0]);
+            }
+          }
+
+          this.screen.newTextGraphics()
+              .setBackgroundColor(TextColor.ANSI.GREEN)
+              .setForegroundColor(TextColor.ANSI.BLACK)
+              .putString(0,0, "Delta time: %f".formatted(deltaTime));
+          this.screen.newTextGraphics()
+              .setBackgroundColor(TextColor.ANSI.GREEN)
+              .setForegroundColor(TextColor.ANSI.BLACK)
+              .putString(0,1, "Sleep time: %f".formatted(sleepTime));
+          this.screen.refresh();
+          lastDelta = now;
+        }
+
+        // sleep for the remaining time to target render interval if needed to keep the game loop stable
+        sleepTime = (RENDER_INTERVAL - (System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
+        if (sleepTime >= 0) {
+          Thread.sleep((long) (sleepTime * 1000), (int) (sleepTime * 1000));
+          Thread.yield(); // let other threads run
+        }
+
+      } catch (InterruptedException | IOException e) {
+        LOGGER.severe("[%s] Error while updating Render System: %s".formatted(TAG, e.getMessage()));
+        throw new ResourceInitializationException("Error while updating Render System", e);
+      }
+    }
   }
 
   @Override
   public void stop() {
-
+    LOGGER.info("[%s] Stopping Render System".formatted(TAG));
+    try {
+      this.screen.stopScreen();
+      this.screen.close();
+      running = false;
+    } catch (IOException e) {
+      LOGGER.severe("[%s] Error while stopping Render System: %s".formatted(TAG, e.getMessage()));
+      throw new ResourceCleanupException("Error while stopping Render System", e);
+    }
   }
 
   @Override
   public void cleanUp() {
-
+    LOGGER.info("[%s] Cleaning up Render System".formatted(TAG));
   }
 }

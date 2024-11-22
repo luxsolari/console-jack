@@ -62,47 +62,6 @@ public class MasterGameHandler implements SystemHandler {
   @Override
   public void init() {
     LOGGER.info("[%s] Initializing Master Game Handler".formatted(TAG));
-    try {
-      // We want to make sure that we get a graphical terminal, no text terminal for us, since we're making a game that will be graphical,
-      // even if it's text-graphics based.
-      // The graphical terminal will be contained inside a Swing or AWT window provided by Lanterna library.
-      DefaultTerminalFactory terminalFactory =
-          new DefaultTerminalFactory().setForceTextTerminal(false).setPreferTerminalEmulator(true).setTerminalEmulatorTitle(TAG);
-
-      // Set custom font for the terminal, load font from resources
-      Font font =
-          Font.createFont(Font.PLAIN, getClass().getResourceAsStream("/fonts/InputMono-Regular.ttf"))
-              .deriveFont(Font.PLAIN, 24);
-      SwingTerminalFontConfiguration fontConfig =
-          new SwingTerminalFontConfiguration(true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
-      terminalFactory.setTerminalEmulatorFontConfiguration(fontConfig);
-
-      int targetWidth = 1280;
-      int targetHeight = 720;
-
-      // calculate columns and rows based on font size using a rough scaling factor of 0.625 for width and 1.18 for height
-      // width scaling factor - could be a configuration parameter for different fonts.
-      // Have to keep in mind these factors change depending on the font size and font family.
-      fontPixelWidth = font.getSize() * .625f;
-      // height scaling factor - same as above
-      fontPixelHeight = font.getSize() * 1.18f;
-
-      screenColumns = Math.round(targetWidth / fontPixelWidth);
-      screenRows = Math.round(targetHeight / fontPixelHeight);
-
-      effectivePxWidth = Math.round(screenColumns * fontPixelWidth);
-      effectivePxHeight = Math.round(screenRows * fontPixelHeight);
-
-      terminalFactory.setInitialTerminalSize(new TerminalSize(screenColumns, screenRows));
-
-      this.screen = terminalFactory.createScreen();
-      this.screen.startScreen();
-      this.screen.setCursorPosition(null); // we don't need a cursor
-
-    } catch (IOException | FontFormatException e) {
-      LOGGER.severe("[%s] Error while initializing Master Game Handler: %s".formatted(TAG, e.getMessage()));
-      throw new ResourceInitializationException("Error while initializing Master Game Handler", e);
-    }
     this.start();
   }
 
