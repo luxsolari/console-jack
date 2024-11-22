@@ -21,11 +21,11 @@ import java.util.logging.Logger;
 
 public class MasterGameHandler implements SystemHandler {
 
+  private static MasterGameHandler INSTANCE;
   private static final String TAG = MasterGameHandler.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
-  public static final int SECOND_IN_NANOS = 1_000_000_000;
-  private static MasterGameHandler INSTANCE;
 
+  private static final int SECOND_IN_NANOS = 1_000_000_000;
   private static final int TARGET_UPS = 4;  // 4 updates per second
   private static final int TARGET_FPS = 2; //  2 frames per second
 
@@ -44,9 +44,9 @@ public class MasterGameHandler implements SystemHandler {
   private int screenRows;
 
   private boolean running = false;
-  private Screen screen;
   private float fontPixelWidth;
   private float fontPixelHeight;
+  private Screen screen;
 
   private MasterGameHandler() {
   }
@@ -80,8 +80,9 @@ public class MasterGameHandler implements SystemHandler {
       int targetWidth = 1280;
       int targetHeight = 720;
 
-      // calculate columns and rows based on font size using a rough scaling factor of 0.58 for width and 1.25 for height
-      // width scaling factor - could be a configuration parameter for different fonts
+      // calculate columns and rows based on font size using a rough scaling factor of 0.625 for width and 1.18 for height
+      // width scaling factor - could be a configuration parameter for different fonts.
+      // Have to keep in mind these factors change depending on the font size and font family.
       fontPixelWidth = font.getSize() * .625f;
       // height scaling factor - same as above
       fontPixelHeight = font.getSize() * 1.18f;
