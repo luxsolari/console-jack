@@ -21,7 +21,7 @@ public class RenderSystemHandler implements SystemHandler {
   private static final String TAG = RenderSystemHandler.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
-  private static final int TARGET_FPS = 1;  // 4 updates per second
+  private static final int TARGET_FPS = 4;  // 4 updates per second
 
   private static final int SECOND_IN_NANOS = 1_000_000_000;
   private static final long RENDER_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~250ms per update
@@ -103,6 +103,8 @@ public class RenderSystemHandler implements SystemHandler {
   public void update() {
     long lastDelta = System.nanoTime();
     double sleepTime = 0;
+    TextCharacter background = TextCharacter.fromCharacter(' ', TextColor.ANSI.BLACK_BRIGHT, TextColor.ANSI.BLACK_BRIGHT)[0];
+    StringBuilder sb = new StringBuilder();
 
     while (running) {
       long now = System.nanoTime(); // current time in nanoseconds
@@ -116,25 +118,20 @@ public class RenderSystemHandler implements SystemHandler {
           this.screen.doResizeIfNecessary();
           this.screenColumns = this.screen.getTerminalSize().getColumns();
           this.screenRows = this.screen.getTerminalSize().getRows();
-        }
 
-        if (running && (elapsedTime >= (RENDER_INTERVAL))) {
           // draw a green background to simulate a game table
           this.screen.clear();
           for (int i = 0; i < screenColumns; i++) {
             for (int j = 0; j < screenRows; j++) {
-              this.screen.setCharacter(i, j, TextCharacter.fromCharacter(' ', TextColor.ANSI.BLACK_BRIGHT, TextColor.ANSI.BLACK_BRIGHT)[0]);
+              this.screen.setCharacter(i, j, background);
             }
           }
+        }
 
+        if (running && (elapsedTime >= (RENDER_INTERVAL))) {
           this.screen.newTextGraphics()
-              .setBackgroundColor(TextColor.ANSI.GREEN)
-              .setForegroundColor(TextColor.ANSI.BLACK)
-              .putString(0,0, "Delta time: %f".formatted(deltaTime));
-          this.screen.newTextGraphics()
-              .setBackgroundColor(TextColor.ANSI.GREEN)
-              .setForegroundColor(TextColor.ANSI.BLACK)
-              .putString(0,1, "Sleep time: %f".formatted(sleepTime));
+              .putCSIStyledString(0, 0, sb.delete(0, sb.length())
+                  .append("Delta time: ").append(deltaTime).append("s").toString());
           this.screen.refresh();
           lastDelta = now;
         }
