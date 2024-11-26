@@ -1,7 +1,6 @@
 package net.luxsolari;
 
 
-import net.luxsolari.handlers.MasterGameHandler;
 import net.luxsolari.handlers.RenderSystemHandler;
 
 import java.util.logging.Logger;
