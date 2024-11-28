@@ -1,7 +1,7 @@
 package net.luxsolari;
 
 
-import net.luxsolari.handlers.RenderSystemHandler;
+import net.luxsolari.systems.MasterGameSubsystem;
 
 import java.util.logging.Logger;
 
@@ -13,17 +13,12 @@ public class Main {
     LOGGER.info("[%s] Starting Main".formatted(TAG));
 
     // Spawn master thread for GameMasterHandler instance
-//    MasterGameHandler masterGameHandler = MasterGameHandler.getInstance();
-//    Thread masterGameHandlerThread = new Thread(masterGameHandler, "MasterHandler");
-//    masterGameHandlerThread.start();
-    RenderSystemHandler renderSystemHandler = RenderSystemHandler.getInstance();
-    Thread renderSystemHandlerThread = new Thread(renderSystemHandler, "RenderHandler");
-    renderSystemHandlerThread.start();
+    MasterGameSubsystem masterGameSystem = MasterGameSubsystem.getInstance();
+    Thread masterGameHandlerThread = new Thread(masterGameSystem, "MasterHandler");
+    masterGameHandlerThread.start();
 
     try {
-      // Wait for master thread to finish before exiting.
-      //masterGameHandlerThread.join();
-      renderSystemHandlerThread.join();
+      masterGameHandlerThread.join();
     } catch (InterruptedException e) {
       LOGGER.severe("[%s] Error while joining Master Game Handler thread: %s"
           .formatted(TAG, e.getMessage()));

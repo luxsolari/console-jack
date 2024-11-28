@@ -1,6 +1,6 @@
-package net.luxsolari.handlers;
+package net.luxsolari.systems;
 
-public class InputSystemHandler implements SystemHandler {
+public class InputSubsystem implements Subsystem {
   @Override
   public void init() {
 

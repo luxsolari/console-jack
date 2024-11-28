@@ -1,6 +1,6 @@
-package net.luxsolari.handlers;
+package net.luxsolari.systems;
 
-public class GameLogicSystemHandler implements SystemHandler {
+public class GameLogicSubsystem implements Subsystem {
   @Override
   public void init() {
 

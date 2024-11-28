@@ -1,11 +1,10 @@
-package net.luxsolari.handlers;
+package net.luxsolari.systems;
 
+import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.graphics.TextGraphics;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.swing.AWTTerminalFontConfiguration;
@@ -16,236 +15,280 @@ import net.luxsolari.exceptions.ResourceInitializationException;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
-public class MasterGameHandler implements SystemHandler {
 
-  private static MasterGameHandler INSTANCE;
-  private static final String TAG = MasterGameHandler.class.getSimpleName();
+public class RenderSubsystem implements Subsystem {
+  private static RenderSubsystem INSTANCE;
+
+  private static final String TAG = RenderSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
-  private static final int SECOND_IN_NANOS = 1_000_000_000;
-  private static final int TARGET_UPS = 4;  // 4 updates per second
-  private static final int TARGET_FPS = 2; //  2 frames per second
-
-  private static final long UPDATE_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_UPS); // ~250ms per update
-  private static final long RENDER_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~500ms per render
+  private static final int TARGET_FPS = 4;  // Target frames per second, this is the maximum FPS we want to achieve.
+  private static final int SECOND_IN_NANOS = 1_000_000_000; // 1 second, expressed in nanoseconds. This is used for time calculations.
+  private static final long RENDER_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~100ms per frame
+  private static final int MAX_LAYERS = 10; // maximum number of layers for rendering
 
   // tracking statistics for FPS and UPS counters
-  private long lastStatsTime = System.nanoTime();
   private int frameCount = 0;
-  private int updateCount = 0;
   private int currentFPS = 0;
-  private int currentUPS = 0;
-  private int effectivePxWidth;
-  private int effectivePxHeight;
   private int screenColumns;
   private int screenRows;
 
   private boolean running = false;
-  private float fontPixelWidth;
-  private float fontPixelHeight;
-  private Screen screen;
 
-  private MasterGameHandler() {
+  // Layering/Render system
+  record Position(int x, int y) {
+  } // record class for storing x and y coordinates
+
+  record ZIndex(String name, int index) {
+  } // record class for storing layer name and index
+
+  record Layer(Map<Position, TextCharacter> contents) {
+  } // record class for storing layer contents
+
+  private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
+  private Map<ZIndex, Layer> layers; // map of layers for rendering
+  private TextCharacter mainBackgroundCharacter;
+
+  private RenderSubsystem() {
   }
 
-  public static MasterGameHandler getInstance() {
+  public static RenderSubsystem getInstance() {
     if (INSTANCE == null) {
-      LOGGER.info("[%s] Creating new Master Game Handler instance".formatted(TAG));
-      INSTANCE = new MasterGameHandler();
+      INSTANCE = new RenderSubsystem();
     }
     return INSTANCE;
   }
 
+  public boolean running() {
+    return running;
+  }
+
+  public AtomicReference<Screen> mainScreen() {
+    return mainScreen;
+  }
+
   @Override
   public void init() {
-    LOGGER.info("[%s] Initializing Master Game Handler".formatted(TAG));
+    LOGGER.info("[%s] Initializing Render System".formatted(TAG));
+    try {
+      // We want to make sure that we get a graphical terminal, no text terminal for us, since we're making a game that will be graphical,
+      // even if it's text-graphics based.
+      // The graphical terminal will be contained inside a Swing or AWT window provided by Lanterna library.
+      DefaultTerminalFactory terminalFactory =
+          new DefaultTerminalFactory()
+              .setForceTextTerminal(false)
+              .setPreferTerminalEmulator(true)
+              .setTerminalEmulatorTitle(TAG);
+
+      // Set custom font for the terminal, load font from resources
+      Font font =
+          Font.createFont(Font.PLAIN, Objects.requireNonNull(getClass().getResourceAsStream("/fonts/InputMono-Regular.ttf")))
+              .deriveFont(Font.PLAIN, 24);
+      SwingTerminalFontConfiguration fontConfig =
+          new SwingTerminalFontConfiguration(true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
+      terminalFactory.setTerminalEmulatorFontConfiguration(fontConfig);
+
+      int targetWidth = 1280;
+      int targetHeight = 720;
+
+      // calculate columns and rows based on font size using a rough scaling factor of 0.625 for width and 1.18 for height
+      // width scaling factor - could be a configuration parameter for different fonts.
+      // Have to keep in mind these factors change depending on the font size and font family.
+      float fontPixelWidth = font.getSize() * .625f;
+      // height scaling factor - same as above
+      float fontPixelHeight = font.getSize() * 1.175f;
+
+      screenColumns = Math.round(targetWidth / fontPixelWidth);
+      screenRows = Math.round(targetHeight / fontPixelHeight);
+
+      terminalFactory.setInitialTerminalSize(new TerminalSize(screenColumns, screenRows));
+
+      this.mainScreen.set(terminalFactory.createScreen());
+      this.mainScreen.get().startScreen();
+      this.mainScreen.get().setCursorPosition(null); // we don't need a cursor
+
+
+      this.layers = new ConcurrentHashMap<>(); // initialize the layers map
+      for (int i = 0; i < MAX_LAYERS; i++) {  // initialize each layer
+        this.layers.put(
+            new ZIndex("Layer %d".formatted(i), i),
+            new Layer(new ConcurrentHashMap<>()
+            ));
+      }
+
+      TextColor backgroundColor = new TextColor.RGB(40, 55, 40);
+
+      this.mainBackgroundCharacter = TextCharacter.fromCharacter(' ', backgroundColor, backgroundColor)[0];
+      // draw a green background to simulate a game table
+      this.mainScreen.get().clear();
+      for (int i = 0; i < screenColumns; i++) {
+        for (int j = 0; j < screenRows; j++) {
+          this.mainScreen.get().setCharacter(i, j, mainBackgroundCharacter);
+        }
+      }
+    } catch (IOException | FontFormatException e) {
+      LOGGER.severe("[%s] Error while initializing Master Game Handler: %s".formatted(TAG, e.getMessage()));
+      throw new ResourceInitializationException("Error while initializing Master Game Handler", e);
+    }
     this.start();
   }
 
   @Override
   public void start() {
-    LOGGER.info("[%s] Starting Master Game Handler".formatted(TAG));
+    LOGGER.info("[%s] Starting Render System".formatted(TAG));
     running = true;
   }
 
   @Override
+  @SuppressWarnings("BusyWait")
   public void update() {
-
-    long previousUpdateTime = System.nanoTime();
-    long previousRenderTime = System.nanoTime();
-    long updateLag = 0;
-
-    long cardDrawClock = System.nanoTime();
-    long timeToDrawCardSeconds = TimeUnit.MILLISECONDS.toNanos(1000);
+    long lastDeltaClock = java.lang.System.nanoTime();
+    long fpsCounterClock = java.lang.System.nanoTime();
+    double sleepTime = 0;
 
     while (running) {
+      long now = java.lang.System.nanoTime(); // current time in nanoseconds
+      double deltaTime = (double) (now - lastDeltaClock) / SECOND_IN_NANOS; // time passed since last frame in seconds
+      double elapsedTime = now - deltaTime; // accumulated time since start of loop in nanoseconds
+
+      // calculate FPS
+      if (now - fpsCounterClock >= SECOND_IN_NANOS) {
+        currentFPS = frameCount;
+        frameCount = 0;
+        fpsCounterClock = now;
+      }
+
       try {
-        long currentTime = System.nanoTime();
+        if (this.mainScreen.get().doResizeIfNecessary() != null) {
+          // resize the screen if the terminal size has changed
+          this.mainScreen.get().doResizeIfNecessary();
+          this.screenColumns = this.mainScreen.get().getTerminalSize().getColumns();
+          this.screenRows = this.mainScreen.get().getTerminalSize().getRows();
 
-        if (currentTime - lastStatsTime >= SECOND_IN_NANOS) {
-          currentFPS = frameCount;
-          currentUPS = updateCount;
-          frameCount = 0;
-          updateCount = 0;
-          lastStatsTime = currentTime;
-        }
-
-        // calculate elapsed time since last update and render
-        long elapsedTime = currentTime - previousUpdateTime;
-        long renderElapsedTime = currentTime - previousRenderTime;
-
-        // update lag is the time that has passed since the last update, and we need to keep track of it
-        // so we can update the game logic at a fixed rate, even if the rendering is slower or faster
-        updateLag += elapsedTime;
-        previousUpdateTime = currentTime;
-
-        // update game logic at fixed rate
-        while (running && (updateLag >= UPDATE_INTERVAL)) {
-          // INPUT HANDLING SECTION //
-          // poll for key presses
-          KeyStroke keyStroke = this.screen.pollInput();
-          if (keyStroke != null) {
-            if ((keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter().toString().equalsIgnoreCase("c"))) {
-              this.screen.clear();
-            }
-            if ((keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter().toString().equalsIgnoreCase("q")) ||
-                keyStroke.getKeyType() == KeyType.EOF) {
-              this.stop();
+          // draw a green background to simulate a game table
+          this.mainScreen.get().clear();
+          for (int i = 0; i < screenColumns; i++) {
+            for (int j = 0; j < screenRows; j++) {
+              this.mainScreen.get().setCharacter(i, j, mainBackgroundCharacter);
             }
           }
-          // END INPUT HANDLING SECTION //
-
-          // GAME LOGIC SECTION //
-          // In a real game, this is where you would update the game state.
-          // This is a common pattern in game development, where you have a game loop that runs at a fixed rate, and you update
-          // the game state at each iteration of the loop. This is called the "game loop" pattern.
-          // In this case, we're running the game logic at 4 updates per second (UPS), which means we update the game state 4 times per second.
-          // And we're running the rendering at 2 frames per second (FPS), which means we render the game screen 2 times per second.
-          // This is a very simple example, but it shows the basic structure of a game loop.
-
-          // END GAME LOGIC SECTION //
-
-          updateCount++;
-          updateLag -= UPDATE_INTERVAL;
         }
 
-        if (running && (renderElapsedTime >= RENDER_INTERVAL)) {
-          // RENDERING SECTION //
-          // draw border around screen using special border characters and color it red
-          if (this.screen.doResizeIfNecessary() != null) {
-            this.screen.clear();
-
-            // recalculate screen size
-            screenColumns = this.screen.getTerminalSize().getColumns();
-            screenRows = this.screen.getTerminalSize().getRows();
-
-            // recalculate effective pixel size
-            effectivePxWidth = Math.round(screenColumns * fontPixelWidth);
-            effectivePxHeight = Math.round(screenRows * fontPixelHeight);
-          }
-
+        if (running && (elapsedTime >= (RENDER_INTERVAL))) {
           drawScreenBorders();
-          displayStatsCounters(currentFPS, currentUPS, effectivePxWidth, effectivePxHeight, screenColumns, screenRows);
+          displayPerfStats(deltaTime, sleepTime);
 
-          // the update logic of this method should be decoupled from the rendering logic, but for now, we'll keep it simple
-          // and do both in the same method, just to test things out. Of course this is not ideal for a real game,
-          // and it means that the rendering logic will be tied to the logic that updates the model of the card, and that
-          // WILL cause memory leaks, but we'll fix that later when we divide all the concerns of this system into separate classes.
-          // draw a random card at a random position on the screen (x, y) every second
-          if (currentTime - cardDrawClock >= timeToDrawCardSeconds) {
-            drawRandomCard((int) (Math.random() * (screenColumns - 10)),
-                (int) (Math.random() * (screenRows - 10)), 10, 8, (int) (Math.random() * 13), (int) (Math.random() * 4));
-            cardDrawClock = currentTime;
-          }
+          // Layer system rendering goes here
 
-          this.screen.refresh();
-          // END RENDERING SECTION //
+          // refresh the screen to apply changes
+          this.mainScreen.get().refresh();
           frameCount++;
-          previousRenderTime = currentTime;
+          lastDeltaClock = now;
         }
 
-        // sleep for a short time to avoid busy-waiting. This is a standard game development pattern.
-        // Specifying 1ms signals our intent to yield CPU time to other processes,
-        // though the actual sleep time is subject to OS timer resolution.
-        // noinspection BusyWait
-        Thread.sleep(1);
-        Thread.yield();
+        // sleep for the remaining time to target render interval if needed to keep the game loop stable
+        sleepTime = (RENDER_INTERVAL - (java.lang.System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
+        if (sleepTime >= 0) {
 
+          Thread.sleep((long) (sleepTime * 1000), (int) (sleepTime * 1000));
+          Thread.yield(); // let other threads run
+        }
       } catch (InterruptedException | IOException e) {
-        this.stop();
-        LOGGER.severe("[%s] Error while running Master Game Handler: %s".formatted(TAG, e.getMessage()));
+        LOGGER.severe("[%s] Error while updating Render System: %s".formatted(TAG, e.getMessage()));
+        throw new ResourceInitializationException("Error while updating Render System", e);
       }
     }
   }
 
-  private void displayStatsCounters(int currentFPS, int currentUPS, int effectivePxWidth, int effectivePxHeight, int screenColumns,
-                                    int screenRows) {
-    // Display FPS/UPS in top-right corner
-    String stats = "FPS: " + currentFPS + " | UPS: " + currentUPS;
-    String resolution = "RES: " + effectivePxWidth + "x" + effectivePxHeight;
-    String canvasSize = "SCR: " + screenColumns + "x" + screenRows;
-    String instructions = "Press 'C' to clear screen, 'Q' to quit";
-    screen.newTextGraphics().putString(
-        screen.getTerminalSize().getColumns() - stats.length() - 2,
-        1,
-        stats
-    );
-    screen.newTextGraphics().putString(
-        screen.getTerminalSize().getColumns() - resolution.length() - 2,
-        2,
-        resolution
-    );
-    screen.newTextGraphics().putString(
-        screen.getTerminalSize().getColumns() - canvasSize.length() - 2,
-        3,
-        canvasSize
-    );
+  @Override
+  public void stop() {
+    LOGGER.info("[%s] Stopping Render System".formatted(TAG));
+    try {
+      this.mainScreen.get().stopScreen();
+      this.mainScreen.get().close();
+      running = false;
+    } catch (IOException e) {
+      LOGGER.severe("[%s] Error while stopping Render System: %s".formatted(TAG, e.getMessage()));
+      throw new ResourceCleanupException("Error while stopping Render System", e);
+    }
+  }
 
-    // put instructions at bottom of screen
-    screen.newTextGraphics().putString(
-        2,
-        screen.getTerminalSize().getRows() - 1,
-        instructions
-    );
+  @Override
+  public void cleanUp() {
+    LOGGER.info("[%s] Cleaning up Render System".formatted(TAG));
   }
 
   private void drawScreenBorders() {
-    TextGraphics textGraphics = this.screen.newTextGraphics();
+    TextGraphics textGraphics = this.mainScreen.get().newTextGraphics();
     // draw top border
-    for (int i = 0; i < this.screen.getTerminalSize().getColumns(); i++) {
-      textGraphics.setCharacter(i, 0, new TextCharacter('─', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    for (int i = 0; i < this.mainScreen.get().getTerminalSize().getColumns(); i++) {
+      textGraphics.drawLine(i, 0, i, 0, Symbols.SINGLE_LINE_HORIZONTAL)
+          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setForegroundColor(TextColor.ANSI.RED);
     }
 
     // draw bottom border
-    for (int i = 0; i < this.screen.getTerminalSize().getColumns(); i++) {
-      textGraphics.setCharacter(i, this.screen.getTerminalSize().getRows() - 1,
-          new TextCharacter('─', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    for (int i = 0; i < this.mainScreen.get().getTerminalSize().getColumns(); i++) {
+      textGraphics.drawLine(i, this.mainScreen.get().getTerminalSize().getRows() - 1, i,
+              this.mainScreen.get().getTerminalSize().getRows() - 1,
+              Symbols.SINGLE_LINE_HORIZONTAL)
+          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setForegroundColor(TextColor.ANSI.RED);
     }
 
     // draw left border
-    for (int i = 0; i < this.screen.getTerminalSize().getRows(); i++) {
-      textGraphics.setCharacter(0, i, new TextCharacter('│', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    for (int i = 0; i < this.mainScreen.get().getTerminalSize().getRows(); i++) {
+      textGraphics.drawLine(0, i, 0, i, Symbols.SINGLE_LINE_VERTICAL)
+          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setForegroundColor(TextColor.ANSI.RED);
     }
 
     // draw right border
 
-    for (int i = 0; i < this.screen.getTerminalSize().getRows(); i++) {
-      textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, i,
-          new TextCharacter('│', TextColor.ANSI.RED, TextColor.ANSI.BLACK));
+    for (int i = 0; i < this.mainScreen.get().getTerminalSize().getRows(); i++) {
+      textGraphics.drawLine(this.mainScreen.get().getTerminalSize().getColumns() - 1, i,
+              this.mainScreen.get().getTerminalSize().getColumns() - 1, i, Symbols.SINGLE_LINE_VERTICAL)
+          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setForegroundColor(TextColor.ANSI.RED);
     }
 
     // draw corners
-    textGraphics.setCharacter(0, 0, new TextCharacter('┌'));
-    textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, 0, new TextCharacter('┐'));
-    textGraphics.setCharacter(0, this.screen.getTerminalSize().getRows() - 1, new TextCharacter('└'));
-    textGraphics.setCharacter(this.screen.getTerminalSize().getColumns() - 1, this.screen.getTerminalSize().getRows() - 1,
-        new TextCharacter('┘'));
+    textGraphics.setCharacter(0, 0, Symbols.SINGLE_LINE_TOP_LEFT_CORNER)
+        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setForegroundColor(TextColor.ANSI.RED);
+    textGraphics.setCharacter(this.mainScreen.get().getTerminalSize().getColumns() - 1, 0, Symbols.SINGLE_LINE_TOP_RIGHT_CORNER)
+        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setForegroundColor(TextColor.ANSI.RED);
+    textGraphics.setCharacter(0, this.mainScreen.get().getTerminalSize().getRows() - 1, Symbols.SINGLE_LINE_BOTTOM_LEFT_CORNER)
+        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setForegroundColor(TextColor.ANSI.RED);
+    textGraphics.setCharacter(
+            this.mainScreen.get().getTerminalSize().getColumns() - 1, this.mainScreen.get().getTerminalSize().getRows() - 1,
+            Symbols.SINGLE_LINE_BOTTOM_RIGHT_CORNER)
+        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setForegroundColor(TextColor.ANSI.RED);
   }
 
-  private void drawRandomCard(int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
+  private void displayPerfStats(double deltaTime, double sleepTime) {
+    TextGraphics textGraphics = this.mainScreen.get().newTextGraphics();
+    textGraphics.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
+    textGraphics.setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor());
+    textGraphics.putString(1, 1, "Render System Stats");
+    textGraphics.putString(1, 2, "FPS: %d (Target %d)".formatted(currentFPS, TARGET_FPS));
+    textGraphics.putString(1, 3, "Delta Time: %dms".formatted((int) (deltaTime * 1000)));
+    textGraphics.putString(1, 4, "Sleep Time: %dms".formatted((int) (sleepTime * 1000)));
+    textGraphics.putString(1, 5, "Actual Render Time: %.3f".formatted((deltaTime - sleepTime) * 1000).concat("ms "));
+    textGraphics.drawLine(1, 6, this.mainScreen.get().getTerminalSize().getColumns() - 2, 6, Symbols.SINGLE_LINE_HORIZONTAL);
+  }
+
+  private void drawRandomCard(Screen screen, int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
 
     // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
     String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
@@ -541,8 +584,8 @@ public class MasterGameHandler implements SystemHandler {
     TextColor shadowColor = new TextColor.Indexed(235); // dark gray
 
     // "shadow" character from half-blocks unicode range
-//    char shadowSide = '\u2595';
-//    char shadowBottom = '\u2591';
+//    char shadowSide = '▕';
+//    char shadowBottom = '░';
 //
 //    TextCharacter shadowSideChar = TextCharacter.fromCharacter(shadowSide, shadowColor, shadowColor)[0];
 //    TextCharacter shadowBottomChar = TextCharacter.fromCharacter(shadowBottom, shadowColor, shadowColor)[0];
@@ -588,23 +631,5 @@ public class MasterGameHandler implements SystemHandler {
 //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
 //        .setCharacter(x + 11, y + height + 1, shadowBottomChar);
 
-  }
-
-  @Override
-  public void stop() {
-    LOGGER.info("[%s] Stopping Master Game Handler".formatted(TAG));
-    try {
-      this.screen.stopScreen();
-      this.screen.close();
-      running = false;
-    } catch (IOException e) {
-      LOGGER.severe("[%s] Error while stopping Master Game Handler: %s".formatted(TAG, e.getMessage()));
-      throw new ResourceCleanupException("Error while stopping Master Game Handler", e);
-    }
-  }
-
-  @Override
-  public void cleanUp() {
-    LOGGER.info("[%s] Cleaning up Master Game Handler".formatted(TAG));
   }
 }
