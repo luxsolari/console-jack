@@ -2,27 +2,17 @@ package net.luxsolari.systems;
 
 public class InputSubsystem implements Subsystem {
   @Override
-  public void init() {
-
-  }
+  public void init() {}
 
   @Override
-  public void start() {
-
-  }
+  public void start() {}
 
   @Override
-  public void update() {
-
-  }
+  public void update() {}
 
   @Override
-  public void stop() {
-
-  }
+  public void stop() {}
 
   @Override
-  public void cleanUp() {
-
-  }
+  public void cleanUp() {}
 }

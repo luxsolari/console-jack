@@ -3,7 +3,6 @@ package net.luxsolari.systems;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -15,8 +14,9 @@ public class MasterGameSubsystem implements Subsystem {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private static final int SECOND_IN_NANOS = 1_000_000_000;
-  private static final int TARGET_UPS = 8;  // 8 updates per second
-  private static final long UPDATE_INTERVAL = TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_UPS); // ~125ms per update
+  private static final int TARGET_UPS = 8; // 8 updates per second
+  private static final long UPDATE_INTERVAL =
+      TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_UPS); // ~125ms per update
 
   // tracking statistics for FPS and UPS counters
   private long lastStatsTime = java.lang.System.nanoTime();
@@ -25,8 +25,7 @@ public class MasterGameSubsystem implements Subsystem {
 
   private boolean running = false;
 
-  private MasterGameSubsystem() {
-  }
+  private MasterGameSubsystem() {}
 
   public static MasterGameSubsystem getInstance() {
     if (INSTANCE == null) {
@@ -72,30 +71,42 @@ public class MasterGameSubsystem implements Subsystem {
         // calculate elapsed time since last update and render
         long elapsedTime = currentTime - previousUpdateTime;
 
-        // update lag is the time that has passed since the last update, and we need to keep track of it
-        // so we can update the game logic at a fixed rate, even if the rendering is slower or faster
+        // update lag is the time that has passed since the last update, and we need to keep track
+        // of it
+        // so we can update the game logic at a fixed rate, even if the rendering is slower or
+        // faster
         updateLag += elapsedTime;
         previousUpdateTime = currentTime;
 
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.getInstance().running() && RenderSubsystem.getInstance().mainScreen().get() != null) {
-            RenderSubsystem.getInstance().mainScreen().get().newTextGraphics()
+          if (RenderSubsystem.getInstance().running()
+              && RenderSubsystem.getInstance().mainScreen().get() != null) {
+            RenderSubsystem.getInstance()
+                .mainScreen()
+                .get()
+                .newTextGraphics()
                 .setBackgroundColor(new TextColor.RGB(40, 55, 40))
                 .setForegroundColor(new TextColor.RGB(255, 255, 255))
                 .putString(1, 7, "Master Game System Stats")
                 .putString(1, 8, "UPS: %d".formatted(currentUPS))
                 .putString(1, 9, "Tick Count: %d".formatted(updateCount))
-                .putString(1, 10, "Update Interval: %dms".formatted(TimeUnit.NANOSECONDS.toMillis(UPDATE_INTERVAL)));
+                .putString(
+                    1,
+                    10,
+                    "Update Interval: %dms"
+                        .formatted(TimeUnit.NANOSECONDS.toMillis(UPDATE_INTERVAL)));
           }
 
-          if (RenderSubsystem.getInstance().running() && RenderSubsystem.getInstance().mainScreen().get() != null) {
+          if (RenderSubsystem.getInstance().running()
+              && RenderSubsystem.getInstance().mainScreen().get() != null) {
             try {
               KeyStroke keyStroke = RenderSubsystem.getInstance().mainScreen().get().pollInput();
               if (keyStroke != null) {
-                if ((keyStroke.getKeyType() == KeyType.Character && keyStroke.getCharacter().toString().equalsIgnoreCase("q")) ||
-                    keyStroke.getKeyType() == KeyType.EOF) {
+                if ((keyStroke.getKeyType() == KeyType.Character
+                        && keyStroke.getCharacter().toString().equalsIgnoreCase("q"))
+                    || keyStroke.getKeyType() == KeyType.EOF) {
                   this.stop();
                 }
               }
