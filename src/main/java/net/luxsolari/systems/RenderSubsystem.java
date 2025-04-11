@@ -37,7 +37,7 @@ public class RenderSubsystem implements Subsystem {
 
   // tracking statistics for FPS and UPS counters
   private int frameCount = 0;
-  private int currentFPS = 0;
+  private int currentFps = 0;
   private int screenColumns;
   private int screenRows;
 
@@ -165,7 +165,7 @@ public class RenderSubsystem implements Subsystem {
 
       // calculate FPS
       if (now - fpsCounterClock >= SECOND_IN_NANOS) {
-        currentFPS = frameCount;
+        currentFps = frameCount;
         frameCount = 0;
         fpsCounterClock = now;
       }
@@ -310,7 +310,7 @@ public class RenderSubsystem implements Subsystem {
     textGraphics.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
     textGraphics.setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor());
     textGraphics.putString(1, 1, "Render System Stats");
-    textGraphics.putString(1, 2, "FPS: %d (Target %d)".formatted(currentFPS, TARGET_FPS));
+    textGraphics.putString(1, 2, "FPS: %d (Target %d)".formatted(currentFps, TARGET_FPS));
     textGraphics.putString(1, 3, "Delta Time: %dms".formatted((int) (deltaTime * 1000)));
     textGraphics.putString(1, 4, "Sleep Time: %dms".formatted((int) (sleepTime * 1000)));
     textGraphics.putString(
