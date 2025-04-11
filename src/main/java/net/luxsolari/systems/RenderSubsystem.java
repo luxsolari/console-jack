@@ -46,12 +46,12 @@ public class RenderSubsystem implements Subsystem {
   // Layering/Render system
   record Position(int x, int y) {} // record class for storing x and y coordinates
 
-  record ZIndex(String name, int index) {} // record class for storing layer name and index
+  record ZLayer(String name, int index) {} // record class for storing layer name and index
 
   record Layer(Map<Position, TextCharacter> contents) {} // record class for storing layer contents
 
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
-  private Map<ZIndex, Layer> layers; // map of layers for rendering
+  private Map<ZLayer, Layer> layers; // map of layers for rendering
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
@@ -121,7 +121,7 @@ public class RenderSubsystem implements Subsystem {
       this.layers = new ConcurrentHashMap<>(); // initialize the layers map
       for (int i = 0; i < MAX_LAYERS; i++) { // initialize each layer
         this.layers.put(
-            new ZIndex("Layer %d".formatted(i), i), new Layer(new ConcurrentHashMap<>()));
+            new ZLayer("Layer %d".formatted(i), i), new Layer(new ConcurrentHashMap<>()));
       }
 
       TextColor backgroundColor = new TextColor.RGB(40, 55, 40);
