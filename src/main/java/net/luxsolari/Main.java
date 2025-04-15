@@ -21,15 +21,8 @@ public class Main {
 
     // Spawn master thread for GameMasterHandler instance
     MasterGameSubsystem masterGameSystem = MasterGameSubsystem.getInstance();
-    Thread masterGameHandlerThread = new Thread(masterGameSystem, "MasterHandler");
-    masterGameHandlerThread.start();
+    masterGameSystem.run();
 
-    try {
-      masterGameHandlerThread.join();
-    } catch (InterruptedException e) {
-      LOGGER.severe(
-          "[%s] Error while joining Master Game Handler thread: %s".formatted(TAG, e.getMessage()));
-    }
     LOGGER.info("[%s] Exiting Main".formatted(TAG));
   }
 }

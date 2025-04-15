@@ -81,15 +81,14 @@ public class MasterGameSubsystem implements Subsystem {
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.getInstance().running()
-              && RenderSubsystem.getInstance().mainScreen().get() != null) {
+          if (RenderSubsystem.getInstance().running() && RenderSubsystem.getInstance().mainScreen().get() != null) {
             RenderSubsystem.getInstance()
                 .mainScreen()
                 .get()
                 .newTextGraphics()
                 .setBackgroundColor(new TextColor.RGB(40, 55, 40))
                 .setForegroundColor(new TextColor.RGB(255, 255, 255))
-                .putString(1, 7, "Master Game System Stats")
+                .putString(1, 7, "Master Game Subsystem Stats")
                 .putString(1, 8, "UPS: %d".formatted(currentUPS))
                 .putString(1, 9, "Tick Count: %d".formatted(updateCount))
                 .putString(
@@ -120,8 +119,8 @@ public class MasterGameSubsystem implements Subsystem {
         }
 
         Thread.sleep(1);
-        Thread.yield();
-      } catch (InterruptedException e) {
+        //Thread.yield();
+      } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }

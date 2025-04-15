@@ -46,12 +46,12 @@ public class RenderSubsystem implements Subsystem {
   // Layering/Render system
   record Position(int x, int y) {} // record class for storing x and y coordinates
 
-  record ZLayer(String name, int index) {} // record class for storing layer name and index
+  record Zlayer(String name, int index) {} // record class for storing layer name and index
 
   record Layer(Map<Position, TextCharacter> contents) {} // record class for storing layer contents
 
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
-  private Map<ZLayer, Layer> layers; // map of layers for rendering
+  private Map<Zlayer, Layer> layers; // map of layers for rendering
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
@@ -121,7 +121,7 @@ public class RenderSubsystem implements Subsystem {
       this.layers = new ConcurrentHashMap<>(); // initialize the layers map
       for (int i = 0; i < MAX_LAYERS; i++) { // initialize each layer
         this.layers.put(
-            new ZLayer("Layer %d".formatted(i), i), new Layer(new ConcurrentHashMap<>()));
+            new Zlayer("Layer %d".formatted(i), i), new Layer(new ConcurrentHashMap<>()));
       }
 
       TextColor backgroundColor = new TextColor.RGB(40, 55, 40);
@@ -147,6 +147,9 @@ public class RenderSubsystem implements Subsystem {
   public void start() {
     LOGGER.info("[%s] Starting Render System".formatted(TAG));
     running = true;
+
+    // Add a card to a specific layer (e.g., for players, table, deck)
+    addCardToLayer(1, 10, 10, 3, 2); // Adds 4 of clubs at position (10,10) on layer 1
   }
 
   @Override
@@ -191,6 +194,7 @@ public class RenderSubsystem implements Subsystem {
           displayPerfStats(deltaTime, sleepTime);
 
           // Layer system rendering goes here
+          renderLayers();
 
           // refresh the screen to apply changes
           this.mainScreen.get().refresh();
@@ -309,7 +313,7 @@ public class RenderSubsystem implements Subsystem {
     TextGraphics textGraphics = this.mainScreen.get().newTextGraphics();
     textGraphics.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
     textGraphics.setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor());
-    textGraphics.putString(1, 1, "Render System Stats");
+    textGraphics.putString(1, 1, "Render Subsystem Stats");
     textGraphics.putString(1, 2, "FPS: %d (Target %d)".formatted(currentFps, TARGET_FPS));
     textGraphics.putString(1, 3, "Delta Time: %dms".formatted((int) (deltaTime * 1000)));
     textGraphics.putString(1, 4, "Sleep Time: %dms".formatted((int) (sleepTime * 1000)));
@@ -324,7 +328,7 @@ public class RenderSubsystem implements Subsystem {
   }
 
   private void drawRandomCard(
-      Screen screen, int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
+      int layerIndex, int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
 
     // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
     String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
@@ -346,6 +350,11 @@ public class RenderSubsystem implements Subsystem {
     TextColor suitColor = (suitIndex < 2) ? red : black;
     TextColor borderColor = (cardValueIndex == 0) ? yellow : suitColor;
 
+    // Get the layer to draw to
+    Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
+    Layer layer = layers.get(zlayer);
+    Map<Position, TextCharacter> layerContents = layer.contents();
+
     // I still fail to comprehend why the author of the lanterna library decided to use a 2D array
     // for the TextCharacter class...
     TextCharacter topLeftCorner = TextCharacter.fromCharacter('┌', borderColor, white)[0];
@@ -356,633 +365,342 @@ public class RenderSubsystem implements Subsystem {
     TextCharacter verticalBorder = TextCharacter.fromCharacter('│', borderColor, white)[0];
     TextCharacter blank = TextCharacter.fromCharacter(' ', white, white)[0];
 
+    // Draw to layer instead of screen
     // draw top border of the card at specified position (x, y) using special border characters
-    screen.newTextGraphics().setCharacter(x, y, topLeftCorner);
-    screen.newTextGraphics().setCharacter(x + width, y, topRightCorner);
+    layerContents.put(new Position(x, y), topLeftCorner);
+    layerContents.put(new Position(x + width, y), topRightCorner);
     for (int i = 1; i < width; i++) {
-      screen.newTextGraphics().setCharacter(x + i, y, horizontalBorder);
+      layerContents.put(new Position(x + i, y), horizontalBorder);
     }
 
     // draw bottom border of the card at specified position (x, y) using special border characters
-    screen.newTextGraphics().setCharacter(x, y + height, bottomLeftCorner);
-    screen.newTextGraphics().setCharacter(x + width, y + height, bottomRightCorner);
+    layerContents.put(new Position(x, y + height), bottomLeftCorner);
+    layerContents.put(new Position(x + width, y + height), bottomRightCorner);
     for (int i = 1; i < width; i++) {
-      screen.newTextGraphics().setCharacter(x + i, y + height, horizontalBorder);
+      layerContents.put(new Position(x + i, y + height), horizontalBorder);
     }
 
     // draw left border of the card at specified position (x, y) using special border characters
     for (int i = 1; i < height; i++) {
-      screen.newTextGraphics().setCharacter(x, y + i, verticalBorder);
+      layerContents.put(new Position(x, y + i), verticalBorder);
     }
 
     // draw right border of the card at specified position (x, y) using special border characters
     for (int i = 1; i < height; i++) {
-      screen.newTextGraphics().setCharacter(x + width, y + i, verticalBorder);
+      layerContents.put(new Position(x + width, y + i), verticalBorder);
     }
 
     // clear the inside of the card
     for (int i = 1; i < width; i++) {
       for (int j = 1; j < height; j++) {
-        screen.newTextGraphics().setCharacter(x + i, y + j, blank);
+        layerContents.put(new Position(x + i, y + j), blank);
       }
     }
 
-    // draw card value and suit in the center of the card
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 1, y + 1, cardValue);
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 1, y + 2, suit);
+    // For single characters like card values and suits, use the first character
+    char cardValueChar = cardValue.charAt(0);
+    char suitChar = suit.charAt(0);
 
-    // draw card value and suit at the opposite corner of the card
+    // draw card value and suit in the center of the card
+    layerContents.put(
+        new Position(x + 1, y + 1),
+        TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
+    layerContents.put(
+        new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+
+    // Special handling for "10" which is two characters
     if (!cardValue.equals("10")) {
-      screen
-          .newTextGraphics()
-          .setForegroundColor(suitColor)
-          .setBackgroundColor(white)
-          .putString(x + width - 1, y + height - 2, cardValue);
-      screen
-          .newTextGraphics()
-          .setForegroundColor(suitColor)
-          .setBackgroundColor(white)
-          .putString(x + width - 1, y + height - 1, suit);
+      layerContents.put(
+          new Position(x + width - 1, y + height - 2),
+          TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + width - 1, y + height - 1),
+          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     } else {
-      screen
-          .newTextGraphics()
-          .setForegroundColor(suitColor)
-          .setBackgroundColor(white)
-          .putString(x + width - 3, y + height - 1, cardValue);
-      screen
-          .newTextGraphics()
-          .setForegroundColor(suitColor)
-          .setBackgroundColor(white)
-          .putString(x + width - 1, y + height - 1, suit);
+      // Handle "10" specially since it's two characters
+      layerContents.put(
+          new Position(x + width - 2, y + height - 1),
+          TextCharacter.fromCharacter('1', suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + width - 1, y + height - 1),
+          TextCharacter.fromCharacter('0', suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + width - 1, y + height - 1),
+          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     }
 
-    // draw card value and suit in the center of the card
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 2, y + 2, "┌");
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 8, y + 2, "┐");
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 2, y + 6, "└");
-    ;
-    screen
-        .newTextGraphics()
-        .setForegroundColor(suitColor)
-        .setBackgroundColor(white)
-        .putString(x + 8, y + 6, "┘");
+    // draw card corners
+    layerContents.put(
+        new Position(x + 2, y + 2), TextCharacter.fromCharacter('┌', suitColor, white)[0]);
+    layerContents.put(
+        new Position(x + 8, y + 2), TextCharacter.fromCharacter('┐', suitColor, white)[0]);
+    layerContents.put(
+        new Position(x + 2, y + 6), TextCharacter.fromCharacter('└', suitColor, white)[0]);
+    layerContents.put(
+        new Position(x + 8, y + 6), TextCharacter.fromCharacter('┘', suitColor, white)[0]);
 
+    // Add the suit symbols for each card value
     switch (cardValue) {
-      case "A" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-      }
-      case "2" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-      }
-      case "3" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-      }
-      case "4" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-      }
-      case "5" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-      }
-      case "6" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-      }
-      case "7" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-      }
-      case "8" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 6, suit);
-      }
-      case "9" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-      }
-      case "10" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 6, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-      }
-      case "J" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 6, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 2, suit);
-      }
-      case "Q" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 4, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 6, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 6, suit);
-      }
-      case "K" -> {
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 3, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 7, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 4, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 6, y + 2, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 1, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 3, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 5, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(suitColor)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 4, suit);
-        screen
-            .newTextGraphics()
-            .setForegroundColor(TextColor.ANSI.YELLOW)
-            .setBackgroundColor(white)
-            .putString(x + 5, y + 6, suit);
+      case "A":
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "2":
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "3":
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "4":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "5":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "6":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "7":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "8":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 6), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "9":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "10":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 6), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        break;
+      case "J":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 6),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 2),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        break;
+      case "Q":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 4, y + 2),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        layerContents.put(
+            new Position(x + 6, y + 2),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 6),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        break;
+      case "K":
+        layerContents.put(
+            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 4, y + 2),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        layerContents.put(
+            new Position(x + 6, y + 2),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 1), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+        layerContents.put(
+            new Position(x + 5, y + 6),
+            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+        break;
+    }
+  }
+
+  /**
+   * Renders all layers to the screen in order of their index. Lower index layers are rendered first
+   * (background), higher index layers are rendered on top (foreground).
+   */
+  private void renderLayers() {
+    // Render layers from bottom to top
+    for (int i = 0; i < MAX_LAYERS; i++) {
+      Zlayer zlayer = new Zlayer("Layer %d".formatted(i), i);
+      Layer layer = layers.get(zlayer);
+
+      if (layer != null) {
+        // Render all contents of this layer
+        for (Map.Entry<Position, TextCharacter> entry : layer.contents().entrySet()) {
+          Position pos = entry.getKey();
+          TextCharacter character = entry.getValue();
+
+          // Only render if within screen bounds
+          if (pos.x() >= 0 && pos.x() < screenColumns && pos.y() >= 0 && pos.y() < screenRows) {
+            this.mainScreen.get().setCharacter(pos.x(), pos.y(), character);
+          }
+        }
       }
     }
+  }
 
-    // shadow color for the card
-    TextColor shadowColor = new TextColor.Indexed(235); // dark gray
+  /**
+   * Public method to add a card to a specific layer. This can be called from outside the render
+   * subsystem.
+   */
+  public void addCardToLayer(int layerIndex, int x, int y, int cardValueIndex, int suitIndex) {
+    // Standard card size
+    int width = 10;
+    int height = 7;
 
-    // "shadow" character from half-blocks unicode range
-    //    char shadowSide = '▕';
-    //    char shadowBottom = '░';
-    //
-    //    TextCharacter shadowSideChar = TextCharacter.fromCharacter(shadowSide, shadowColor,
-    // shadowColor)[0];
-    //    TextCharacter shadowBottomChar = TextCharacter.fromCharacter(shadowBottom, shadowColor,
-    // shadowColor)[0];
+    // Draw the card to the specified layer
+    drawRandomCard(layerIndex, x, y, width, height, cardValueIndex, suitIndex);
+  }
 
-    //    // draw shadow for the card
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 1, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 2, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 3, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 4, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 5, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 6, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 7, shadowSideChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + width + 1, y + 8, shadowSideChar);
-    //
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 1, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 2, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 3, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 4, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 5, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 6, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 7, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 8, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 9, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 10, y + height + 1, shadowBottomChar);
-    //    screen.newTextGraphics().setForegroundColor(black).setBackgroundColor(shadowColor)
-    //        .setCharacter(x + 11, y + height + 1, shadowBottomChar);
-
+  /** Clears a specific layer by removing all its contents */
+  public void clearLayer(int layerIndex) {
+    Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
+    layers.put(zlayer, new Layer(new ConcurrentHashMap<>()));
   }
 }
