@@ -1,7 +1,7 @@
 package net.luxsolari;
 
 import java.util.logging.Logger;
-import net.luxsolari.systems.MasterGameSubsystem;
+import net.luxsolari.systems.MasterSubsystem;
 
 /**
  * Main application class that serves as the entry point for the application. Initializes and
@@ -20,7 +20,7 @@ public class Main {
     LOGGER.info("[%s] Starting Main".formatted(TAG));
 
     // Spawn master thread for GameMasterHandler instance
-    MasterGameSubsystem masterGameSystem = MasterGameSubsystem.getInstance();
+    MasterSubsystem masterGameSystem = MasterSubsystem.getInstance();
     masterGameSystem.run();
 
     LOGGER.info("[%s] Exiting Main".formatted(TAG));

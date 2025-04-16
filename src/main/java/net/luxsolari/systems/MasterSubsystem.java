@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class MasterGameSubsystem implements Subsystem {
+public class MasterSubsystem implements Subsystem {
 
-  private static MasterGameSubsystem INSTANCE;
-  private static final String TAG = MasterGameSubsystem.class.getSimpleName();
+  private static MasterSubsystem INSTANCE;
+  private static final String TAG = MasterSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private static final int SECOND_IN_NANOS = 1_000_000_000;
@@ -25,12 +25,12 @@ public class MasterGameSubsystem implements Subsystem {
 
   private boolean running = false;
 
-  private MasterGameSubsystem() {}
+  private MasterSubsystem() {}
 
-  public static MasterGameSubsystem getInstance() {
+  public static MasterSubsystem getInstance() {
     if (INSTANCE == null) {
       LOGGER.info("[%s] Creating new Master Game Handler instance".formatted(TAG));
-      INSTANCE = new MasterGameSubsystem();
+      INSTANCE = new MasterSubsystem();
     }
     return INSTANCE;
   }
@@ -81,7 +81,8 @@ public class MasterGameSubsystem implements Subsystem {
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.getInstance().running() && RenderSubsystem.getInstance().mainScreen().get() != null) {
+          if (RenderSubsystem.getInstance().running()
+              && RenderSubsystem.getInstance().mainScreen().get() != null) {
             RenderSubsystem.getInstance()
                 .mainScreen()
                 .get()
@@ -104,7 +105,7 @@ public class MasterGameSubsystem implements Subsystem {
               KeyStroke keyStroke = RenderSubsystem.getInstance().mainScreen().get().pollInput();
               if (keyStroke != null) {
                 if ((keyStroke.getKeyType() == KeyType.Character
-                        && keyStroke.getCharacter().toString().equalsIgnoreCase("q"))
+                        && keyStroke.getCharacter().toString().equalsIgnoreCase("Q"))
                     || keyStroke.getKeyType() == KeyType.EOF) {
                   this.stop();
                 }
@@ -119,7 +120,7 @@ public class MasterGameSubsystem implements Subsystem {
         }
 
         Thread.sleep(1);
-        //Thread.yield();
+        // Thread.yield();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

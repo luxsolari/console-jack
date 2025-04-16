@@ -92,7 +92,7 @@ public class RenderSubsystem implements Subsystem {
                   Font.PLAIN,
                   Objects.requireNonNull(
                       getClass().getResourceAsStream("/fonts/InputMono-Regular.ttf")))
-              .deriveFont(Font.PLAIN, 24);
+              .deriveFont(Font.PLAIN, 20);
       SwingTerminalFontConfiguration fontConfig =
           new SwingTerminalFontConfiguration(
               true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
@@ -148,8 +148,38 @@ public class RenderSubsystem implements Subsystem {
     LOGGER.info("[%s] Starting Render System".formatted(TAG));
     running = true;
 
-    // Add a card to a specific layer (e.g., for players, table, deck)
-    addCardToLayer(1, 10, 10, 3, 2); // Adds 4 of clubs at position (10,10) on layer 1
+    // Draw all cards of the deck, one suit per layer - with overlapping for compactness
+    int cardWidth = 10; // Actual card width
+    int cardHeight = 8; // Actual card height
+    int horizontalOffset = 6; // Cards will overlap horizontally (smaller = more overlap)
+    int verticalOffset = 3; // Minimal vertical spacing between suits
+    int cardsPerRow = 13; // Show all cards in one row per suit
+
+    // Calculate total width and height of the card layout
+    int totalWidth = (cardsPerRow - 1) * horizontalOffset + cardWidth;
+    int totalHeight = (4 - 1) * verticalOffset + cardHeight;
+
+    // Calculate starting position to center the layout
+    int startX = (screenColumns - totalWidth) / 2;
+    int startY = (screenRows - totalHeight) / 2;
+
+    // For each suit (Hearts, Diamonds, Clubs, Spades)
+    for (int suit = 0; suit < 4; suit++) {
+      int suitLayer = suit; // Use suit index as layer
+
+      // For each card value (A, 2-10, J, Q, K)
+      for (int value = 0; value < 13; value++) {
+        // Calculate position in grid
+        int row = value / cardsPerRow;
+        int col = value % cardsPerRow;
+
+        int x = startX + (col * horizontalOffset);
+        int y = startY + (row * cardHeight) + (suit * verticalOffset);
+
+        // Add card to appropriate layer
+        addCardToLayer(suitLayer, x, y, value, suit);
+      }
+    }
   }
 
   @Override
@@ -402,11 +432,22 @@ public class RenderSubsystem implements Subsystem {
     char suitChar = suit.charAt(0);
 
     // draw card value and suit in the center of the card
-    layerContents.put(
-        new Position(x + 1, y + 1),
-        TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
-    layerContents.put(
-        new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+    // Special handling for "10" in top left
+    if (!cardValue.equals("10")) {
+      layerContents.put(
+          new Position(x + 1, y + 1),
+          TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+    } else {
+      // Handle "10" specially for top left
+      layerContents.put(
+          new Position(x + 1, y + 1), TextCharacter.fromCharacter('1', suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + 2, y + 1), TextCharacter.fromCharacter('0', suitColor, white)[0]);
+      layerContents.put(
+          new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+    }
 
     // Special handling for "10" which is two characters
     if (!cardValue.equals("10")) {
@@ -419,14 +460,14 @@ public class RenderSubsystem implements Subsystem {
     } else {
       // Handle "10" specially since it's two characters
       layerContents.put(
+          new Position(x + width - 1, y + height - 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      layerContents.put(
           new Position(x + width - 2, y + height - 1),
           TextCharacter.fromCharacter('1', suitColor, white)[0]);
       layerContents.put(
           new Position(x + width - 1, y + height - 1),
           TextCharacter.fromCharacter('0', suitColor, white)[0]);
-      layerContents.put(
-          new Position(x + width - 1, y + height - 1),
-          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     }
 
     // draw card corners
@@ -692,13 +733,13 @@ public class RenderSubsystem implements Subsystem {
   public void addCardToLayer(int layerIndex, int x, int y, int cardValueIndex, int suitIndex) {
     // Standard card size
     int width = 10;
-    int height = 7;
+    int height = 8;
 
     // Draw the card to the specified layer
     drawRandomCard(layerIndex, x, y, width, height, cardValueIndex, suitIndex);
   }
 
-  /** Clears a specific layer by removing all its contents */
+  /** Clears a specific layer by removing all its contents. */
   public void clearLayer(int layerIndex) {
     Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
     layers.put(zlayer, new Layer(new ConcurrentHashMap<>()));
