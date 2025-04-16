@@ -56,6 +56,11 @@ public class RenderSubsystem implements Subsystem {
 
   private RenderSubsystem() {}
 
+  /**
+   * Returns the singleton instance of the RenderSubsystem.
+   *
+   * @return The singleton instance of RenderSubsystem
+   */
   public static RenderSubsystem getInstance() {
     if (INSTANCE == null) {
       INSTANCE = new RenderSubsystem();
@@ -63,14 +68,29 @@ public class RenderSubsystem implements Subsystem {
     return INSTANCE;
   }
 
+  /**
+   * Checks if the render subsystem is currently running.
+   *
+   * @return true if the subsystem is running, false otherwise
+   */
   public boolean running() {
     return running;
   }
 
+  /**
+   * Returns the main screen reference used for rendering.
+   *
+   * @return The AtomicReference containing the main Screen instance
+   */
   public AtomicReference<Screen> mainScreen() {
     return mainScreen;
   }
 
+  /**
+   * Initializes the render subsystem by setting up the terminal, screen, and layers.
+   *
+   * @throws ResourceInitializationException if initialization fails
+   */
   @Override
   public void init() {
     LOGGER.info("[%s] Initializing Render System".formatted(TAG));
@@ -143,6 +163,7 @@ public class RenderSubsystem implements Subsystem {
     this.start();
   }
 
+  /** Starts the render subsystem and initializes the card layout. */
   @Override
   public void start() {
     LOGGER.info("[%s] Starting Render System".formatted(TAG));
@@ -182,6 +203,11 @@ public class RenderSubsystem implements Subsystem {
     }
   }
 
+  /**
+   * Updates the render subsystem, handling screen resizing and frame rendering.
+   *
+   * @throws ResourceInitializationException if update operations fail
+   */
   @Override
   @SuppressWarnings("BusyWait")
   public void update() {
@@ -248,6 +274,11 @@ public class RenderSubsystem implements Subsystem {
     }
   }
 
+  /**
+   * Stops the render subsystem and closes the screen.
+   *
+   * @throws ResourceCleanupException if stopping operations fail
+   */
   @Override
   public void stop() {
     LOGGER.info("[%s] Stopping Render System".formatted(TAG));
@@ -261,6 +292,7 @@ public class RenderSubsystem implements Subsystem {
     }
   }
 
+  /** Cleans up resources used by the render subsystem. */
   @Override
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning up Render System".formatted(TAG));
@@ -727,8 +759,13 @@ public class RenderSubsystem implements Subsystem {
   }
 
   /**
-   * Public method to add a card to a specific layer. This can be called from outside the render
-   * subsystem.
+   * Adds a card to a specific rendering layer.
+   *
+   * @param layerIndex The index of the layer to add the card to
+   * @param x The x-coordinate position of the card
+   * @param y The y-coordinate position of the card
+   * @param cardValueIndex The index of the card value (0-12 for A,2-10,J,Q,K)
+   * @param suitIndex The index of the card suit (0-3 for Hearts,Diamonds,Clubs,Spades)
    */
   public void addCardToLayer(int layerIndex, int x, int y, int cardValueIndex, int suitIndex) {
     // Standard card size
@@ -739,7 +776,11 @@ public class RenderSubsystem implements Subsystem {
     drawRandomCard(layerIndex, x, y, width, height, cardValueIndex, suitIndex);
   }
 
-  /** Clears a specific layer by removing all its contents. */
+  /**
+   * Clears all contents from a specific rendering layer.
+   *
+   * @param layerIndex The index of the layer to clear
+   */
   public void clearLayer(int layerIndex) {
     Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
     layers.put(zlayer, new Layer(new ConcurrentHashMap<>()));
