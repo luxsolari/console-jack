@@ -1,4 +1,4 @@
-package net.luxsolari.systems;
+package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TerminalSize;
@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
-import net.luxsolari.exceptions.ResourceCleanupException;
-import net.luxsolari.exceptions.ResourceInitializationException;
+import net.luxsolari.engine.exceptions.ResourceCleanupException;
+import net.luxsolari.engine.exceptions.ResourceInitializationException;
 
 public class RenderSubsystem implements Subsystem {
   private static RenderSubsystem INSTANCE;

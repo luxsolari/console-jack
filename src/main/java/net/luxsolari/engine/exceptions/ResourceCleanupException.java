@@ -1,4 +1,4 @@
-package net.luxsolari.exceptions;
+package net.luxsolari.engine.exceptions;
 
 public class ResourceCleanupException extends RuntimeException {
   public ResourceCleanupException(String message, Throwable cause) {

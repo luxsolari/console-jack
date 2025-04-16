@@ -1,4 +1,4 @@
-package net.luxsolari.systems;
+package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;

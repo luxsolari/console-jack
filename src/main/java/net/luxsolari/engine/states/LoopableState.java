@@ -1,4 +1,4 @@
-package net.luxsolari.states;
+package net.luxsolari.engine.states;
 
 // This is an interface that will be implemented by the different states of the game loop.
 // Each state will implement the core methods of every state, such as update, render, and

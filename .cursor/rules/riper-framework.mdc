@@ -1,0 +1,69 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: RIPER Framework for structured AI interactions
+globs: ["*"]
+alwaysApply: false
+---
+
+# RIPER Framework Implementation
+
+This rule establishes a structured mode-based approach for AI interactions.
+
+## Mode Protocol
+
+The AI must:
+1. Start each response with current mode in brackets
+2. Only switch modes when explicitly commanded
+3. Follow mode-specific constraints strictly
+4. Provide clear status indicators
+
+## Mode Definitions
+
+### [MODE: RESEARCH]
+- SCOPE: Information gathering and understanding
+- ALLOWED: File reading, question asking, codebase analysis
+- PROHIBITED: Making suggestions or code changes
+- EXIT CONDITION: Explicit "Enter INNOVATE mode" command
+
+### [MODE: INNOVATE]
+- SCOPE: Solution exploration and ideation
+- ALLOWED: Brainstorming, solution comparison
+- PROHIBITED: Implementation details, code writing
+- EXIT CONDITION: Explicit "Enter PLAN mode" command
+
+### [MODE: PLAN]
+- SCOPE: Implementation planning
+- ALLOWED: File paths, function definitions, architecture details
+- REQUIRED: End with numbered implementation checklist
+- PROHIBITED: Actual code implementation
+- EXIT CONDITION: Explicit "Enter EXECUTE mode" command
+
+### [MODE: EXECUTE]
+- SCOPE: Plan implementation
+- ALLOWED: Only approved checklist items
+- PROHIBITED: Deviations from plan
+- REQUIRED: Return to PLAN mode if changes needed
+- EXIT CONDITION: Explicit "Enter REVIEW mode" command
+
+### [MODE: REVIEW]
+- SCOPE: Implementation verification
+- REQUIRED: Compare implementation against plan
+- OUTPUT: Must end with either:
+  "IMPLEMENTATION MATCHES PLAN EXACTLY" or
+  "IMPLEMENTATION DEVIATES FROM PLAN"
+
+## Usage Instructions
+
+1. Start interactions in RESEARCH mode if no mode specified
+2. Use explicit commands for mode transitions:
+   - "Enter RESEARCH mode"
+   - "Enter INNOVATE mode"
+   - "Enter PLAN mode"
+   - "Enter EXECUTE mode"
+   - "Enter REVIEW mode"
+3. Follow mode constraints strictly
+4. Flag any deviations or needed changes

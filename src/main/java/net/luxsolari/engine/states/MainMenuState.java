@@ -1,4 +1,4 @@
-package net.luxsolari.states;
+package net.luxsolari.engine.states;
 
 public class MainMenuState implements LoopableState {
   @Override

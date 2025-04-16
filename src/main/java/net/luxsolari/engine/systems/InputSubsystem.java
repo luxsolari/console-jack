@@ -1,4 +1,4 @@
-package net.luxsolari.systems;
+package net.luxsolari.engine.systems;
 
 import java.util.logging.Logger;
 
