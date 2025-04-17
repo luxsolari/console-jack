@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import net.luxsolari.engine.exceptions.ResourceCleanupException;
 import net.luxsolari.engine.exceptions.ResourceInitializationException;
+import net.luxsolari.game.entity.EntityPosition;
 
 public class RenderSubsystem implements Subsystem {
   private static RenderSubsystem INSTANCE;
@@ -42,16 +43,8 @@ public class RenderSubsystem implements Subsystem {
   private int screenRows;
 
   private boolean running = false;
-
-  // Layering/Render system
-  record Position(int x, int y) {} // record class for storing x and y coordinates
-
-  record Zlayer(String name, int index) {} // record class for storing layer name and index
-
-  record Layer(Map<Position, TextCharacter> contents) {} // record class for storing layer contents
-
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
-  private Map<Zlayer, Layer> layers; // map of layers for rendering
+  private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
@@ -141,7 +134,7 @@ public class RenderSubsystem implements Subsystem {
       this.layers = new ConcurrentHashMap<>(); // initialize the layers map
       for (int i = 0; i < MAX_LAYERS; i++) { // initialize each layer
         this.layers.put(
-            new Zlayer("Layer %d".formatted(i), i), new Layer(new ConcurrentHashMap<>()));
+            new ZLayer("Layer %d".formatted(i), i), new ZLayerData(new ConcurrentHashMap<>()));
       }
 
       TextColor backgroundColor = new TextColor.RGB(40, 55, 40);
@@ -168,39 +161,6 @@ public class RenderSubsystem implements Subsystem {
   public void start() {
     LOGGER.info("[%s] Starting Render System".formatted(TAG));
     running = true;
-
-    // Draw all cards of the deck, one suit per layer - with overlapping for compactness
-    int cardWidth = 10; // Actual card width
-    int cardHeight = 8; // Actual card height
-    int horizontalOffset = 6; // Cards will overlap horizontally (smaller = more overlap)
-    int verticalOffset = 3; // Minimal vertical spacing between suits
-    int cardsPerRow = 13; // Show all cards in one row per suit
-
-    // Calculate total width and height of the card layout
-    int totalWidth = (cardsPerRow - 1) * horizontalOffset + cardWidth;
-    int totalHeight = (4 - 1) * verticalOffset + cardHeight;
-
-    // Calculate starting position to center the layout
-    int startX = (screenColumns - totalWidth) / 2;
-    int startY = (screenRows - totalHeight) / 2;
-
-    // For each suit (Hearts, Diamonds, Clubs, Spades)
-    for (int suit = 0; suit < 4; suit++) {
-      int suitLayer = suit; // Use suit index as layer
-
-      // For each card value (A, 2-10, J, Q, K)
-      for (int value = 0; value < 13; value++) {
-        // Calculate position in grid
-        int row = value / cardsPerRow;
-        int col = value % cardsPerRow;
-
-        int x = startX + (col * horizontalOffset);
-        int y = startY + (row * cardHeight) + (suit * verticalOffset);
-
-        // Add card to appropriate layer
-        addCardToLayer(suitLayer, x, y, value, suit);
-      }
-    }
   }
 
   /**
@@ -392,70 +352,74 @@ public class RenderSubsystem implements Subsystem {
   private void drawRandomCard(
       int layerIndex, int x, int y, int width, int height, int cardValueIndex, int suitIndex) {
 
-    // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K)
-    String[] cardValues = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
-    String cardValue = cardValues[cardValueIndex];
+    // random value for the card (A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, JOKER)
+    String[] cardValues = {
+      "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "JOKER"
+    };
+    final String cardValue = cardValues[cardValueIndex];
 
     // random suit for the card (hearts, diamonds, clubs, spades), represented by wide unicode
     // characters
     String[] suits = {"♥", "♦", "♣", "♠"};
     String[] suitNames = {"HEARTS", "DIAMONDS", "CLUBS", "SPADES"};
-    String suit = suits[suitIndex];
+    final String suit = suits[suitIndex];
 
     // draw card frame using special border characters and color the card red if it's a heart or
     // diamond, white otherwise
-    TextColor white = TextColor.ANSI.WHITE;
-    TextColor black = TextColor.ANSI.BLACK;
-    TextColor red = TextColor.ANSI.RED;
-    TextColor green = TextColor.ANSI.GREEN;
-    TextColor yellow = TextColor.ANSI.YELLOW;
-    TextColor suitColor = (suitIndex < 2) ? red : black;
-    TextColor borderColor = (cardValueIndex == 0) ? yellow : suitColor;
+    final TextColor white = TextColor.ANSI.WHITE;
+    final TextColor black = TextColor.ANSI.BLACK;
+    final TextColor red = TextColor.ANSI.RED;
+    final TextColor green = TextColor.ANSI.GREEN;
+    final TextColor yellow = TextColor.ANSI.YELLOW;
+    final TextColor magenta = TextColor.ANSI.MAGENTA;
+    final TextColor suitColor = (suitIndex < 2) ? red : black;
+    final TextColor borderColor =
+        (cardValueIndex == 0 || cardValueIndex == 13) ? yellow : suitColor;
 
     // Get the layer to draw to
-    Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
-    Layer layer = layers.get(zlayer);
-    Map<Position, TextCharacter> layerContents = layer.contents();
+    ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
+    ZLayerData layer = layers.get(zlayer);
+    Map<ZLayerPosition, TextCharacter> layerContents = layer.contents();
 
     // I still fail to comprehend why the author of the lanterna library decided to use a 2D array
     // for the TextCharacter class...
-    TextCharacter topLeftCorner = TextCharacter.fromCharacter('┌', borderColor, white)[0];
-    TextCharacter topRightCorner = TextCharacter.fromCharacter('┐', borderColor, white)[0];
-    TextCharacter bottomLeftCorner = TextCharacter.fromCharacter('└', borderColor, white)[0];
-    TextCharacter bottomRightCorner = TextCharacter.fromCharacter('┘', borderColor, white)[0];
-    TextCharacter horizontalBorder = TextCharacter.fromCharacter('─', borderColor, white)[0];
-    TextCharacter verticalBorder = TextCharacter.fromCharacter('│', borderColor, white)[0];
-    TextCharacter blank = TextCharacter.fromCharacter(' ', white, white)[0];
+    final TextCharacter topLeftCorner = TextCharacter.fromCharacter('┌', borderColor, white)[0];
+    final TextCharacter topRightCorner = TextCharacter.fromCharacter('┐', borderColor, white)[0];
+    final TextCharacter bottomLeftCorner = TextCharacter.fromCharacter('└', borderColor, white)[0];
+    final TextCharacter bottomRightCorner = TextCharacter.fromCharacter('┘', borderColor, white)[0];
+    final TextCharacter horizontalBorder = TextCharacter.fromCharacter('─', borderColor, white)[0];
+    final TextCharacter verticalBorder = TextCharacter.fromCharacter('│', borderColor, white)[0];
+    final TextCharacter blank = TextCharacter.fromCharacter(' ', white, white)[0];
 
     // Draw to layer instead of screen
     // draw top border of the card at specified position (x, y) using special border characters
-    layerContents.put(new Position(x, y), topLeftCorner);
-    layerContents.put(new Position(x + width, y), topRightCorner);
+    layerContents.put(new ZLayerPosition(x, y), topLeftCorner);
+    layerContents.put(new ZLayerPosition(x + width, y), topRightCorner);
     for (int i = 1; i < width; i++) {
-      layerContents.put(new Position(x + i, y), horizontalBorder);
+      layerContents.put(new ZLayerPosition(x + i, y), horizontalBorder);
     }
 
     // draw bottom border of the card at specified position (x, y) using special border characters
-    layerContents.put(new Position(x, y + height), bottomLeftCorner);
-    layerContents.put(new Position(x + width, y + height), bottomRightCorner);
+    layerContents.put(new ZLayerPosition(x, y + height), bottomLeftCorner);
+    layerContents.put(new ZLayerPosition(x + width, y + height), bottomRightCorner);
     for (int i = 1; i < width; i++) {
-      layerContents.put(new Position(x + i, y + height), horizontalBorder);
+      layerContents.put(new ZLayerPosition(x + i, y + height), horizontalBorder);
     }
 
     // draw left border of the card at specified position (x, y) using special border characters
     for (int i = 1; i < height; i++) {
-      layerContents.put(new Position(x, y + i), verticalBorder);
+      layerContents.put(new ZLayerPosition(x, y + i), verticalBorder);
     }
 
     // draw right border of the card at specified position (x, y) using special border characters
     for (int i = 1; i < height; i++) {
-      layerContents.put(new Position(x + width, y + i), verticalBorder);
+      layerContents.put(new ZLayerPosition(x + width, y + i), verticalBorder);
     }
 
     // clear the inside of the card
     for (int i = 1; i < width; i++) {
       for (int j = 1; j < height; j++) {
-        layerContents.put(new Position(x + i, y + j), blank);
+        layerContents.put(new ZLayerPosition(x + i, y + j), blank);
       }
     }
 
@@ -467,269 +431,402 @@ public class RenderSubsystem implements Subsystem {
     // Special handling for "10" in top left
     if (!cardValue.equals("10")) {
       layerContents.put(
-          new Position(x + 1, y + 1),
+          new ZLayerPosition(x + 1, y + 1),
           TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
       layerContents.put(
-          new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+          new ZLayerPosition(x + 1, y + 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     } else {
       // Handle "10" specially for top left
       layerContents.put(
-          new Position(x + 1, y + 1), TextCharacter.fromCharacter('1', suitColor, white)[0]);
+          new ZLayerPosition(x + 1, y + 1), TextCharacter.fromCharacter('1', suitColor, white)[0]);
       layerContents.put(
-          new Position(x + 2, y + 1), TextCharacter.fromCharacter('0', suitColor, white)[0]);
+          new ZLayerPosition(x + 2, y + 1), TextCharacter.fromCharacter('0', suitColor, white)[0]);
       layerContents.put(
-          new Position(x + 1, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+          new ZLayerPosition(x + 1, y + 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     }
 
     // Special handling for "10" which is two characters
     if (!cardValue.equals("10")) {
       layerContents.put(
-          new Position(x + width - 1, y + height - 2),
+          new ZLayerPosition(x + width - 1, y + height - 2),
           TextCharacter.fromCharacter(cardValueChar, suitColor, white)[0]);
       layerContents.put(
-          new Position(x + width - 1, y + height - 1),
+          new ZLayerPosition(x + width - 1, y + height - 1),
           TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
     } else {
       // Handle "10" specially since it's two characters
       layerContents.put(
-          new Position(x + width - 1, y + height - 2),
+          new ZLayerPosition(x + width - 1, y + height - 2),
           TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
       layerContents.put(
-          new Position(x + width - 2, y + height - 1),
+          new ZLayerPosition(x + width - 2, y + height - 1),
           TextCharacter.fromCharacter('1', suitColor, white)[0]);
       layerContents.put(
-          new Position(x + width - 1, y + height - 1),
+          new ZLayerPosition(x + width - 1, y + height - 1),
           TextCharacter.fromCharacter('0', suitColor, white)[0]);
     }
 
     // draw card corners
     layerContents.put(
-        new Position(x + 2, y + 2), TextCharacter.fromCharacter('┌', suitColor, white)[0]);
+        new ZLayerPosition(x + 2, y + 2), TextCharacter.fromCharacter('┌', suitColor, white)[0]);
     layerContents.put(
-        new Position(x + 8, y + 2), TextCharacter.fromCharacter('┐', suitColor, white)[0]);
+        new ZLayerPosition(x + 8, y + 2), TextCharacter.fromCharacter('┐', suitColor, white)[0]);
     layerContents.put(
-        new Position(x + 2, y + 6), TextCharacter.fromCharacter('└', suitColor, white)[0]);
+        new ZLayerPosition(x + 2, y + 6), TextCharacter.fromCharacter('└', suitColor, white)[0]);
     layerContents.put(
-        new Position(x + 8, y + 6), TextCharacter.fromCharacter('┘', suitColor, white)[0]);
+        new ZLayerPosition(x + 8, y + 6), TextCharacter.fromCharacter('┘', suitColor, white)[0]);
 
     // Add the suit symbols for each card value
     switch (cardValue) {
-      case "A":
+      case "A" -> {
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "2":
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "2" -> {
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "3":
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "3" -> {
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "4":
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "4" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "5":
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "5" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "6":
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "6" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "7":
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "7" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "8":
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "8" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 2),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 6), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "9":
+            new ZLayerPosition(x + 5, y + 6),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "9" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "10":
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "10" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 2), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 2),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 6), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 6),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
-        break;
-      case "J":
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
+      case "J" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 6),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+            new ZLayerPosition(x + 5, y + 6),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 2),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
-        break;
-      case "Q":
+            new ZLayerPosition(x + 5, y + 2),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
+      }
+      case "Q" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 4, y + 2),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+            new ZLayerPosition(x + 4, y + 2),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
         layerContents.put(
-            new Position(x + 6, y + 2),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+            new ZLayerPosition(x + 6, y + 2),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 6),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
-        break;
-      case "K":
+            new ZLayerPosition(x + 5, y + 6),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
+      }
+      case "K" -> {
         layerContents.put(
-            new Position(x + 3, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 3, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 3, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 7, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 7, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 4, y + 2),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+            new ZLayerPosition(x + 4, y + 2),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
         layerContents.put(
-            new Position(x + 6, y + 2),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
+            new ZLayerPosition(x + 6, y + 2),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 1), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 1),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 3), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 3),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 5), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 5),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 4), TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
         layerContents.put(
-            new Position(x + 5, y + 6),
-            TextCharacter.fromCharacter('*', TextColor.ANSI.YELLOW, white)[0]);
-        break;
+            new ZLayerPosition(x + 5, y + 6),
+            TextCharacter.fromCharacter(suitChar, TextColor.ANSI.YELLOW, white)[0]);
+      }
+      case "JOKER" -> {
+        // Special rendering for Joker card with a colorful pattern
+        // Draw a jester hat pattern
+        layerContents.put(
+            new ZLayerPosition(x + 3, y + 2), TextCharacter.fromCharacter('▲', magenta, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 4, y + 2), TextCharacter.fromCharacter('▲', red, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 5, y + 2), TextCharacter.fromCharacter('▲', yellow, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 6, y + 2), TextCharacter.fromCharacter('▲', green, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 7, y + 2), TextCharacter.fromCharacter('▲', magenta, white)[0]);
+
+        // Draw a joker face
+        layerContents.put(
+            new ZLayerPosition(x + 4, y + 3), TextCharacter.fromCharacter('(', white, black)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 5, y + 3), TextCharacter.fromCharacter('^', yellow, black)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 6, y + 3), TextCharacter.fromCharacter(')', white, black)[0]);
+
+        // Draw a smile
+        layerContents.put(
+            new ZLayerPosition(x + 4, y + 4), TextCharacter.fromCharacter('\\', white, black)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 5, y + 4), TextCharacter.fromCharacter('_', white, black)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 6, y + 4), TextCharacter.fromCharacter('/', white, black)[0]);
+
+        // Draw joker text
+        layerContents.put(
+            new ZLayerPosition(x + 3, y + 5), TextCharacter.fromCharacter('J', magenta, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 4, y + 5), TextCharacter.fromCharacter('O', red, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 5, y + 5), TextCharacter.fromCharacter('K', yellow, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 6, y + 5), TextCharacter.fromCharacter('E', green, white)[0]);
+        layerContents.put(
+            new ZLayerPosition(x + 7, y + 5), TextCharacter.fromCharacter('R', magenta, white)[0]);
+      }
+      default -> {
+        // Handle any unexpected card values by drawing a simple pattern
+        layerContents.put(
+            new ZLayerPosition(x + 5, y + 4),
+            TextCharacter.fromCharacter(suitChar, suitColor, white)[0]);
+      }
     }
   }
 
@@ -740,13 +837,13 @@ public class RenderSubsystem implements Subsystem {
   private void renderLayers() {
     // Render layers from bottom to top
     for (int i = 0; i < MAX_LAYERS; i++) {
-      Zlayer zlayer = new Zlayer("Layer %d".formatted(i), i);
-      Layer layer = layers.get(zlayer);
+      ZLayer zlayer = new ZLayer("Layer %d".formatted(i), i);
+      ZLayerData layer = layers.get(zlayer);
 
       if (layer != null) {
         // Render all contents of this layer
-        for (Map.Entry<Position, TextCharacter> entry : layer.contents().entrySet()) {
-          Position pos = entry.getKey();
+        for (Map.Entry<ZLayerPosition, TextCharacter> entry : layer.contents().entrySet()) {
+          ZLayerPosition pos = entry.getKey();
           TextCharacter character = entry.getValue();
 
           // Only render if within screen bounds
@@ -782,7 +879,233 @@ public class RenderSubsystem implements Subsystem {
    * @param layerIndex The index of the layer to clear
    */
   public void clearLayer(int layerIndex) {
-    Zlayer zlayer = new Zlayer("Layer %d".formatted(layerIndex), layerIndex);
-    layers.put(zlayer, new Layer(new ConcurrentHashMap<>()));
+    ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
+    layers.put(zlayer, new ZLayerData(new ConcurrentHashMap<>()));
+  }
+
+  /**
+   * Renders an Entity object to the specified layer.
+   *
+   * @param layerIndex The index of the layer to render to
+   * @param entity The Entity to render
+   */
+  public void renderEntity(int layerIndex, net.luxsolari.game.entity.Entity entity) {
+    if (!entity.isVisible()) {
+      return;
+    }
+
+    // Convert entity position and size to integers for rendering
+    EntityPosition entityPos = entity.getPosition();
+    ZLayerPosition pos = entityPos.toZLayerPosition();
+    int x = pos.x();
+    int y = pos.y();
+    int width = (int) entity.getWidth();
+    int height = (int) entity.getHeight();
+
+    // Get the layer to draw to
+    ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
+    ZLayerData layer = layers.get(zlayer);
+    Map<ZLayerPosition, TextCharacter> layerContents = layer.contents();
+
+    // Draw a simple rectangle for the entity
+    TextColor borderColor = TextColor.ANSI.WHITE;
+    TextColor fillColor = TextColor.ANSI.BLACK;
+
+    // Draw borders
+    for (int i = x; i <= x + width; i++) {
+      layerContents.put(
+          new ZLayerPosition(i, y), TextCharacter.fromCharacter('─', borderColor, fillColor)[0]);
+      layerContents.put(
+          new ZLayerPosition(i, y + height),
+          TextCharacter.fromCharacter('─', borderColor, fillColor)[0]);
+    }
+
+    for (int i = y; i <= y + height; i++) {
+      layerContents.put(
+          new ZLayerPosition(x, i), TextCharacter.fromCharacter('│', borderColor, fillColor)[0]);
+      layerContents.put(
+          new ZLayerPosition(x + width, i),
+          TextCharacter.fromCharacter('│', borderColor, fillColor)[0]);
+    }
+
+    // Draw corners
+    layerContents.put(
+        new ZLayerPosition(x, y), TextCharacter.fromCharacter('┌', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x + width, y),
+        TextCharacter.fromCharacter('┐', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x, y + height),
+        TextCharacter.fromCharacter('└', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x + width, y + height),
+        TextCharacter.fromCharacter('┘', borderColor, fillColor)[0]);
+  }
+
+  /**
+   * Renders a Card object to the specified layer.
+   *
+   * @param layerIndex The index of the layer to render to
+   * @param card The Card to render
+   */
+  public void renderCard(int layerIndex, net.luxsolari.game.entity.Card card) {
+    if (!card.isVisible()) {
+      return;
+    }
+
+    // Convert card position and size to integers for rendering
+    int x = (int) card.getX();
+    int y = (int) card.getY();
+    int width = (int) card.getWidth();
+    int height = (int) card.getHeight();
+
+    // Get the layer to draw to
+    ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
+    ZLayerData layer = layers.get(zlayer);
+    Map<ZLayerPosition, TextCharacter> layerContents = layer.contents();
+
+    // Determine card colors based on suit
+    TextColor suitColor;
+    if (card.getSuit() == net.luxsolari.game.entity.Card.Suit.HEARTS
+        || card.getSuit() == net.luxsolari.game.entity.Card.Suit.DIAMONDS) {
+      suitColor = TextColor.ANSI.RED;
+    } else {
+      suitColor = TextColor.ANSI.BLACK;
+    }
+
+    TextColor borderColor = suitColor;
+    TextColor fillColor = TextColor.ANSI.WHITE;
+
+    // Draw card borders
+    for (int i = x; i <= x + width; i++) {
+      layerContents.put(
+          new ZLayerPosition(i, y), TextCharacter.fromCharacter('─', borderColor, fillColor)[0]);
+      layerContents.put(
+          new ZLayerPosition(i, y + height),
+          TextCharacter.fromCharacter('─', borderColor, fillColor)[0]);
+    }
+
+    for (int i = y; i <= y + height; i++) {
+      layerContents.put(
+          new ZLayerPosition(x, i), TextCharacter.fromCharacter('│', borderColor, fillColor)[0]);
+      layerContents.put(
+          new ZLayerPosition(x + width, i),
+          TextCharacter.fromCharacter('│', borderColor, fillColor)[0]);
+    }
+
+    // Draw corners
+    layerContents.put(
+        new ZLayerPosition(x, y), TextCharacter.fromCharacter('┌', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x + width, y),
+        TextCharacter.fromCharacter('┐', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x, y + height),
+        TextCharacter.fromCharacter('└', borderColor, fillColor)[0]);
+    layerContents.put(
+        new ZLayerPosition(x + width, y + height),
+        TextCharacter.fromCharacter('┘', borderColor, fillColor)[0]);
+
+    // If card is face up, draw the suit and rank
+    if (card.isFaceUp()) {
+      // Draw rank in top-left corner
+      String rankStr = getRankString(card.getRank());
+      for (int i = 0; i < rankStr.length(); i++) {
+        layerContents.put(
+            new ZLayerPosition(x + 1 + i, y + 1),
+            TextCharacter.fromCharacter(rankStr.charAt(i), suitColor, fillColor)[0]);
+      }
+
+      // Draw suit symbol in top-left corner
+      char suitChar = getSuitChar(card.getSuit());
+      layerContents.put(
+          new ZLayerPosition(x + 1, y + 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, fillColor)[0]);
+
+      // Draw rank and suit in bottom-right corner (upside down)
+      for (int i = 0; i < rankStr.length(); i++) {
+        layerContents.put(
+            new ZLayerPosition(x + width - 1 - i, y + height - 1),
+            TextCharacter.fromCharacter(rankStr.charAt(i), suitColor, fillColor)[0]);
+      }
+
+      layerContents.put(
+          new ZLayerPosition(x + width - 1, y + height - 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, fillColor)[0]);
+
+      // Draw suit symbol in the center
+      layerContents.put(
+          new ZLayerPosition(x + width / 2, y + height / 2),
+          TextCharacter.fromCharacter(suitChar, suitColor, fillColor)[0]);
+    } else {
+      // Draw card back pattern
+      for (int i = x + 1; i < x + width; i += 2) {
+        for (int j = y + 1; j < y + height; j += 2) {
+          layerContents.put(
+              new ZLayerPosition(i, j),
+              TextCharacter.fromCharacter('█', TextColor.ANSI.BLUE, TextColor.ANSI.BLUE)[0]);
+        }
+      }
+    }
+  }
+
+  /**
+   * Converts a Card.Rank to its string representation.
+   *
+   * @param rank The rank to convert
+   * @return The string representation of the rank
+   */
+  private String getRankString(net.luxsolari.game.entity.Card.Rank rank) {
+    switch (rank) {
+      case ACE:
+        return "A";
+      case TWO:
+        return "2";
+      case THREE:
+        return "3";
+      case FOUR:
+        return "4";
+      case FIVE:
+        return "5";
+      case SIX:
+        return "6";
+      case SEVEN:
+        return "7";
+      case EIGHT:
+        return "8";
+      case NINE:
+        return "9";
+      case TEN:
+        return "10";
+      case JACK:
+        return "J";
+      case QUEEN:
+        return "Q";
+      case KING:
+        return "K";
+      default:
+        return "?";
+    }
+  }
+
+  /**
+   * Converts a Card.Suit to its character representation.
+   *
+   * @param suit The suit to convert
+   * @return The character representation of the suit
+   */
+  private char getSuitChar(net.luxsolari.game.entity.Card.Suit suit) {
+    switch (suit) {
+      case HEARTS:
+        return '♥';
+      case DIAMONDS:
+        return '♦';
+      case CLUBS:
+        return '♣';
+      case SPADES:
+        return '♠';
+      default:
+        return '?';
+    }
   }
 }
