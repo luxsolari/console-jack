@@ -41,7 +41,7 @@ public class MasterSubsystem implements Subsystem {
     this.start();
 
     RenderSubsystem renderSystem = RenderSubsystem.getInstance();
-    Thread renderSystemHandlerThread = new Thread(renderSystem, "RenderHandler");
+    Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
     renderSystemHandlerThread.start();
   }
 

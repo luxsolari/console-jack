@@ -50,10 +50,7 @@ public abstract class Entity {
   public abstract void update(float deltaTime);
 
   /** Renders the entity to the screen. */
-  public void render() {
-    // Use the RenderSubsystem to render this entity
-    RenderSubsystem.getInstance().renderEntity(ENTITY_LAYER, this);
-  }
+  public void render() {}
 
   // Getters and setters
   public float getX() {

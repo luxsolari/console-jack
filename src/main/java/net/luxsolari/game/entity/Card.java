@@ -78,7 +78,6 @@ public class Card extends Entity {
   @Override
   public void render() {
     // Use the RenderSubsystem to render this card
-    RenderSubsystem.getInstance().renderCard(CARD_LAYER, this);
   }
 
   /** Flips the card face up or face down. */
