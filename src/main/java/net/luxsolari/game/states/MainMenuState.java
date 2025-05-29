@@ -1,5 +1,12 @@
-package net.luxsolari.engine.states;
+package net.luxsolari.game.states;
 
+import net.luxsolari.engine.states.LoopableState;
+
+/**
+ * Represents the main menu state of the game.
+ * This state handles the display and interaction of the main menu interface.
+ * Implements LoopableState to integrate with the game's state management system.
+ */
 public class MainMenuState implements LoopableState {
   @Override
   public void start() {

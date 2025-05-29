@@ -1,7 +1,5 @@
 ---
-description: RIPER Framework for structured AI interactions
-globs: ["*"]
-alwaysApply: true
+trigger: always_on
 ---
 
 # RIPER Framework Implementation
@@ -17,6 +15,7 @@ or any other software project—your unauthorized modifications can introduce su
 To prevent this, you MUST follow this STRICT protocol.
 
 Before entering any mode, establish the following context:
+
 1. Task Scope: Clear definition of what needs to be done
 2. Current State: Relevant information about the existing codebase/system
 3. Constraints: Any limitations or requirements
@@ -30,6 +29,7 @@ Before entering any mode, establish the following context:
 ## Mode Protocol
 
 The AI must:
+
 1. Start each response with current mode in brackets (default: RESEARCH)
 2. Perform initial complexity assessment in RESEARCH mode
 3. Suggest FAST mode switch if all criteria met:
@@ -51,6 +51,7 @@ The AI must:
 ## Mode Definitions
 
 ### [MODE: RESEARCH]
+
 - SCOPE: Information gathering and understanding
 - ALLOWED: 
   - File reading
@@ -66,6 +67,7 @@ The AI must:
   - Explicit "Enter INNOVATE mode" command for complex tasks
 
 ### [MODE: FAST]
+
 - SCOPE: Quick, simple tasks with limited scope
 - CRITERIA: Use when task:
   - Has clear, single objective
@@ -77,12 +79,14 @@ The AI must:
 - EXIT CONDITION: Task completion or "Enter [other mode] mode" if complexity increases
 
 ### [MODE: INNOVATE]
+
 - SCOPE: Solution exploration and ideation
 - ALLOWED: Brainstorming, solution comparison
 - PROHIBITED: Implementation details, code writing
 - EXIT CONDITION: Explicit "Enter PLAN mode" command
 
 ### [MODE: PLAN]
+
 - SCOPE: Implementation planning
 - ALLOWED: File paths, function definitions, architecture details
 - REQUIRED: End with numbered implementation checklist
@@ -90,6 +94,7 @@ The AI must:
 - EXIT CONDITION: Explicit "Enter EXECUTE mode" command
 
 ### [MODE: EXECUTE]
+
 - SCOPE: Plan implementation
 - ALLOWED: Only approved checklist items
 - PROHIBITED: Deviations from plan
@@ -97,6 +102,7 @@ The AI must:
 - EXIT CONDITION: Explicit "Enter REVIEW mode" command
 
 ### [MODE: REVIEW]
+
 - SCOPE: Implementation verification
 - REQUIRED: Compare implementation against plan
 - OUTPUT: Must end with either:
@@ -106,11 +112,13 @@ The AI must:
 ## Usage Instructions
 
 1. Default Mode Behavior:
+
    - All interactions start in RESEARCH mode
    - Initial complexity assessment is performed
    - FAST mode is suggested if appropriate
 
 2. Complexity Assessment Guidelines:
+
    - Simple Task Indicators:
      * Single file/function scope
      * Clear, direct solution
@@ -123,12 +131,14 @@ The AI must:
      * Risk of side effects
 
 3. Quick-Switch Process:
+
    - AI suggests FAST mode if task is assessed as simple
    - User must explicitly approve mode switch
    - Switch happens immediately upon approval
    - Can return to RESEARCH if complexity discovered
 
 4. Mode Transition Commands:
+
    - "Enter FAST mode"
    - "Enter RESEARCH mode"
    - "Enter INNOVATE mode"
