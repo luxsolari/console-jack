@@ -1,3 +1,5 @@
+[![Lux Solari's GitHub stats](https://github-readme-stats.vercel.app/api?username=luxsolari)](https://github.com/anuraghazra/github-readme-stats)
+
 # Console Jack
 Console-based, text-graphics stlye implementation of the classic casino game.
 
