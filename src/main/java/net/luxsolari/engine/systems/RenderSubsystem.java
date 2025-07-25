@@ -382,14 +382,15 @@ public class RenderSubsystem implements Subsystem {
     ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
     layers.put(zlayer, new ZLayerData(new ConcurrentHashMap<>()));
   }
-  
-  /**
-   * Clears all contents from all rendering layers.
-   */
+
+  /** Clears all contents from all rendering layers. */
   public void clearAllLayers() {
     for (int i = 0; i < MAX_LAYERS; i++) {
       clearLayer(i);
     }
   }
 
+  public Map<ZLayer, ZLayerData> getLayers() {
+    return layers;
+  }
 }

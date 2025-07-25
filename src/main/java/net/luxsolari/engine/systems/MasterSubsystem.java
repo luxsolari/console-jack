@@ -1,9 +1,10 @@
 package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import java.io.IOException;
+import net.luxsolari.engine.manager.StateManager;
+import net.luxsolari.engine.states.LoopableState;
+import net.luxsolari.game.states.MainMenuState;
+
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -25,6 +26,9 @@ public class MasterSubsystem implements Subsystem {
 
   private boolean running = false;
 
+  // State management
+  private final StateManager stateManager = new StateManager();
+
   private MasterSubsystem() {}
 
   public static MasterSubsystem getInstance() {
@@ -43,6 +47,9 @@ public class MasterSubsystem implements Subsystem {
     RenderSubsystem renderSystem = RenderSubsystem.getInstance();
     Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
     renderSystemHandlerThread.start();
+
+    // Push initial game state (Main Menu)
+    stateManager.push(new MainMenuState());
   }
 
   @Override
@@ -99,20 +106,12 @@ public class MasterSubsystem implements Subsystem {
                         .formatted(TimeUnit.NANOSECONDS.toMillis(UPDATE_INTERVAL)));
           }
 
-          if (RenderSubsystem.getInstance().running()
-              && RenderSubsystem.getInstance().mainScreen().get() != null) {
-            try {
-              KeyStroke keyStroke = RenderSubsystem.getInstance().mainScreen().get().pollInput();
-              if (keyStroke != null) {
-                if ((keyStroke.getKeyType() == KeyType.Character
-                        && keyStroke.getCharacter().toString().equalsIgnoreCase("Q"))
-                    || keyStroke.getKeyType() == KeyType.EOF) {
-                  this.stop();
-                }
-              }
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+          // ----- STATE MACHINE -----
+          LoopableState active = stateManager.active();
+          if (active != null) {
+            active.handleInput();
+            active.update();
+            active.render();
           }
 
           updateCount++;
@@ -137,5 +136,11 @@ public class MasterSubsystem implements Subsystem {
   @Override
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning up Master Game Handler".formatted(TAG));
+    stateManager.clear();
+  }
+
+  /** Exposes the engine-wide StateManager instance. */
+  public StateManager stateManager() {
+    return stateManager;
   }
 }

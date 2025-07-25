@@ -8,29 +8,25 @@ import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.MasterSubsystem;
 import net.luxsolari.engine.systems.RenderSubsystem;
 
-/**
- * Represents the main menu state of the game. This state handles the display and interaction of the
- * main menu interface. Implements LoopableState to integrate with the game's state management
- * system.
- */
-public class MainMenuState implements LoopableState {
+/** Pause overlay state. "Escape" or "P" resumes gameplay. "Q" quits to main menu (clears stack). */
+public class PauseState implements LoopableState {
 
-  private static final String TAG = MainMenuState.class.getSimpleName();
+  private static final String TAG = PauseState.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   @Override
   public void start() {
-    LOGGER.info("Main menu started");
+    LOGGER.info("Pause menu opened");
   }
 
   @Override
   public void pause() {
-    LOGGER.info("Main menu paused");
+    // not applicable
   }
 
   @Override
   public void resume() {
-    LOGGER.info("Main menu resumed");
+    LOGGER.info("Pause menu resumed");
   }
 
   @Override
@@ -39,20 +35,27 @@ public class MainMenuState implements LoopableState {
         || RenderSubsystem.getInstance().mainScreen().get() == null) {
       return;
     }
-
     try {
       KeyStroke ks = RenderSubsystem.getInstance().mainScreen().get().pollInput();
       if (ks == null) return;
+      if (ks.getKeyType() == KeyType.EOF) {
+        MasterSubsystem.getInstance().stop();
+        return;
+      }
 
       if (ks.getKeyType() == KeyType.Character) {
         char c = Character.toUpperCase(ks.getCharacter());
         switch (c) {
-          case 'G', '\r' -> MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
-          case 'Q' -> MasterSubsystem.getInstance().stop();
+          case 'P', '\u001B' -> MasterSubsystem.getInstance().stateManager().pop(); // resume
+          case 'Q' -> {
+            // clear to main menu
+            MasterSubsystem.getInstance().stateManager().clear();
+            MasterSubsystem.getInstance().stateManager().push(new MainMenuState());
+          }
           default -> {}
         }
-      } else if (ks.getKeyType() == KeyType.EOF) {
-        MasterSubsystem.getInstance().stop();
+      } else if (ks.getKeyType() == KeyType.Escape) {
+        MasterSubsystem.getInstance().stateManager().pop();
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -60,17 +63,13 @@ public class MainMenuState implements LoopableState {
   }
 
   @Override
-  public void update() {
-    // Menu update placeholder
-  }
+  public void update() {}
 
   @Override
-  public void render() {
-    // Menu rendering would be handled through RenderSubsystem layers or text. Placeholder for now.
-  }
+  public void render() {}
 
   @Override
   public void end() {
-    LOGGER.info("Main menu ended");
+    LOGGER.info("Pause menu closed");
   }
 }
