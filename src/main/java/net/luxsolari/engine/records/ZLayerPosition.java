@@ -1,4 +1,4 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.records;
 
 /**
  * Represents a position within a Z-ordered layer for rendering. This class is used for positioning

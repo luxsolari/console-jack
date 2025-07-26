@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import net.luxsolari.engine.exceptions.ResourceCleanupException;
 import net.luxsolari.engine.exceptions.ResourceInitializationException;
+import net.luxsolari.engine.records.ZLayer;
+import net.luxsolari.engine.records.ZLayerData;
+import net.luxsolari.engine.records.ZLayerPosition;
 
 public class RenderSubsystem implements Subsystem {
   private static RenderSubsystem INSTANCE;

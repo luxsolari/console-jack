@@ -1,4 +1,4 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.records;
 
 /**
  * Represents a Z-ordered layer in the rendering system. Each layer has a name and an index that

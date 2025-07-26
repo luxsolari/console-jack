@@ -1,4 +1,4 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.records;
 
 import com.googlecode.lanterna.TextCharacter;
 import java.util.Map;

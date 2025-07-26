@@ -1,12 +1,11 @@
 package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.TextColor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.game.states.MainMenuState;
-
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 public class MasterSubsystem implements Subsystem {
 
