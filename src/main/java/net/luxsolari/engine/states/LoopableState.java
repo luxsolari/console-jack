@@ -1,5 +1,7 @@
 package net.luxsolari.engine.states;
 
+import net.luxsolari.engine.systems.RenderSubsystem;
+
 /**
  * This is an interface that will be implemented by the different states of the game loop. Each
  * state will implement the core methods of every state, such as update, render, and handleInput.
@@ -42,4 +44,14 @@ public interface LoopableState {
    * unloaded.
    */
   void end();
+
+  /**
+   * Convenience helper available to every state: returns {@code true} when the {@link
+   * RenderSubsystem} is running <em>and</em> its main {@code Screen}
+   * reference has been initialised. States can use this to early-exit input or render logic in a
+   * multi-threaded startup scenario without duplicating the same checks.
+   */
+  default boolean renderReady() {
+    return RenderSubsystem.getInstance().ready();
+  }
 }

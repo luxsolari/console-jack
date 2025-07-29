@@ -3,6 +3,7 @@ package net.luxsolari.engine.render;
 import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.screen.Screen;
 import java.util.concurrent.ConcurrentHashMap;
 import net.luxsolari.engine.systems.RenderSubsystem;
 import net.luxsolari.engine.records.ZLayer;
@@ -160,6 +161,87 @@ public final class LayerRenderer {
     putChar(layerIdx, x2, y1, Symbols.SINGLE_LINE_TOP_RIGHT_CORNER, fg, bg);
     putChar(layerIdx, x1, y2, Symbols.SINGLE_LINE_BOTTOM_LEFT_CORNER, fg, bg);
     putChar(layerIdx, x2, y2, Symbols.SINGLE_LINE_BOTTOM_RIGHT_CORNER, fg, bg);
+  }
+
+  /* ======================================================================== */
+  /*                           HIGH-LEVEL RENDERERS                            */
+  /* ======================================================================== */
+
+  /**
+   * Draws a single-line centred menu/label block with optional rainbow header and a surrounding
+   * box.
+   *
+   * <p>This is basically the code that was duplicated across {@code MainMenuState} and
+   * {@code GameplayState}. It centres the given {@code lines} horizontally & vertically, prints
+   * them and finally draws a 1-character-padding border around the block. If {@code rainbowHeader}
+   * is {@code true}, the first line is drawn with {@link #putStringRainbow}.
+   */
+  public static void drawCenteredTextBlock(
+      int layerIdx, Screen screen, String[] lines,
+      boolean rainbowHeader) {
+
+    if (screen == null) return;
+
+    int cols = screen.getTerminalSize().getColumns();
+    int rows = screen.getTerminalSize().getRows();
+
+    int startY = rows / 2 - lines.length / 2;
+
+    int longestLen = 0;
+    for (String s : lines) {
+      longestLen = Math.max(longestLen, s.length());
+    }
+
+    for (int i = 0; i < lines.length; i++) {
+      String s = lines[i];
+      int x = (cols - s.length()) / 2;
+      int y = startY + i;
+
+      if (i == 0 && rainbowHeader) {
+        putStringRainbow(layerIdx, x, y, s);
+      } else {
+        putString(layerIdx, x, y, s, DEFAULT_FG, DEFAULT_BG);
+      }
+    }
+
+    // Calculate and draw box with 1-char padding
+    int boxX1 = (cols - longestLen) / 2 - 2;
+    int boxY1 = startY - 2;
+    int boxX2 = boxX1 + longestLen + 3; // left padding + content + right padding (+ border)
+    int boxY2 = boxY1 + lines.length + 3; // top padding + content + bottom padding (+ border)
+
+    drawBox(layerIdx, boxX1, boxY1, boxX2, boxY2, TextColor.ANSI.WHITE, DEFAULT_BG);
+  }
+
+  /**
+   * Draws an empty box centred on the screen.
+   *
+   * @param contentWidth width of the inner content area (without 2-char padding/borders)
+   * @param contentHeight height of the inner content area
+   */
+  public static void drawCenteredBox(
+      int layerIdx,
+      Screen screen,
+      int contentWidth,
+      int contentHeight,
+      TextColor fg,
+      TextColor bg) {
+
+    if (screen == null) return;
+
+    int cols = screen.getTerminalSize().getColumns();
+    int rows = screen.getTerminalSize().getRows();
+
+    // total box size accounts for 2-char padding and the border glyphs on both sides → +3
+    int totalWidth = contentWidth + 3; // 1 left padding + 1 right padding + 1 border overlap
+    int totalHeight = contentHeight + 3;
+
+    int boxX1 = (cols - totalWidth) / 2;
+    int boxY1 = (rows - totalHeight) / 2;
+    int boxX2 = boxX1 + totalWidth - 1;
+    int boxY2 = boxY1 + totalHeight - 1;
+
+    drawBox(layerIdx, boxX1, boxY1, boxX2, boxY2, fg, bg);
   }
 
   /* ======================================================================== */

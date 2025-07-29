@@ -1,16 +1,13 @@
 package net.luxsolari.game.states;
 
-import com.googlecode.lanterna.TextCharacter;
-import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.graphics.TextGraphics;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.io.IOException;
 import java.util.logging.Logger;
-
 import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.*;
+import net.luxsolari.engine.systems.MasterSubsystem;
+import net.luxsolari.engine.systems.RenderSubsystem;
 
 /**
  * Represents the main menu state of the game. This state handles the display and interaction of the
@@ -21,6 +18,7 @@ public class MainMenuState implements LoopableState {
 
   private static final String TAG = MainMenuState.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
+  private boolean running = true;
 
   @Override
   public void start() {
@@ -39,8 +37,7 @@ public class MainMenuState implements LoopableState {
 
   @Override
   public void handleInput() {
-    if (!RenderSubsystem.getInstance().running()
-        || RenderSubsystem.getInstance().mainScreen().get() == null) {
+    if (renderReady() || !this.running) {
       return;
     }
 
@@ -51,7 +48,10 @@ public class MainMenuState implements LoopableState {
       if (ks.getKeyType() == KeyType.Character) {
         char c = Character.toUpperCase(ks.getCharacter());
         switch (c) {
-          case 'G', '\r' -> MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
+          case 'G', '\r' -> {
+            MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
+            this.running = false;
+          }
           case 'Q' -> MasterSubsystem.getInstance().stop();
           default -> {}
         }
@@ -71,53 +71,16 @@ public class MainMenuState implements LoopableState {
   @Override
   public void render() {
     LayerRenderer.clear(0);
-
-    // Menu lines
+    if (!RenderSubsystem.getInstance().ready()) return;
+    var screen = RenderSubsystem.getInstance().mainScreen().get();
     String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};
-
-    // Obtain screen safely – may be null during early startup
-    var screenRef = RenderSubsystem.getInstance().mainScreen().get();
-    if (screenRef == null) {
-      // Render subsystem not ready; skip rendering this frame
-      return;
-    }
-
-    int cols = screenRef.getTerminalSize().getColumns();
-    int rows = screenRef.getTerminalSize().getRows();
-
-    // Determine starting Y to vertically center the block
-    int startY = rows / 2 - lines.length / 2;
-
-    // Draw each line centered horizontally
-    int longestLen = 0;
-    for (String s : lines) {
-      longestLen = Math.max(longestLen, s.length());
-    }
-
-    for (int i = 0; i < lines.length; i++) {
-      String s = lines[i];
-      int x = (cols - s.length()) / 2;
-      int y = startY + i;
-
-      if (i == 0) {
-        LayerRenderer.putStringRainbow(0, x, y, s);
-      } else {
-        LayerRenderer.putString(0, x, y, s, LayerRenderer.DEFAULT_FG, LayerRenderer.DEFAULT_BG);
-      }
-    }
-
-    // Draw border around the menu block with 1-char padding
-    int boxX1 = (cols - longestLen) / 2 - 2;
-    int boxY1 = startY - 2;
-    int boxX2 = boxX1 + longestLen + 3; // +3 because left padding + content + right padding
-    int boxY2 = boxY1 + lines.length + 3; // +3 because top padding + content + bottom padding
-
-    LayerRenderer.drawBox(
-        0, boxX1, boxY1, boxX2, boxY2, TextColor.ANSI.WHITE, LayerRenderer.DEFAULT_BG);
+    LayerRenderer.drawCenteredTextBlock(0, screen, lines, true);
   }
 
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
+    // Final cleanup of this state's layer when it is removed from the stack
+    LayerRenderer.clear(0);
   }
 }

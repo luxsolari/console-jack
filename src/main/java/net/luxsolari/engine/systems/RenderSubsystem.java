@@ -73,6 +73,15 @@ public class RenderSubsystem implements Subsystem {
   }
 
   /**
+   * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the
+   * main {@link Screen} reference has been initialised. States can use this to early-exit their
+   * rendering logic instead of duplicating the same null / running checks everywhere.
+   */
+  public boolean ready() {
+    return running && mainScreen.get() != null;
+  }
+
+  /**
    * Returns the main screen reference used for rendering.
    *
    * @return The AtomicReference containing the main Screen instance
