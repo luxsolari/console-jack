@@ -176,9 +176,19 @@ public final class LayerRenderer {
    * them and finally draws a 1-character-padding border around the block. If {@code rainbowHeader}
    * is {@code true}, the first line is drawn with {@link #putStringRainbow}.
    */
+  /** Public overload that hides the Screen reference from callers. */
   public static void drawCenteredTextBlock(
-      int layerIdx, Screen screen, String[] lines,
-      boolean rainbowHeader) {
+      int layerIdx, String[] lines, boolean rainbowHeader) {
+
+    Screen screen = RenderSubsystem.getInstance().mainScreen().get();
+    if (screen == null) return;
+
+    drawCenteredTextBlock(layerIdx, screen, lines, rainbowHeader);
+  }
+
+  /* package-private */
+  static void drawCenteredTextBlock(
+      int layerIdx, Screen screen, String[] lines, boolean rainbowHeader) {
 
     if (screen == null) return;
 
@@ -219,7 +229,22 @@ public final class LayerRenderer {
    * @param contentWidth width of the inner content area (without 2-char padding/borders)
    * @param contentHeight height of the inner content area
    */
+  /** Public overload: centred empty box without exposing Screen. */
   public static void drawCenteredBox(
+      int layerIdx,
+      int contentWidth,
+      int contentHeight,
+      TextColor fg,
+      TextColor bg) {
+
+    Screen screen = RenderSubsystem.getInstance().mainScreen().get();
+    if (screen == null) return;
+
+    drawCenteredBox(layerIdx, screen, contentWidth, contentHeight, fg, bg);
+  }
+
+  /* package-private */
+  static void drawCenteredBox(
       int layerIdx,
       Screen screen,
       int contentWidth,

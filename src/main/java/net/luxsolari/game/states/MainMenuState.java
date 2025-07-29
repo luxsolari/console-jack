@@ -71,10 +71,9 @@ public class MainMenuState implements LoopableState {
   @Override
   public void render() {
     LayerRenderer.clear(0);
-    if (!RenderSubsystem.getInstance().ready()) return;
-    var screen = RenderSubsystem.getInstance().mainScreen().get();
+    if (!renderReady()) return;
     String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};
-    LayerRenderer.drawCenteredTextBlock(0, screen, lines, true);
+    LayerRenderer.drawCenteredTextBlock(0, lines, true);
   }
 
   @Override
