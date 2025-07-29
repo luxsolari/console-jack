@@ -4,6 +4,7 @@ import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.io.IOException;
 import java.util.logging.Logger;
+import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.MasterSubsystem;
 import net.luxsolari.engine.systems.RenderSubsystem;
@@ -31,8 +32,7 @@ public class PauseState implements LoopableState {
 
   @Override
   public void handleInput() {
-    if (!RenderSubsystem.getInstance().running()
-        || RenderSubsystem.getInstance().mainScreen().get() == null) {
+    if (!renderReady()) {
       return;
     }
     try {
@@ -66,7 +66,12 @@ public class PauseState implements LoopableState {
   public void update() {}
 
   @Override
-  public void render() {}
+  public void render() {
+    LayerRenderer.clear(0);
+    if (!renderReady()) return;
+    String[] lines = {"Paused", "Press P to resume", "Press Q to quit to main menu"};
+    LayerRenderer.drawCenteredTextBlock(0, lines, true);
+  }
 
   @Override
   public void end() {

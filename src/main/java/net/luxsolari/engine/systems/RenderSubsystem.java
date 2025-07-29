@@ -31,7 +31,7 @@ public class RenderSubsystem implements Subsystem {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private static final int TARGET_FPS =
-      30; // Target frames per second, this is the maximum FPS we want to achieve.
+      10; // Target frames per second, this is the maximum FPS we want to achieve.
   private static final int SECOND_IN_NANOS =
       1_000_000_000; // 1 second, expressed in nanoseconds. This is used for time calculations.
   private static final long RENDER_INTERVAL =
@@ -397,6 +397,18 @@ public class RenderSubsystem implements Subsystem {
 
   /** Clears all contents from all rendering layers. */
   public void clearAllLayers() {
+    // Clear the entire screen buffer first
+    if (mainScreen.get() != null) {
+      mainScreen.get().clear();
+      // Redraw background
+      for (int i = 0; i < screenColumns; i++) {
+        for (int j = 0; j < screenRows; j++) {
+          mainScreen.get().setCharacter(i, j, mainBackgroundCharacter);
+        }
+      }
+    }
+    
+    // Then clear all layer data
     for (int i = 0; i < MAX_LAYERS; i++) {
       clearLayer(i);
     }

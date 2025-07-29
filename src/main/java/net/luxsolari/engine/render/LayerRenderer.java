@@ -41,7 +41,42 @@ public final class LayerRenderer {
   public static void clear(int layerIdx) {
     ZLayerData layer = getLayer(layerIdx);
     if (layer != null) {
+      // Clear the screen positions before clearing the layer data
+      clearScreenPositions(layer);
       layer.contents().clear();
+    }
+  }
+
+  /**
+   * Clears the screen buffer at all positions that were occupied by the given layer.
+   * This ensures that old glyphs don't persist when layers are cleared.
+   */
+  private static void clearScreenPositions(ZLayerData layer) {
+    var renderSubsystem = RenderSubsystem.getInstance();
+    if (!renderSubsystem.ready()) {
+      return;
+    }
+    
+    var screen = renderSubsystem.mainScreen().get();
+    var backgroundChar = new TextCharacter(' ', DEFAULT_FG, DEFAULT_BG);
+    
+    // Clear each position that was occupied by this layer
+    for (ZLayerPosition pos : layer.contents().keySet()) {
+      if (pos.x() >= 0 && pos.x() < screen.getTerminalSize().getColumns() && 
+          pos.y() >= 0 && pos.y() < screen.getTerminalSize().getRows()) {
+        screen.setCharacter(pos.x(), pos.y(), backgroundChar);
+      }
+    }
+  }
+
+  /** 
+   * Clears all layers and ensures a clean screen state. 
+   * This should be called when transitioning between game states.
+   */
+  public static void clearAll() {
+    var renderSubsystem = RenderSubsystem.getInstance();
+    if (renderSubsystem.ready()) {
+      renderSubsystem.clearAllLayers();
     }
   }
 

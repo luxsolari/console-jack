@@ -5,6 +5,7 @@ import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import net.luxsolari.engine.states.LoopableState;
+import net.luxsolari.engine.render.LayerRenderer;
 
 /**
  * Manages a stack of {@link LoopableState} instances, providing push/pop/replace semantics and
@@ -65,6 +66,7 @@ public final class StateManager {
         stack.peek().pause();
       }
       stack.push(state);
+      LayerRenderer.clearAll();
       LOGGER.fine(() -> "Pushed state: " + state.getClass().getSimpleName());
       state.start();
     } finally {
@@ -83,6 +85,7 @@ public final class StateManager {
         return;
       }
       LoopableState removed = stack.pop();
+      LayerRenderer.clearAll();
       LOGGER.fine(() -> "Popped state: " + removed.getClass().getSimpleName());
       removed.end();
       if (!stack.isEmpty()) {
@@ -104,10 +107,12 @@ public final class StateManager {
     try {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
+        LayerRenderer.clearAll();
         LOGGER.fine(() -> "Replaced state: " + removed.getClass().getSimpleName() + " -> " + state.getClass().getSimpleName());
         removed.end();
       }
       stack.push(state);
+      LOGGER.fine(() -> "Pushed state: " + state.getClass().getSimpleName());
       state.start();
     } finally {
       lock.unlock();
@@ -124,6 +129,7 @@ public final class StateManager {
         LoopableState s = stack.pop();
         s.end();
       }
+      LayerRenderer.clearAll();
     } finally {
       lock.unlock();
     }
