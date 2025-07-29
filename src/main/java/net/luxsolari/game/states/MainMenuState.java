@@ -37,7 +37,7 @@ public class MainMenuState implements LoopableState {
 
   @Override
   public void handleInput() {
-    if (renderReady() || !this.running) {
+    if (!renderReady() || !running) {
       return;
     }
 
