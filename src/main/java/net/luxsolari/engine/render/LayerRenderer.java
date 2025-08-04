@@ -10,6 +10,8 @@ import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
 
+import static com.googlecode.lanterna.TextColor.Indexed.fromRGB;
+
 /**
  * Convenience facade for pushing glyphs into {@link RenderSubsystem} layers. All methods are static
  * & stateless; nothing to construct. The class also offers a few niceties such as rainbow/gradient

@@ -1,5 +1,6 @@
 package net.luxsolari.engine.systems;
 
+import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 
 import java.util.List;
@@ -70,9 +71,9 @@ public class MasterSubsystem implements Subsystem {
     demo.add(new Position(10, 10));
     demo.add(new Layer(5));
     demo.add(new Visual(
-        com.googlecode.lanterna.TextCharacter.fromCharacter('♠',
-            com.googlecode.lanterna.TextColor.ANSI.WHITE,
-            new com.googlecode.lanterna.TextColor.RGB(40, 55, 40))[0]
+        TextCharacter.fromCharacter('♠',
+            TextColor.ANSI.WHITE,
+            new TextColor.RGB(40, 55, 40))[0]
     ));
   }
 

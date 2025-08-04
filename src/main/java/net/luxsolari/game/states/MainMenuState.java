@@ -79,7 +79,5 @@ public class MainMenuState implements LoopableState {
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
-    // Final cleanup of this state's layer when it is removed from the stack
-    LayerRenderer.clear(LayerRenderer.UI_LAYER);
   }
 }

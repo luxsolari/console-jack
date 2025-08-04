@@ -33,7 +33,7 @@ public class RenderSubsystem implements Subsystem {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private static final int TARGET_FPS =
-      10; // Target frames per second, this is the maximum FPS we want to achieve.
+      30; // Target frames per second, this is the maximum FPS we want to achieve.
   private static final int SECOND_IN_NANOS =
       1_000_000_000; // 1 second, expressed in nanoseconds. This is used for time calculations.
   private static final long RENDER_INTERVAL =
@@ -51,7 +51,7 @@ public class RenderSubsystem implements Subsystem {
   private boolean running = false;
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
   private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
-  private final AtomicReference<List<net.luxsolari.engine.records.RenderCmd>> displayList =
+  private final AtomicReference<List<RenderCmd>> displayList =
       new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
 
@@ -132,7 +132,7 @@ public class RenderSubsystem implements Subsystem {
       int targetHeight = 720;
 
       // calculate columns and rows based on font size using a rough scaling factor of 0.625 for
-      // width and 1.18 for height
+      // width and 1.175 for height
       // width scaling factor - could be a configuration parameter for different fonts.
       // Have to keep in mind these factors change depending on the font size and font family.
       float fontPixelWidth = font.getSize() * .625f;
