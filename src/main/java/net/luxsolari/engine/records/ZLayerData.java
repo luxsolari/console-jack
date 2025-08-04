@@ -9,5 +9,24 @@ import java.util.Map;
  */
 @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public record ZLayerData(Map<ZLayerPosition, TextCharacter> contents) {
-  // No additional methods needed at this time
+  // Getters
+  public Map<ZLayerPosition, TextCharacter> contents() {
+    return contents;
+  }
+
+  public TextCharacter get(ZLayerPosition pos) {
+    return contents.get(pos);
+  }
+
+  public TextCharacter get(int x, int y) {
+    return contents.get(new ZLayerPosition(x, y));
+  }
+
+  public int size() {
+    return contents.size();
+  }
+
+  public boolean isEmpty() {
+    return contents.isEmpty();
+  }
 }

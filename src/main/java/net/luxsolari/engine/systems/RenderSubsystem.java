@@ -12,6 +12,7 @@ import com.googlecode.lanterna.terminal.swing.SwingTerminalFontConfiguration;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import net.luxsolari.engine.exceptions.ResourceCleanupException;
 import net.luxsolari.engine.exceptions.ResourceInitializationException;
+import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
@@ -37,6 +39,8 @@ public class RenderSubsystem implements Subsystem {
   private static final long RENDER_INTERVAL =
       TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~100ms per frame
   private static final int MAX_LAYERS = 10; // maximum number of layers for rendering
+  // Reserve lower half for game objects (ECS), upper half for UI/overlays
+  private static final int ECS_LAYER_MAX = 4; // layers 0..4 cleared each frame
 
   // tracking statistics for FPS and UPS counters
   private int frameCount = 0;
@@ -47,6 +51,8 @@ public class RenderSubsystem implements Subsystem {
   private boolean running = false;
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
   private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
+  private final AtomicReference<List<net.luxsolari.engine.records.RenderCmd>> displayList =
+      new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
@@ -182,12 +188,12 @@ public class RenderSubsystem implements Subsystem {
   @Override
   @SuppressWarnings("BusyWait")
   public void update() {
-    long lastDeltaClock = java.lang.System.nanoTime();
-    long fpsCounterClock = java.lang.System.nanoTime();
+    long lastDeltaClock = System.nanoTime();
+    long fpsCounterClock = System.nanoTime();
     double sleepTime = 0;
 
     while (running) {
-      long now = java.lang.System.nanoTime(); // current time in nanoseconds
+      long now = System.nanoTime(); // current time in nanoseconds
       double deltaTime =
           (double) (now - lastDeltaClock)
               / SECOND_IN_NANOS; // time passed since last frame in seconds
@@ -220,6 +226,16 @@ public class RenderSubsystem implements Subsystem {
           drawMainScreenBorders();
           displayRenderStats(deltaTime, sleepTime);
 
+          // ---- refresh ECS layers ----
+          for (int i = 0; i <= ECS_LAYER_MAX; i++) {
+            clearLayer(i);
+          }
+
+          // ---- draw display list ----
+          for (RenderCmd cmd : displayList.get()) {
+            queueChar(cmd.layer(), cmd.x(), cmd.y(), cmd.glyph());
+          }
+
           // Layer system rendering goes here
           renderLayers();
 
@@ -232,7 +248,7 @@ public class RenderSubsystem implements Subsystem {
         // sleep for the remaining time to target render interval if needed to keep the game loop
         // stable
         sleepTime =
-            (RENDER_INTERVAL - (java.lang.System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
+            (RENDER_INTERVAL - (System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
         if (sleepTime >= 0) {
 
           Thread.sleep((long) (sleepTime * 1000), (int) (sleepTime * 1000));
@@ -414,7 +430,22 @@ public class RenderSubsystem implements Subsystem {
     }
   }
 
+  public void queueChar(int layerIndex, int x, int y, TextCharacter character) {
+    ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
+    ZLayerData data = layers.get(zlayer);
+    if (data == null) {
+      data = new ZLayerData(new ConcurrentHashMap<>());
+      layers.put(zlayer, data);
+    }
+    data.contents().put(new ZLayerPosition(x, y), character);
+  }
+
   public Map<ZLayer, ZLayerData> getLayers() {
     return layers;
+  }
+
+  /** Receives the freshly built display list from the logic thread. */
+  public void submitDisplayList(List<RenderCmd> list) {
+    this.displayList.set(list == null ? List.of() : list);
   }
 }

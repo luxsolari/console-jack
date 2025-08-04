@@ -73,10 +73,10 @@ public class GameplayState implements LoopableState {
 
   @Override
   public void render() {
-    LayerRenderer.clear(0);
+    LayerRenderer.clear(LayerRenderer.UI_LAYER);
     if (!renderReady()) return;
     String[] lines = {"Gameplay state", "Press P to pause"};
-    LayerRenderer.drawCenteredTextBlock(0, lines, true);
+    LayerRenderer.drawCenteredTextBlock(LayerRenderer.UI_LAYER, lines, true);
   }
 
   @Override

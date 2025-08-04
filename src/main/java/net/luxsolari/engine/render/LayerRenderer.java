@@ -22,6 +22,9 @@ public final class LayerRenderer {
   public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE;
   public static final TextColor DEFAULT_BG = new TextColor.RGB(40, 55, 40);
 
+  // Recommended default Z-layer for UI overlays (kept intact by RenderSubsystem each frame)
+  public static final int UI_LAYER = 6;
+
   private static final TextColor[] RAINBOW = {
       TextColor.ANSI.RED,
       TextColor.ANSI.YELLOW,

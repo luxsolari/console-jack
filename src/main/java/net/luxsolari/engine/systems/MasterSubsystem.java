@@ -1,8 +1,16 @@
 package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.TextColor;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import net.luxsolari.engine.ecs.EntityPool;
+import net.luxsolari.engine.ecs.EcsSystem;
+import net.luxsolari.engine.ecs.Position;
+import net.luxsolari.engine.ecs.Layer;
+import net.luxsolari.engine.ecs.Visual;
+import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.game.states.MainMenuState;
@@ -28,6 +36,10 @@ public class MasterSubsystem implements Subsystem {
   // State management
   private final StateManager stateManager = new StateManager();
 
+  // --- ECS ---
+  private final EntityPool entityPool = new EntityPool();
+  private final List<EcsSystem> ecsSystems = new java.util.ArrayList<>();
+
   private MasterSubsystem() {}
 
   public static MasterSubsystem getInstance() {
@@ -49,6 +61,19 @@ public class MasterSubsystem implements Subsystem {
 
     // Push initial game state (Main Menu)
     stateManager.push(new MainMenuState());
+
+    // --- ECS setup ---
+    ecsSystems.add(new DisplayListSystem());
+
+    // Demo entity to verify pipeline
+    var demo = entityPool.create();
+    demo.add(new Position(10, 10));
+    demo.add(new Layer(5));
+    demo.add(new Visual(
+        com.googlecode.lanterna.TextCharacter.fromCharacter('♠',
+            com.googlecode.lanterna.TextColor.ANSI.WHITE,
+            new com.googlecode.lanterna.TextColor.RGB(40, 55, 40))[0]
+    ));
   }
 
   @Override
@@ -112,6 +137,10 @@ public class MasterSubsystem implements Subsystem {
             active.update();
             active.render();
           }
+
+          // ----- ECS SYSTEMS -----
+          double dtSec = UPDATE_INTERVAL / (double) SECOND_IN_NANOS;
+          ecsSystems.forEach(sys -> sys.update(dtSec, entityPool));
 
           updateCount++;
           updateLag -= UPDATE_INTERVAL;

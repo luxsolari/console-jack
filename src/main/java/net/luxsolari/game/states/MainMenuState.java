@@ -70,16 +70,16 @@ public class MainMenuState implements LoopableState {
 
   @Override
   public void render() {
-    LayerRenderer.clear(0);
+    LayerRenderer.clear(LayerRenderer.UI_LAYER);
     if (!renderReady()) return;
     String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};
-    LayerRenderer.drawCenteredTextBlock(0, lines, true);
+    LayerRenderer.drawCenteredTextBlock(LayerRenderer.UI_LAYER, lines, true);
   }
 
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
     // Final cleanup of this state's layer when it is removed from the stack
-    LayerRenderer.clear(0);
+    LayerRenderer.clear(LayerRenderer.UI_LAYER);
   }
 }
