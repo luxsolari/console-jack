@@ -5,12 +5,10 @@ import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.screen.Screen;
 import java.util.concurrent.ConcurrentHashMap;
-import net.luxsolari.engine.systems.RenderSubsystem;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
-
-import static com.googlecode.lanterna.TextColor.Indexed.fromRGB;
+import net.luxsolari.engine.systems.RenderSubsystem;
 
 /**
  * Convenience facade for pushing glyphs into {@link RenderSubsystem} layers. All methods are static
@@ -28,12 +26,12 @@ public final class LayerRenderer {
   public static final int UI_LAYER = 6;
 
   private static final TextColor[] RAINBOW = {
-      TextColor.ANSI.RED,
-      TextColor.ANSI.YELLOW,
-      TextColor.ANSI.GREEN,
-      TextColor.ANSI.CYAN,
-      TextColor.ANSI.BLUE,
-      TextColor.ANSI.MAGENTA
+    TextColor.ANSI.RED,
+    TextColor.ANSI.YELLOW,
+    TextColor.ANSI.GREEN,
+    TextColor.ANSI.CYAN,
+    TextColor.ANSI.BLUE,
+    TextColor.ANSI.MAGENTA
   };
 
   private LayerRenderer() {}
@@ -53,30 +51,32 @@ public final class LayerRenderer {
   }
 
   /**
-   * Clears the screen buffer at all positions that were occupied by the given layer.
-   * This ensures that old glyphs don't persist when layers are cleared.
+   * Clears the screen buffer at all positions that were occupied by the given layer. This ensures
+   * that old glyphs don't persist when layers are cleared.
    */
   private static void clearScreenPositions(ZLayerData layer) {
     var renderSubsystem = RenderSubsystem.getInstance();
     if (!renderSubsystem.ready()) {
       return;
     }
-    
+
     var screen = renderSubsystem.mainScreen().get();
     var backgroundChar = new TextCharacter(' ', DEFAULT_FG, DEFAULT_BG);
-    
+
     // Clear each position that was occupied by this layer
     for (ZLayerPosition pos : layer.contents().keySet()) {
-      if (pos.x() >= 0 && pos.x() < screen.getTerminalSize().getColumns() && 
-          pos.y() >= 0 && pos.y() < screen.getTerminalSize().getRows()) {
+      if (pos.x() >= 0
+          && pos.x() < screen.getTerminalSize().getColumns()
+          && pos.y() >= 0
+          && pos.y() < screen.getTerminalSize().getRows()) {
         screen.setCharacter(pos.x(), pos.y(), backgroundChar);
       }
     }
   }
 
-  /** 
-   * Clears all layers and ensures a clean screen state. 
-   * This should be called when transitioning between game states.
+  /**
+   * Clears all layers and ensures a clean screen state. This should be called when transitioning
+   * between game states.
    */
   public static void clearAll() {
     var renderSubsystem = RenderSubsystem.getInstance();
@@ -105,8 +105,7 @@ public final class LayerRenderer {
   }
 
   /** Shortcut: specify only foreground, keep default background. */
-  public static void putStringCustomFg(
-      int layerIdx, int x, int y, String text, TextColor fg) {
+  public static void putStringCustomFg(int layerIdx, int x, int y, String text, TextColor fg) {
     putString(layerIdx, x, y, text, fg, DEFAULT_BG);
   }
 
@@ -151,8 +150,7 @@ public final class LayerRenderer {
   }
 
   /** Draws a single glyph (foreground/background fully configurable). */
-  public static void putChar(
-      int layerIdx, int x, int y, char ch, TextColor fg, TextColor bg) {
+  public static void putChar(int layerIdx, int x, int y, char ch, TextColor fg, TextColor bg) {
     ZLayerData layer = getLayer(layerIdx);
     if (layer == null) return;
     layer.contents().put(new ZLayerPosition(x, y), new TextCharacter(ch, fg, bg));
@@ -211,14 +209,13 @@ public final class LayerRenderer {
    * Draws a single-line centred menu/label block with optional rainbow header and a surrounding
    * box.
    *
-   * <p>This is basically the code that was duplicated across {@code MainMenuState} and
-   * {@code GameplayState}. It centres the given {@code lines} horizontally & vertically, prints
-   * them and finally draws a 1-character-padding border around the block. If {@code rainbowHeader}
-   * is {@code true}, the first line is drawn with {@link #putStringRainbow}.
+   * <p>This is basically the code that was duplicated across {@code MainMenuState} and {@code
+   * GameplayState}. It centres the given {@code lines} horizontally & vertically, prints them and
+   * finally draws a 1-character-padding border around the block. If {@code rainbowHeader} is {@code
+   * true}, the first line is drawn with {@link #putStringRainbow}.
    */
   /** Public overload that hides the Screen reference from callers. */
-  public static void drawCenteredTextBlock(
-      int layerIdx, String[] lines, boolean rainbowHeader) {
+  public static void drawCenteredTextBlock(int layerIdx, String[] lines, boolean rainbowHeader) {
 
     Screen screen = RenderSubsystem.getInstance().mainScreen().get();
     if (screen == null) return;
@@ -271,11 +268,7 @@ public final class LayerRenderer {
    */
   /** Public overload: centred empty box without exposing Screen. */
   public static void drawCenteredBox(
-      int layerIdx,
-      int contentWidth,
-      int contentHeight,
-      TextColor fg,
-      TextColor bg) {
+      int layerIdx, int contentWidth, int contentHeight, TextColor fg, TextColor bg) {
 
     Screen screen = RenderSubsystem.getInstance().mainScreen().get();
     if (screen == null) return;
@@ -320,7 +313,6 @@ public final class LayerRenderer {
       return null;
     }
     ZLayer zlayer = new ZLayer("Layer " + idx, idx);
-    return rs.getLayers().computeIfAbsent(
-        zlayer, l -> new ZLayerData(new ConcurrentHashMap<>()));
+    return rs.getLayers().computeIfAbsent(zlayer, l -> new ZLayerData(new ConcurrentHashMap<>()));
   }
 }
