@@ -108,7 +108,8 @@ public final class StateManager {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
         LayerRenderer.clearAll();
-        LOGGER.fine(() -> "Replaced state: " + removed.getClass().getSimpleName() + " -> " + state.getClass().getSimpleName());
+        LOGGER.fine(() -> "Replaced state: " + removed.getClass().getSimpleName() + " -> "
+                + state.getClass().getSimpleName());
         removed.end();
       }
       stack.push(state);

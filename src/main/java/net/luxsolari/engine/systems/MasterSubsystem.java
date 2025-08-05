@@ -3,6 +3,7 @@ package net.luxsolari.engine.systems;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -15,6 +16,7 @@ import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.game.states.MainMenuState;
+import net.luxsolari.game.ecs.*;
 
 public class MasterSubsystem implements Subsystem {
 
@@ -28,10 +30,9 @@ public class MasterSubsystem implements Subsystem {
       TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_UPS); // ~125ms per update
 
   // tracking statistics for FPS and UPS counters
-  private long lastStatsTime = java.lang.System.nanoTime();
+  private long lastStatsTime = System.nanoTime();
   private int updateCount = 0;
   private int currentUPS = 0;
-
   private boolean running = false;
 
   // State management
@@ -39,7 +40,7 @@ public class MasterSubsystem implements Subsystem {
 
   // --- ECS ---
   private final EntityPool entityPool = new EntityPool();
-  private final List<EcsSystem> ecsSystems = new java.util.ArrayList<>();
+  private final List<EcsSystem> ecsSystems = new ArrayList<>();
 
   private MasterSubsystem() {}
 
@@ -69,12 +70,26 @@ public class MasterSubsystem implements Subsystem {
     // Demo entity to verify pipeline
     var demo = entityPool.create();
     demo.add(new Position(10, 10));
-    demo.add(new Layer(5));
+    demo.add(new Layer(4));
     demo.add(new Visual(
         TextCharacter.fromCharacter('♠',
             TextColor.ANSI.WHITE,
             new TextColor.RGB(40, 55, 40))[0]
     ));
+    demo.add(new Card(Card.Rank.A, Card.Suit.SPADES));
+    demo.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), true));
+
+    var card = entityPool.create();
+    card.add(new Position(20, 8));
+    card.add(new Layer(2));
+    card.add(new Card(Card.Rank.A, Card.Suit.SPADES));
+    card.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), true));
+
+    var card2 = entityPool.create();
+    card2.add(new Position(30, 8));
+    card2.add(new Layer(2));
+    card2.add(new Card(Card.Rank.Q, Card.Suit.HEARTS));
+    card2.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), false));
   }
 
   @Override
@@ -87,12 +102,12 @@ public class MasterSubsystem implements Subsystem {
   @SuppressWarnings("BusyWait")
   public void update() {
 
-    long previousUpdateTime = java.lang.System.nanoTime();
+    long previousUpdateTime = System.nanoTime();
     long updateLag = 0;
 
     while (running) {
       try {
-        long currentTime = java.lang.System.nanoTime();
+        long currentTime = System.nanoTime();
 
         if (currentTime - lastStatsTime >= SECOND_IN_NANOS) {
           currentUPS = updateCount;
