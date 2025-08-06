@@ -57,7 +57,7 @@ public final class RenderManager {
    * that old glyphs don't persist when layers are cleared.
    */
   private static void clearScreenPositions(ZLayerData layer) {
-    var renderSubsystem = RenderSubsystem.getInstance();
+    var renderSubsystem = RenderSubsystem.INSTANCE;
     if (!renderSubsystem.ready()) {
       return;
     }
@@ -81,7 +81,7 @@ public final class RenderManager {
    * between game states.
    */
   public static void clearAll() {
-    var renderSubsystem = RenderSubsystem.getInstance();
+    var renderSubsystem = RenderSubsystem.INSTANCE;
     if (renderSubsystem.ready()) {
       renderSubsystem.clearAllLayers();
     }
@@ -219,7 +219,7 @@ public final class RenderManager {
   /** Public overload that hides the Screen reference from callers. */
   public static void drawCenteredTextBlock(int layerIdx, String[] lines, boolean rainbowHeader) {
 
-    Screen screen = RenderSubsystem.getInstance().mainScreen().get();
+    Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
     if (screen == null) return;
 
     drawCenteredTextBlock(layerIdx, screen, lines, rainbowHeader);
@@ -272,7 +272,7 @@ public final class RenderManager {
   public static void drawCenteredBox(
       int layerIdx, int contentWidth, int contentHeight, TextColor fg, TextColor bg) {
 
-    Screen screen = RenderSubsystem.getInstance().mainScreen().get();
+    Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
     if (screen == null) return;
 
     drawCenteredBox(layerIdx, screen, contentWidth, contentHeight, fg, bg);
@@ -313,7 +313,7 @@ public final class RenderManager {
    * does not need to reach into {@link RenderSubsystem} directly.
    */
   public static void submitDisplayList(List<RenderCmd> list) {
-    RenderSubsystem rs = RenderSubsystem.getInstance();
+    RenderSubsystem rs = RenderSubsystem.INSTANCE;
     if (!rs.ready()) {
       return; // render thread not yet initialised
     }
@@ -321,7 +321,7 @@ public final class RenderManager {
   }
 
   private static ZLayerData getLayer(int idx) {
-    RenderSubsystem rs = RenderSubsystem.getInstance();
+    RenderSubsystem rs = RenderSubsystem.INSTANCE;
     if (rs.getLayers() == null) {
       // RenderSubsystem not yet initialized; caller should safely ignore drawing for now
       return null;

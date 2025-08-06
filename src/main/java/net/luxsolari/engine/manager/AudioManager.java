@@ -20,7 +20,7 @@ public final class AudioManager {
 
   /** Returns {@code true} if the audio subsystem is initialized and ready. */
   public static boolean ready() {
-    return AudioSubsystem.getInstance().running();
+    return AudioSubsystem.INSTANCE.running();
   }
 
   /**

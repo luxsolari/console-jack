@@ -24,7 +24,7 @@ public class DisplayListSystem implements EcsSystem {
 
   @Override
   public void update(double dt, EntityPool pool) {
-    if (!RenderSubsystem.getInstance().ready()) {
+    if (!RenderSubsystem.INSTANCE.ready()) {
       return; // render thread not fully initialized yet
     }
 

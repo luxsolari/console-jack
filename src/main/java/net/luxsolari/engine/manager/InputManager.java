@@ -17,7 +17,7 @@ public final class InputManager {
 
   /** Returns {@code true} if the input subsystem is initialized and ready to be polled. */
   public static boolean ready() {
-    return InputSubsystem.getInstance().ready();
+    return InputSubsystem.INSTANCE.ready();
   }
 
   /**
@@ -25,6 +25,6 @@ public final class InputManager {
    * input or the subsystem is not ready.
    */
   public static KeyStroke poll() {
-    return InputSubsystem.getInstance().poll();
+    return InputSubsystem.INSTANCE.poll();
   }
 }

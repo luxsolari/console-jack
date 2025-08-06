@@ -39,7 +39,7 @@ public class GameplayState implements LoopableState {
       return;
     }
     if (keyStroke.getKeyType() == KeyType.EOF) {
-      MasterSubsystem.getInstance().stop();
+      MasterSubsystem.INSTANCE.stop();
       return;
     }
 
@@ -47,17 +47,17 @@ public class GameplayState implements LoopableState {
       switch (Character.toUpperCase(keyStroke.getCharacter())) {
         case 'P' ->
             // push pause state
-            MasterSubsystem.getInstance().stateManager().push(new PauseState());
+            MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
         case 'Q' -> {
           // also push pause state
-          MasterSubsystem.getInstance().stateManager().push(new PauseState());
+          MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
         }
         default -> {}
       }
     }
     if (keyStroke.getKeyType() == KeyType.Escape) {
       // Esc behaves like P: open pause menu
-      MasterSubsystem.getInstance().stateManager().push(new PauseState());
+      MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
     }
   }
 

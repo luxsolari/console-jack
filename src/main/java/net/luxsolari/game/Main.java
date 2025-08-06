@@ -20,7 +20,7 @@ public class Main {
     LOGGER.info("[%s] Starting Main".formatted(TAG));
 
     // Spawn master thread for GameMasterHandler instance
-    MasterSubsystem masterGameSystem = MasterSubsystem.getInstance();
+    MasterSubsystem masterGameSystem = MasterSubsystem.INSTANCE;
     masterGameSystem.run();
 
     LOGGER.info("[%s] Exiting Main".formatted(TAG));

@@ -52,6 +52,6 @@ public interface LoopableState {
    * startup scenario without duplicating the same checks.
    */
   default boolean renderReady() {
-    return RenderSubsystem.getInstance().ready();
+    return RenderSubsystem.INSTANCE.ready();
   }
 }

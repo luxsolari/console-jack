@@ -37,23 +37,23 @@ public class PauseState implements LoopableState {
     KeyStroke ks = InputManager.poll();
     if (ks == null) return;
     if (ks.getKeyType() == KeyType.EOF) {
-      MasterSubsystem.getInstance().stop();
+      MasterSubsystem.INSTANCE.stop();
       return;
     }
 
     if (ks.getKeyType() == KeyType.Character) {
       char c = Character.toUpperCase(ks.getCharacter());
       switch (c) {
-        case 'P', '\u001B' -> MasterSubsystem.getInstance().stateManager().pop(); // resume
+        case 'P', '\u001B' -> MasterSubsystem.INSTANCE.stateManager().pop(); // resume
         case 'Q' -> {
           // clear to main menu
-          MasterSubsystem.getInstance().stateManager().clear();
-          MasterSubsystem.getInstance().stateManager().push(new MainMenuState());
+          MasterSubsystem.INSTANCE.stateManager().clear();
+          MasterSubsystem.INSTANCE.stateManager().push(new MainMenuState());
         }
         default -> {}
       }
     } else if (ks.getKeyType() == KeyType.Escape) {
-      MasterSubsystem.getInstance().stateManager().pop();
+      MasterSubsystem.INSTANCE.stateManager().pop();
     }
   }
 

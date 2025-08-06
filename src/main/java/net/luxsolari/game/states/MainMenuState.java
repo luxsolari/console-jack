@@ -47,14 +47,14 @@ public class MainMenuState implements LoopableState {
       char c = Character.toUpperCase(ks.getCharacter());
       switch (c) {
         case 'G', '\r' -> {
-          MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
+          MasterSubsystem.INSTANCE.stateManager().replace(new GameplayState());
           this.running = false;
         }
-        case 'Q' -> MasterSubsystem.getInstance().stop();
+        case 'Q' -> MasterSubsystem.INSTANCE.stop();
         default -> {}
       }
     } else if (ks.getKeyType() == KeyType.EOF) {
-      MasterSubsystem.getInstance().stop();
+      MasterSubsystem.INSTANCE.stop();
     }
   }
 
