@@ -1,4 +1,4 @@
-package net.luxsolari.engine.systems.interfaces;
+package net.luxsolari.engine.systems;
 
 /**
  * The {@code Subsystem} interface defines the basic lifecycle methods that any subsystem in the

@@ -3,8 +3,8 @@ package net.luxsolari.game.states;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
-import net.luxsolari.engine.input.InputFacade;
-import net.luxsolari.engine.render.LayerRenderer;
+import net.luxsolari.engine.manager.InputManager;
+import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
@@ -34,7 +34,7 @@ public class GameplayState implements LoopableState {
     if (!renderReady()) {
       return;
     }
-    KeyStroke keyStroke = InputFacade.poll();
+    KeyStroke keyStroke = InputManager.poll();
     if (keyStroke == null) {
       return;
     }
@@ -68,10 +68,10 @@ public class GameplayState implements LoopableState {
 
   @Override
   public void render() {
-    LayerRenderer.clear(LayerRenderer.UI_LAYER);
+    RenderManager.clear(RenderManager.UI_LAYER);
     if (!renderReady()) return;
     String[] lines = {" Gameplay state ", "Press P or Q", "or Esc to pause"};
-    LayerRenderer.drawCenteredTextBlock(LayerRenderer.UI_LAYER, lines, true);
+    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
 
   @Override

@@ -1,7 +1,7 @@
 package net.luxsolari.engine.systems.internal;
 
 import java.util.logging.Logger;
-import net.luxsolari.engine.systems.interfaces.Subsystem;
+import net.luxsolari.engine.systems.Subsystem;
 
 public class AudioSubsystem implements Subsystem {
   private static final String TAG = AudioSubsystem.class.getSimpleName();

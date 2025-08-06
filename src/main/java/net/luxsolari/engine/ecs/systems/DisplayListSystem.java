@@ -8,8 +8,8 @@ import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.Visual;
+import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.records.RenderCmd;
-import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.game.ecs.CardSprite;
 
@@ -60,6 +60,6 @@ public class DisplayListSystem implements EcsSystem {
               }
             });
 
-    LayerRenderer.submitDisplayList(list);
+    RenderManager.submitDisplayList(list);
   }
 }

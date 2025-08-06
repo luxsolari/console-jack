@@ -1,4 +1,4 @@
-package net.luxsolari.engine.render;
+package net.luxsolari.engine.manager;
 
 import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TextCharacter;
@@ -18,7 +18,7 @@ import net.luxsolari.engine.systems.internal.RenderSubsystem;
  * strings and box drawing helpers so that individual game states remain free of boiler-plate
  * rendering code.
  */
-public final class LayerRenderer {
+public final class RenderManager {
 
   // ---------- configuration / theme ----------
   public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE;
@@ -36,7 +36,7 @@ public final class LayerRenderer {
     TextColor.ANSI.MAGENTA
   };
 
-  private LayerRenderer() {}
+  private RenderManager() {}
 
   /* ======================================================================== */
   /*                               LAYER HELPERS                              */

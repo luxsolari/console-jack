@@ -25,7 +25,7 @@ import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
-import net.luxsolari.engine.systems.interfaces.Subsystem;
+import net.luxsolari.engine.systems.Subsystem;
 
 public class RenderSubsystem implements Subsystem {
   private static RenderSubsystem INSTANCE;

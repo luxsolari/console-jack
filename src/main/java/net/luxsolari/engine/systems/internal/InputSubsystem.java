@@ -1,9 +1,8 @@
 package net.luxsolari.engine.systems.internal;
 
-import java.util.logging.Logger;
-
 import com.googlecode.lanterna.input.KeyStroke;
-import net.luxsolari.engine.systems.interfaces.Subsystem;
+import java.util.logging.Logger;
+import net.luxsolari.engine.systems.Subsystem;
 
 public class InputSubsystem implements Subsystem {
   private static final String TAG = InputSubsystem.class.getSimpleName();

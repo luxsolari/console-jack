@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
 
 /**
@@ -66,7 +65,7 @@ public final class StateManager {
         stack.peek().pause();
       }
       stack.push(state);
-      LayerRenderer.clearAll();
+      RenderManager.clearAll();
       LOGGER.fine(() -> "Pushed state: " + state.getClass().getSimpleName());
       state.start();
     } finally {
@@ -85,7 +84,7 @@ public final class StateManager {
         return;
       }
       LoopableState removed = stack.pop();
-      LayerRenderer.clearAll();
+      RenderManager.clearAll();
       LOGGER.fine(() -> "Popped state: " + removed.getClass().getSimpleName());
       removed.end();
       if (!stack.isEmpty()) {
@@ -108,7 +107,7 @@ public final class StateManager {
     try {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
-        LayerRenderer.clearAll();
+        RenderManager.clearAll();
         LOGGER.fine(
             () ->
                 "Replaced state: "
@@ -133,7 +132,7 @@ public final class StateManager {
         LoopableState s = stack.pop();
         s.end();
       }
-      LayerRenderer.clearAll();
+      RenderManager.clearAll();
     } finally {
       lock.unlock();
     }

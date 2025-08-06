@@ -12,7 +12,7 @@ import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.interfaces.Subsystem;
+import net.luxsolari.engine.systems.Subsystem;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;

@@ -1,4 +1,4 @@
-package net.luxsolari.engine.input;
+package net.luxsolari.engine.manager;
 
 import com.googlecode.lanterna.input.KeyStroke;
 import net.luxsolari.engine.systems.internal.InputSubsystem;
@@ -10,10 +10,10 @@ import net.luxsolari.engine.systems.internal.InputSubsystem;
  * on the internal subsystem implementation. This keeps the subsystem encapsulated while providing a
  * simple, stateless API surface.
  */
-public final class InputFacade {
+public final class InputManager {
 
   // utility class – no instances
-  private InputFacade() {}
+  private InputManager() {}
 
   /** Returns {@code true} if the input subsystem is initialized and ready to be polled. */
   public static boolean ready() {
