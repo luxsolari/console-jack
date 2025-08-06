@@ -4,21 +4,20 @@ import com.googlecode.lanterna.input.KeyStroke;
 import java.util.logging.Logger;
 import net.luxsolari.engine.systems.Subsystem;
 
-public class InputSubsystem implements Subsystem {
+/**
+ * Input subsystem implemented as an enum singleton (see {@link #INSTANCE}) using the
+ * pattern from Effective Java Item 3. It polls keyboard input from the {@link RenderSubsystem}
+ * and exposes lifecycle hooks via the {@link net.luxsolari.engine.systems.Subsystem} contract.
+ */
+public enum InputSubsystem implements Subsystem {
+  INSTANCE;
+
   private static final String TAG = InputSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
-  private static InputSubsystem INSTANCE;
 
   private boolean running = false;
 
   private InputSubsystem() {}
-
-  public static InputSubsystem getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new InputSubsystem();
-    }
-    return INSTANCE;
-  }
 
   public boolean running() {
     return running;
@@ -60,7 +59,7 @@ public class InputSubsystem implements Subsystem {
 
   /** Returns true if the subsystem is running and the RenderSubsystem screen is available. */
   public boolean ready() {
-    return running && RenderSubsystem.getInstance().ready();
+    return running && RenderSubsystem.INSTANCE.ready();
   }
 
   /**
@@ -72,7 +71,7 @@ public class InputSubsystem implements Subsystem {
       return null;
     }
     try {
-      return RenderSubsystem.getInstance().mainScreen().get().pollInput();
+      return RenderSubsystem.INSTANCE.mainScreen().get().pollInput();
     } catch (java.io.IOException e) {
       LOGGER.severe("[" + TAG + "] Error polling input: " + e.getMessage());
       return null;

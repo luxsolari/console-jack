@@ -27,8 +27,14 @@ import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
 import net.luxsolari.engine.systems.Subsystem;
 
-public class RenderSubsystem implements Subsystem {
-  private static RenderSubsystem INSTANCE;
+/**
+ * Render subsystem implemented as an enum singleton (see {@link #INSTANCE}) to guarantee
+ * a single, JVM-wide renderer consistent with Effective Java Item&nbsp;3 recommendations.
+ * It manages the Lanterna {@link Screen}, layered drawing commands, frame timing, and
+ * background clearing for every game state.
+ */
+public enum RenderSubsystem implements Subsystem {
+  INSTANCE;
 
   private static final String TAG = RenderSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
@@ -56,18 +62,6 @@ public class RenderSubsystem implements Subsystem {
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
-
-  /**
-   * Returns the singleton instance of the RenderSubsystem.
-   *
-   * @return The singleton instance of RenderSubsystem
-   */
-  public static RenderSubsystem getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new RenderSubsystem();
-    }
-    return INSTANCE;
-  }
 
   /**
    * Checks if the render subsystem is currently running.

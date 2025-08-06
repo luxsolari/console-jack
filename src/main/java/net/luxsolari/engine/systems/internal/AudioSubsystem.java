@@ -3,21 +3,17 @@ package net.luxsolari.engine.systems.internal;
 import java.util.logging.Logger;
 import net.luxsolari.engine.systems.Subsystem;
 
-public class AudioSubsystem implements Subsystem {
+/**
+ * Audio subsystem implemented as an enum singleton (see {@link #INSTANCE}) following
+ * Effective Java Item 3. It manages audio initialization, lifecycle control and update
+ * logic for all in-game sounds.
+ */
+public enum AudioSubsystem implements Subsystem {
+  INSTANCE;
+
   private static final String TAG = AudioSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
-  private static AudioSubsystem INSTANCE;
-
   private boolean running = false;
-
-  private AudioSubsystem() {}
-
-  public static AudioSubsystem getInstance() {
-    if (INSTANCE == null) {
-      INSTANCE = new AudioSubsystem();
-    }
-    return INSTANCE;
-  }
 
   public boolean running() {
     return running;

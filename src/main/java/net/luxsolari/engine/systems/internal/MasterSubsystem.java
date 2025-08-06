@@ -18,9 +18,15 @@ import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
 import net.luxsolari.game.states.MainMenuState;
 
-public class MasterSubsystem implements Subsystem {
+/**
+ * Master subsystem implemented as an enum singleton (see {@link #INSTANCE}).
+ * It coordinates the main game loop, delegates updates/rendering to other subsystems,
+ * and manages the {@link net.luxsolari.engine.manager.StateManager} for state transitions.
+ */
+public enum MasterSubsystem implements Subsystem {
 
-  private static MasterSubsystem INSTANCE;
+  INSTANCE;
+
   private static final String TAG = MasterSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
@@ -42,28 +48,24 @@ public class MasterSubsystem implements Subsystem {
   private final EntityPool entityPool = new EntityPool();
   private final List<EcsSystem> ecsSystems = new ArrayList<>();
 
-  private MasterSubsystem() {}
-
-  public static MasterSubsystem getInstance() {
-    if (INSTANCE == null) {
-      LOGGER.info("[%s] Creating new Master Game Handler instance".formatted(TAG));
-      INSTANCE = new MasterSubsystem();
-    }
-    return INSTANCE;
-  }
+  MasterSubsystem() {}
 
   @Override
   public void init() {
     LOGGER.info("[%s] Initializing Master Game Handler".formatted(TAG));
     this.start();
 
-    RenderSubsystem renderSystem = RenderSubsystem.getInstance();
+    RenderSubsystem renderSystem = RenderSubsystem.INSTANCE;
     Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
     renderSystemHandlerThread.start();
 
-    InputSubsystem inputSystem = InputSubsystem.getInstance();
+    InputSubsystem inputSystem = InputSubsystem.INSTANCE;
     Thread inputSystemHandlerThread = new Thread(inputSystem, "Input Subsystem Thread");
     inputSystemHandlerThread.start();
+
+    AudioSubsystem audioSystem = AudioSubsystem.INSTANCE;
+    Thread audioSystemHandlerThread = new Thread(audioSystem, "Audio Subsystem Thread");
+    audioSystemHandlerThread.start();
 
     // Push initial game state (Main Menu)
     stateManager.push(new MainMenuState());
@@ -121,8 +123,8 @@ public class MasterSubsystem implements Subsystem {
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.getInstance().ready()) {
-            RenderSubsystem.getInstance()
+          if (RenderSubsystem.INSTANCE.ready()) {
+            RenderSubsystem.INSTANCE
                 .mainScreen()
                 .get()
                 .newTextGraphics()
@@ -165,8 +167,9 @@ public class MasterSubsystem implements Subsystem {
   @Override
   public void stop() {
     LOGGER.info("[%s] Stopping Master Game Handler".formatted(TAG));
-    RenderSubsystem.getInstance().stop();
-    InputSubsystem.getInstance().stop();
+    RenderSubsystem.INSTANCE.stop();
+    InputSubsystem.INSTANCE.stop();
+    AudioSubsystem.INSTANCE.stop();
     running = false;
   }
 

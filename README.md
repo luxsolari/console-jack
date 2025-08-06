@@ -5,3 +5,7 @@ Aims to be a "Card RPG" of sorts where you start a little career as a frequent p
 All of that, in ASCII text-graphics, terminal-emulator-driven glory.
 
 More details will be added during development.
+
+### Architecture Notes
+
+Core subsystems (Render, Input, Audio, Master) are enforced as JVM-wide singletons via the *enum singleton* pattern (see Effective Java, Item 3). Access them through `RenderSubsystem.INSTANCE`, etc.
