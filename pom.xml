@@ -50,7 +50,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>net.luxsolari.Main</mainClass> <!-- Replace with your main class -->
+                                    <mainClass>net.luxsolari.game.Main</mainClass> <!-- Replace with your main class -->
                                 </manifest>
                             </archive>
                             <descriptorRefs>
@@ -105,6 +105,16 @@
                     </filesets>
                 </configuration>
             </plugin>
+
+            <!-- Exec Maven Plugin for running the application -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>net.luxsolari.game.Main</mainClass>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -134,7 +144,7 @@
                                         <argument>--main-jar</argument>
                                         <argument>${project.build.finalName}-jar-with-dependencies.jar</argument>
                                         <argument>--main-class</argument>
-                                        <argument>net.luxsolari.Main</argument> <!-- Replace with your main class -->
+                                        <argument>net.luxsolari.game.Main</argument> <!-- Replace with your main class -->
                                         <argument>--type</argument>
                                         <argument>app-image</argument>
                                         <argument>--java-options</argument>
@@ -174,7 +184,7 @@
                                         <argument>--main-jar</argument>
                                         <argument>${project.build.finalName}-jar-with-dependencies.jar</argument>
                                         <argument>--main-class</argument>
-                                        <argument>net.luxsolari.Main</argument> <!-- Replace with your main class -->
+                                        <argument>net.luxsolari.game.Main</argument> <!-- Replace with your main class -->
                                         <argument>--type</argument>
                                         <argument>pkg</argument>
                                         <argument>--java-options</argument>
@@ -213,7 +223,7 @@
                                         <argument>--main-jar</argument>
                                         <argument>${project.build.finalName}-jar-with-dependencies.jar</argument>
                                         <argument>--main-class</argument>
-                                        <argument>net.luxsolari.Main</argument> <!-- Replace with your main class -->
+                                        <argument>net.luxsolari.game.Main</argument> <!-- Replace with your main class -->
                                         <argument>--type</argument>
                                         <argument>app-image</argument>
                                         <argument>--java-options</argument>
@@ -255,7 +265,7 @@
                                         <argument>--main-jar</argument>
                                         <argument>${project.build.finalName}-jar-with-dependencies.jar</argument>
                                         <argument>--main-class</argument>
-                                        <argument>net.luxsolari.Main</argument> <!-- Replace with your main class -->
+                                        <argument>net.luxsolari.game.Main</argument> <!-- Replace with your main class -->
                                         <argument>--type</argument>
                                         <argument>app-image</argument>
                                         <argument>--java-options</argument>

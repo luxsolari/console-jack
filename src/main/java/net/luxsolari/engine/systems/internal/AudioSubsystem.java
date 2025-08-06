@@ -33,13 +33,22 @@ public enum AudioSubsystem implements Subsystem {
 
   @Override
   public void update() {
-    LOGGER.info("[%s] Updating Audio Subsystem".formatted(TAG));
     try {
-      Thread.sleep(1000);
-      LOGGER.info("[%s] Audio update cycle complete".formatted(TAG));
+      // Block and wait until the RenderSubsystem is fully initialized.
+      RenderSubsystem.INSTANCE.getInitializedFuture().get();
+    } catch (Exception e) {
+      LOGGER.severe("[%s] Failed to wait for RenderSubsystem: %s".formatted(TAG, e.getMessage()));
+      Thread.currentThread().interrupt(); // Preserve the interrupted status
+      return; // Exit if we can't initialize
+    }
+
+    try {
+      while (running) {
+        // TODO Add audio update logic here.
+        Thread.sleep(1000);
+      }
     } catch (InterruptedException e) {
       LOGGER.severe("[%s] Audio update interrupted: %s".formatted(TAG, e.getMessage()));
-      // Thread.currentThread().interrupt();
     }
   }
 
@@ -52,5 +61,10 @@ public enum AudioSubsystem implements Subsystem {
   @Override
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning Up Audio Subsystem".formatted(TAG));
+  }
+
+  /** Returns true if the subsystem is running and the RenderSubsystem screen is available. */
+  public boolean ready() {
+    return running && RenderSubsystem.INSTANCE.ready();
   }
 }

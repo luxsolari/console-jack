@@ -11,9 +11,9 @@ import net.luxsolari.engine.states.LoopableState;
  * Internal subsystem that holds the game-state stack. Implemented as an enum singleton, following
  * the same pattern as other subsystems (RenderSubsystem, InputSubsystem, etc.).
  *
- * <p>All external code should interact with the state machine through the stateless facade
- * {@link net.luxsolari.engine.manager.StateMachineManager}. This class itself should <em>not</em>
- * be referenced directly by gameplay code.
+ * <p>All external code should interact with the state machine through the stateless facade {@link
+ * net.luxsolari.engine.manager.StateMachineManager}. This class itself should <em>not</em> be
+ * referenced directly by gameplay code.
  */
 public enum StateMachineSubsystem {
   INSTANCE;
@@ -26,7 +26,9 @@ public enum StateMachineSubsystem {
 
   /* -------------------------- Queries -------------------------- */
 
-  /** @return {@code true} if at least one state exists in the stack. */
+  /**
+   * @return {@code true} if at least one state exists in the stack.
+   */
   public boolean hasStates() {
     lock.lock();
     try {
@@ -36,7 +38,9 @@ public enum StateMachineSubsystem {
     }
   }
 
-  /** @return The active (top) state, or {@code null} if the stack is empty. */
+  /**
+   * @return The active (top) state, or {@code null} if the stack is empty.
+   */
   public LoopableState active() {
     lock.lock();
     try {
@@ -56,6 +60,15 @@ public enum StateMachineSubsystem {
     if (state == null) {
       throw new IllegalArgumentException("State to push cannot be null");
     }
+
+    try {
+      RenderSubsystem.INSTANCE.getInitializedFuture().get();
+    } catch (Exception e) {
+      LOGGER.severe("Failed to wait for RenderSubsystem: " + e.getMessage());
+      Thread.currentThread().interrupt();
+      return;
+    }
+
     lock.lock();
     try {
       if (!stack.isEmpty()) {
@@ -75,6 +88,14 @@ public enum StateMachineSubsystem {
    * new top (if any) is resumed.
    */
   public void pop() {
+    try {
+      RenderSubsystem.INSTANCE.getInitializedFuture().get();
+    } catch (Exception e) {
+      LOGGER.severe("Failed to wait for RenderSubsystem: " + e.getMessage());
+      Thread.currentThread().interrupt();
+      return;
+    }
+
     lock.lock();
     try {
       if (stack.isEmpty()) {
@@ -93,7 +114,8 @@ public enum StateMachineSubsystem {
   }
 
   /**
-   * Replaces the current active state with the given state. Equivalent to {@code pop(); push(newState)}.
+   * Replaces the current active state with the given state. Equivalent to {@code pop();
+   * push(newState)}.
    */
   public void replace(LoopableState state) {
     if (state == null) {
@@ -104,8 +126,12 @@ public enum StateMachineSubsystem {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
         RenderManager.clearAll();
-        LOGGER.fine(() ->
-            "Replaced state: " + removed.getClass().getSimpleName() + " -> " + state.getClass().getSimpleName());
+        LOGGER.fine(
+            () ->
+                "Replaced state: "
+                    + removed.getClass().getSimpleName()
+                    + " -> "
+                    + state.getClass().getSimpleName());
         removed.end();
       }
       stack.push(state);

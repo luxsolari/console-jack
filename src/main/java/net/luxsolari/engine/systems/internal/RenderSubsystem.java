@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +56,7 @@ public enum RenderSubsystem implements Subsystem {
   private int screenColumns;
   private int screenRows;
 
+  private final CompletableFuture<Void> initializedFuture = new CompletableFuture<>();
   private boolean running = false;
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
   private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
@@ -62,15 +64,6 @@ public enum RenderSubsystem implements Subsystem {
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
-
-  /**
-   * Checks if the render subsystem is currently running.
-   *
-   * @return true if the subsystem is running, false otherwise
-   */
-  public boolean running() {
-    return running;
-  }
 
   /**
    * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the main
@@ -159,12 +152,22 @@ public enum RenderSubsystem implements Subsystem {
           this.mainScreen.get().setCharacter(i, j, mainBackgroundCharacter);
         }
       }
+
+      // Mark the subsystem as initialized and complete the future.
+      // This will allow other systems that depend on the render subsystem to start.
+      initializedFuture.complete(null);
+      LOGGER.info("[%s] Render Subsystem Initialized".formatted(TAG));
     } catch (IOException | FontFormatException e) {
       LOGGER.severe(
           "[%s] Error while initializing Master Game Handler: %s".formatted(TAG, e.getMessage()));
+      initializedFuture.completeExceptionally(e);
       throw new ResourceInitializationException("Error while initializing Master Game Handler", e);
     }
     this.start();
+  }
+
+  public CompletableFuture<Void> getInitializedFuture() {
+    return initializedFuture;
   }
 
   /** Starts the render subsystem and initializes the card layout. */

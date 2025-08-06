@@ -94,6 +94,14 @@ public enum MasterSubsystem implements Subsystem {
   @SuppressWarnings("BusyWait")
   public void update() {
 
+    try {
+      RenderSubsystem.INSTANCE.getInitializedFuture().get();
+    } catch (Exception e) {
+      LOGGER.severe("Failed to wait for RenderSubsystem: " + e.getMessage());
+      Thread.currentThread().interrupt();
+      return;
+    }
+
     long previousUpdateTime = System.nanoTime();
     long updateLag = 0;
 
@@ -120,22 +128,20 @@ public enum MasterSubsystem implements Subsystem {
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.INSTANCE.ready()) {
-            RenderSubsystem.INSTANCE
-                .mainScreen()
-                .get()
-                .newTextGraphics()
-                .setBackgroundColor(new TextColor.RGB(40, 55, 40))
-                .setForegroundColor(new TextColor.RGB(255, 255, 255))
-                .putString(1, 7, "Master Game Subsystem Stats")
-                .putString(1, 8, "UPS: %d".formatted(currentUPS))
-                .putString(1, 9, "Tick Count: %d".formatted(updateCount))
-                .putString(
-                    1,
-                    10,
-                    "Update Interval: %dms"
-                        .formatted(TimeUnit.NANOSECONDS.toMillis(UPDATE_INTERVAL)));
-          }
+          RenderSubsystem.INSTANCE
+              .mainScreen()
+              .get()
+              .newTextGraphics()
+              .setBackgroundColor(new TextColor.RGB(40, 55, 40))
+              .setForegroundColor(new TextColor.RGB(255, 255, 255))
+              .putString(1, 7, "Master Game Subsystem Stats")
+              .putString(1, 8, "UPS: %d".formatted(currentUPS))
+              .putString(1, 9, "Tick Count: %d".formatted(updateCount))
+              .putString(
+                  1,
+                  10,
+                  "Update Interval: %dms"
+                      .formatted(TimeUnit.NANOSECONDS.toMillis(UPDATE_INTERVAL)));
 
           // ----- STATE MACHINE -----
           LoopableState active = StateMachineManager.active();
