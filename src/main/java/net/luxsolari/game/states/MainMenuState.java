@@ -5,6 +5,7 @@ import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
+import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
@@ -47,7 +48,7 @@ public class MainMenuState implements LoopableState {
       char c = Character.toUpperCase(ks.getCharacter());
       switch (c) {
         case 'G', '\r' -> {
-          MasterSubsystem.INSTANCE.stateManager().replace(new GameplayState());
+          StateMachineManager.replace(new GameplayState());
           this.running = false;
         }
         case 'Q' -> MasterSubsystem.INSTANCE.stop();

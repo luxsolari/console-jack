@@ -15,7 +15,7 @@ public final class AudioManager {
   private static final String TAG = AudioManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
-  // Prevent instantiation
+  // Utility class - no instances
   private AudioManager() {}
 
   /** Returns {@code true} if the audio subsystem is initialized and ready. */

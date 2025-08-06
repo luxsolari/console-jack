@@ -1,23 +1,24 @@
-package net.luxsolari.engine.manager;
+package net.luxsolari.engine.systems.internal;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
+import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.states.LoopableState;
 
 /**
- * Manages a stack of {@link LoopableState} instances, providing push/pop/replace semantics and
- * ensuring the correct lifecycle callbacks are invoked. Only the state on the top of the stack is
- * considered <em>active</em>; underlying states remain paused until they are resumed again.
+ * Internal subsystem that holds the game-state stack. Implemented as an enum singleton, following
+ * the same pattern as other subsystems (RenderSubsystem, InputSubsystem, etc.).
  *
- * <p>This class is <strong>thread-safe</strong> via an internal {@link ReentrantLock}. For the best
- * performance, all interactions should ideally originate from the MasterSubsystem thread, but the
- * lock allows defensive use from other threads should the need arise in the future.
+ * <p>All external code should interact with the state machine through the stateless facade
+ * {@link net.luxsolari.engine.manager.StateMachineManager}. This class itself should <em>not</em>
+ * be referenced directly by gameplay code.
  */
-public final class StateManager {
+public enum StateMachineSubsystem {
+  INSTANCE;
 
-  private static final String TAG = StateManager.class.getSimpleName();
+  private static final String TAG = StateMachineSubsystem.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private final Deque<LoopableState> stack = new ArrayDeque<>();
@@ -25,9 +26,7 @@ public final class StateManager {
 
   /* -------------------------- Queries -------------------------- */
 
-  /**
-   * @return {@code true} if at least one state exists in the stack.
-   */
+  /** @return {@code true} if at least one state exists in the stack. */
   public boolean hasStates() {
     lock.lock();
     try {
@@ -37,9 +36,7 @@ public final class StateManager {
     }
   }
 
-  /**
-   * @return The active (top) state, or {@code null} if the stack is empty.
-   */
+  /** @return The active (top) state, or {@code null} if the stack is empty. */
   public LoopableState active() {
     lock.lock();
     try {
@@ -96,8 +93,7 @@ public final class StateManager {
   }
 
   /**
-   * Replaces the current active state with the given state. Equivalent to {@code pop();
-   * push(newState)}.
+   * Replaces the current active state with the given state. Equivalent to {@code pop(); push(newState)}.
    */
   public void replace(LoopableState state) {
     if (state == null) {
@@ -108,12 +104,8 @@ public final class StateManager {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
         RenderManager.clearAll();
-        LOGGER.fine(
-            () ->
-                "Replaced state: "
-                    + removed.getClass().getSimpleName()
-                    + " -> "
-                    + state.getClass().getSimpleName());
+        LOGGER.fine(() ->
+            "Replaced state: " + removed.getClass().getSimpleName() + " -> " + state.getClass().getSimpleName());
         removed.end();
       }
       stack.push(state);

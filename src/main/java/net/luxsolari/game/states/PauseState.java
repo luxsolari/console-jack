@@ -5,6 +5,7 @@ import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
+import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
@@ -44,16 +45,16 @@ public class PauseState implements LoopableState {
     if (ks.getKeyType() == KeyType.Character) {
       char c = Character.toUpperCase(ks.getCharacter());
       switch (c) {
-        case 'P', '\u001B' -> MasterSubsystem.INSTANCE.stateManager().pop(); // resume
+        case 'P', '\u001B' -> StateMachineManager.pop(); // resume
         case 'Q' -> {
           // clear to main menu
-          MasterSubsystem.INSTANCE.stateManager().clear();
-          MasterSubsystem.INSTANCE.stateManager().push(new MainMenuState());
+          StateMachineManager.clear();
+          StateMachineManager.push(new MainMenuState());
         }
         default -> {}
       }
     } else if (ks.getKeyType() == KeyType.Escape) {
-      MasterSubsystem.INSTANCE.stateManager().pop();
+      StateMachineManager.pop();
     }
   }
 

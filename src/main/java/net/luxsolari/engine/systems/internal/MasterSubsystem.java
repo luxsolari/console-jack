@@ -10,7 +10,7 @@ import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
-import net.luxsolari.engine.manager.StateManager;
+import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.Subsystem;
 import net.luxsolari.game.ecs.Card;
@@ -21,7 +21,7 @@ import net.luxsolari.game.states.MainMenuState;
 /**
  * Master subsystem implemented as an enum singleton (see {@link #INSTANCE}).
  * It coordinates the main game loop, delegates updates/rendering to other subsystems,
- * and manages the {@link net.luxsolari.engine.manager.StateManager} for state transitions.
+ * and manages the {@link net.luxsolari.engine.manager.StateMachineManager} for state transitions.
  */
 public enum MasterSubsystem implements Subsystem {
 
@@ -40,9 +40,6 @@ public enum MasterSubsystem implements Subsystem {
   private int updateCount = 0;
   private int currentUPS = 0;
   private boolean running = false;
-
-  // State management
-  private final StateManager stateManager = new StateManager();
 
   // --- ECS ---
   private final EntityPool entityPool = new EntityPool();
@@ -68,7 +65,7 @@ public enum MasterSubsystem implements Subsystem {
     audioSystemHandlerThread.start();
 
     // Push initial game state (Main Menu)
-    stateManager.push(new MainMenuState());
+    StateMachineManager.push(new MainMenuState());
 
     // --- ECS setup ---
     ecsSystems.add(new DisplayListSystem());
@@ -141,7 +138,7 @@ public enum MasterSubsystem implements Subsystem {
           }
 
           // ----- STATE MACHINE -----
-          LoopableState active = stateManager.active();
+          LoopableState active = StateMachineManager.active();
           if (active != null) {
             active.handleInput();
             active.update();
@@ -176,11 +173,6 @@ public enum MasterSubsystem implements Subsystem {
   @Override
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning up Master Game Handler".formatted(TAG));
-    stateManager.clear();
-  }
-
-  /** Exposes the engine-wide StateManager instance. */
-  public StateManager stateManager() {
-    return stateManager;
+    StateMachineManager.clear();
   }
 }

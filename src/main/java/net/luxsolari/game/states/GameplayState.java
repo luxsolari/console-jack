@@ -5,6 +5,7 @@ import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
+import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
@@ -47,17 +48,17 @@ public class GameplayState implements LoopableState {
       switch (Character.toUpperCase(keyStroke.getCharacter())) {
         case 'P' ->
             // push pause state
-            MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
+            StateMachineManager.push(new PauseState());
         case 'Q' -> {
           // also push pause state
-          MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
+          StateMachineManager.push(new PauseState());
         }
         default -> {}
       }
     }
     if (keyStroke.getKeyType() == KeyType.Escape) {
       // Esc behaves like P: open pause menu
-      MasterSubsystem.INSTANCE.stateManager().push(new PauseState());
+      StateMachineManager.push(new PauseState());
     }
   }
 

@@ -36,6 +36,7 @@ public final class RenderManager {
     TextColor.ANSI.MAGENTA
   };
 
+  // Utility class - no instances
   private RenderManager() {}
 
   /* ======================================================================== */
