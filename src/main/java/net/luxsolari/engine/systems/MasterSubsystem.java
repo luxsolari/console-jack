@@ -67,16 +67,6 @@ public class MasterSubsystem implements Subsystem {
     ecsSystems.add(new DisplayListSystem());
 
     // Demo entity to verify pipeline
-    var demo = entityPool.create();
-    demo.add(new Position(10, 10));
-    demo.add(new Layer(4));
-    demo.add(
-        new Visual(
-            TextCharacter.fromCharacter('♠', TextColor.ANSI.WHITE, new TextColor.RGB(40, 55, 40))[
-                0]));
-    demo.add(new Card(Card.Rank.A, Card.Suit.SPADES));
-    demo.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), true));
-
     var card = entityPool.create();
     card.add(new Position(20, 8));
     card.add(new Layer(2));

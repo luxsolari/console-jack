@@ -53,7 +53,7 @@ public class DisplayListSystem implements EcsSystem {
                 String line = art[row];
                 for (int col = 0; col < sprite.cols(); col++) {
                   char ch = line.charAt(col);
-                  if (ch == ' ') continue; // skip transparent cells
+                  //if (ch == ' ') continue; // skip transparent cells
                   list.add(
                       new RenderCmd(
                           l.index(), p.x() + col, p.y() + row, TextCharacter.fromCharacter(ch)[0]));
