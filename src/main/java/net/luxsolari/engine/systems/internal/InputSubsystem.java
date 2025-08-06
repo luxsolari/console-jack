@@ -1,6 +1,9 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.systems.internal;
 
 import java.util.logging.Logger;
+
+import com.googlecode.lanterna.input.KeyStroke;
+import net.luxsolari.engine.systems.interfaces.Subsystem;
 
 public class InputSubsystem implements Subsystem {
   private static final String TAG = InputSubsystem.class.getSimpleName();
@@ -36,13 +39,12 @@ public class InputSubsystem implements Subsystem {
 
   @Override
   public void update() {
-    LOGGER.info("[%s] Updating Input Subsystem".formatted(TAG));
     try {
-      Thread.sleep(1000);
-      LOGGER.info("[%s] Input update cycle complete".formatted(TAG));
+      while (running) {
+        Thread.sleep(10);
+      }
     } catch (InterruptedException e) {
       LOGGER.severe("[%s] Input update interrupted: %s".formatted(TAG, e.getMessage()));
-      // Thread.currentThread().interrupt();
     }
   }
 
@@ -55,5 +57,26 @@ public class InputSubsystem implements Subsystem {
   @Override
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning Up Input Subsystem".formatted(TAG));
+  }
+
+  /** Returns true if the subsystem is running and the RenderSubsystem screen is available. */
+  public boolean ready() {
+    return running && RenderSubsystem.getInstance().ready();
+  }
+
+  /**
+   * Polls and returns the latest {@link KeyStroke} from the terminal
+   * screen or {@code null} if none is available / not ready.
+   */
+  public KeyStroke poll() {
+    if (!ready()) {
+      return null;
+    }
+    try {
+      return RenderSubsystem.getInstance().mainScreen().get().pollInput();
+    } catch (java.io.IOException e) {
+      LOGGER.severe("[" + TAG + "] Error polling input: " + e.getMessage());
+      return null;
+    }
   }
 }

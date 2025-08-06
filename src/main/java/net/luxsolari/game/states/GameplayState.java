@@ -2,12 +2,11 @@ package net.luxsolari.game.states;
 
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import java.io.IOException;
 import java.util.logging.Logger;
+import net.luxsolari.engine.input.InputFacade;
 import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.MasterSubsystem;
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
 /** Simple placeholder gameplay state used to demonstrate state transitions. */
 public class GameplayState implements LoopableState {
@@ -35,34 +34,30 @@ public class GameplayState implements LoopableState {
     if (!renderReady()) {
       return;
     }
-    try {
-      KeyStroke keyStroke = RenderSubsystem.getInstance().mainScreen().get().pollInput();
-      if (keyStroke == null) {
-        return;
-      }
-      if (keyStroke.getKeyType() == KeyType.EOF) {
-        MasterSubsystem.getInstance().stop();
-        return;
-      }
+    KeyStroke keyStroke = InputFacade.poll();
+    if (keyStroke == null) {
+      return;
+    }
+    if (keyStroke.getKeyType() == KeyType.EOF) {
+      MasterSubsystem.getInstance().stop();
+      return;
+    }
 
-      if (keyStroke.getKeyType() == KeyType.Character) {
-        switch (Character.toUpperCase(keyStroke.getCharacter())) {
-          case 'P' ->
-              // push pause state
-              MasterSubsystem.getInstance().stateManager().push(new PauseState());
-          case 'Q' -> {
-            // also push pause state
+    if (keyStroke.getKeyType() == KeyType.Character) {
+      switch (Character.toUpperCase(keyStroke.getCharacter())) {
+        case 'P' ->
+            // push pause state
             MasterSubsystem.getInstance().stateManager().push(new PauseState());
-          }
-          default -> {}
+        case 'Q' -> {
+          // also push pause state
+          MasterSubsystem.getInstance().stateManager().push(new PauseState());
         }
+        default -> {}
       }
-      if (keyStroke.getKeyType() == KeyType.Escape) {
-        // Esc behaves like P: open pause menu
-        MasterSubsystem.getInstance().stateManager().push(new PauseState());
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    }
+    if (keyStroke.getKeyType() == KeyType.Escape) {
+      // Esc behaves like P: open pause menu
+      MasterSubsystem.getInstance().stateManager().push(new PauseState());
     }
   }
 

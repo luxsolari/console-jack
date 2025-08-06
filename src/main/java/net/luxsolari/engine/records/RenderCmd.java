@@ -2,7 +2,7 @@ package net.luxsolari.engine.records;
 
 import com.googlecode.lanterna.TextCharacter;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.RenderSubsystem;
 
 /**
  * Immutable draw command representing a single glyph to render on the terminal.

@@ -1,4 +1,4 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.systems.internal;
 
 import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TerminalSize;
@@ -25,6 +25,7 @@ import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
+import net.luxsolari.engine.systems.interfaces.Subsystem;
 
 public class RenderSubsystem implements Subsystem {
   private static RenderSubsystem INSTANCE;

@@ -4,13 +4,13 @@ import com.googlecode.lanterna.Symbols;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.screen.Screen;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
-import net.luxsolari.engine.records.RenderCmd;
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.RenderSubsystem;
 
 /**
  * Convenience facade for pushing glyphs into {@link RenderSubsystem} layers. All methods are static
@@ -309,8 +309,8 @@ public final class LayerRenderer {
   /* ======================================================================== */
 
   /**
-   * Submits a pre-built display list to the RenderSubsystem. Acts as a batch hand-off so logic
-   * code does not need to reach into {@link RenderSubsystem} directly.
+   * Submits a pre-built display list to the RenderSubsystem. Acts as a batch hand-off so logic code
+   * does not need to reach into {@link RenderSubsystem} directly.
    */
   public static void submitDisplayList(List<RenderCmd> list) {
     RenderSubsystem rs = RenderSubsystem.getInstance();

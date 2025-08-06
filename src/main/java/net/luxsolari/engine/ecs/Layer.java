@@ -1,6 +1,6 @@
 package net.luxsolari.engine.ecs;
 
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.RenderSubsystem;
 
 /**
  * Declares which Z-layer an entity should be rendered on.

@@ -1,7 +1,7 @@
 package net.luxsolari.game;
 
 import java.util.logging.Logger;
-import net.luxsolari.engine.systems.MasterSubsystem;
+import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
 /**
  * Main application class that serves as the entry point for the application. Initializes and

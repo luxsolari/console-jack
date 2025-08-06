@@ -2,12 +2,11 @@ package net.luxsolari.game.states;
 
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import java.io.IOException;
 import java.util.logging.Logger;
+import net.luxsolari.engine.input.InputFacade;
 import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.MasterSubsystem;
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
 /** Pause overlay state. "Escape" or "P" resumes gameplay. "Q" quits to main menu (clears stack). */
 public class PauseState implements LoopableState {
@@ -35,30 +34,26 @@ public class PauseState implements LoopableState {
     if (!renderReady()) {
       return;
     }
-    try {
-      KeyStroke ks = RenderSubsystem.getInstance().mainScreen().get().pollInput();
-      if (ks == null) return;
-      if (ks.getKeyType() == KeyType.EOF) {
-        MasterSubsystem.getInstance().stop();
-        return;
-      }
+    KeyStroke ks = InputFacade.poll();
+    if (ks == null) return;
+    if (ks.getKeyType() == KeyType.EOF) {
+      MasterSubsystem.getInstance().stop();
+      return;
+    }
 
-      if (ks.getKeyType() == KeyType.Character) {
-        char c = Character.toUpperCase(ks.getCharacter());
-        switch (c) {
-          case 'P', '\u001B' -> MasterSubsystem.getInstance().stateManager().pop(); // resume
-          case 'Q' -> {
-            // clear to main menu
-            MasterSubsystem.getInstance().stateManager().clear();
-            MasterSubsystem.getInstance().stateManager().push(new MainMenuState());
-          }
-          default -> {}
+    if (ks.getKeyType() == KeyType.Character) {
+      char c = Character.toUpperCase(ks.getCharacter());
+      switch (c) {
+        case 'P', '\u001B' -> MasterSubsystem.getInstance().stateManager().pop(); // resume
+        case 'Q' -> {
+          // clear to main menu
+          MasterSubsystem.getInstance().stateManager().clear();
+          MasterSubsystem.getInstance().stateManager().push(new MainMenuState());
         }
-      } else if (ks.getKeyType() == KeyType.Escape) {
-        MasterSubsystem.getInstance().stateManager().pop();
+        default -> {}
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } else if (ks.getKeyType() == KeyType.Escape) {
+      MasterSubsystem.getInstance().stateManager().pop();
     }
   }
 

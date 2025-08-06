@@ -1,6 +1,5 @@
-package net.luxsolari.engine.systems;
+package net.luxsolari.engine.systems.internal;
 
-import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,11 +9,13 @@ import net.luxsolari.engine.ecs.EcsSystem;
 import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
-import net.luxsolari.engine.ecs.Visual;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.game.ecs.*;
+import net.luxsolari.engine.systems.interfaces.Subsystem;
+import net.luxsolari.game.ecs.Card;
+import net.luxsolari.game.ecs.CardArt;
+import net.luxsolari.game.ecs.CardSprite;
 import net.luxsolari.game.states.MainMenuState;
 
 public class MasterSubsystem implements Subsystem {
@@ -59,6 +60,10 @@ public class MasterSubsystem implements Subsystem {
     RenderSubsystem renderSystem = RenderSubsystem.getInstance();
     Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
     renderSystemHandlerThread.start();
+
+    InputSubsystem inputSystem = InputSubsystem.getInstance();
+    Thread inputSystemHandlerThread = new Thread(inputSystem, "Input Subsystem Thread");
+    inputSystemHandlerThread.start();
 
     // Push initial game state (Main Menu)
     stateManager.push(new MainMenuState());
@@ -116,8 +121,7 @@ public class MasterSubsystem implements Subsystem {
         // update game logic at fixed rate
         while (running && (updateLag >= UPDATE_INTERVAL)) {
 
-          if (RenderSubsystem.getInstance().running()
-              && RenderSubsystem.getInstance().mainScreen().get() != null) {
+          if (RenderSubsystem.getInstance().ready()) {
             RenderSubsystem.getInstance()
                 .mainScreen()
                 .get()
@@ -162,6 +166,7 @@ public class MasterSubsystem implements Subsystem {
   public void stop() {
     LOGGER.info("[%s] Stopping Master Game Handler".formatted(TAG));
     RenderSubsystem.getInstance().stop();
+    InputSubsystem.getInstance().stop();
     running = false;
   }
 

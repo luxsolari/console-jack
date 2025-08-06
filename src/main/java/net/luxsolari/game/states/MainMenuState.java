@@ -2,12 +2,11 @@ package net.luxsolari.game.states;
 
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import java.io.IOException;
 import java.util.logging.Logger;
+import net.luxsolari.engine.input.InputFacade;
 import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.MasterSubsystem;
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
 /**
  * Represents the main menu state of the game. This state handles the display and interaction of the
@@ -41,25 +40,21 @@ public class MainMenuState implements LoopableState {
       return;
     }
 
-    try {
-      KeyStroke ks = RenderSubsystem.getInstance().mainScreen().get().pollInput();
-      if (ks == null) return;
+    KeyStroke ks = InputFacade.poll();
+    if (ks == null) return;
 
-      if (ks.getKeyType() == KeyType.Character) {
-        char c = Character.toUpperCase(ks.getCharacter());
-        switch (c) {
-          case 'G', '\r' -> {
-            MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
-            this.running = false;
-          }
-          case 'Q' -> MasterSubsystem.getInstance().stop();
-          default -> {}
+    if (ks.getKeyType() == KeyType.Character) {
+      char c = Character.toUpperCase(ks.getCharacter());
+      switch (c) {
+        case 'G', '\r' -> {
+          MasterSubsystem.getInstance().stateManager().replace(new GameplayState());
+          this.running = false;
         }
-      } else if (ks.getKeyType() == KeyType.EOF) {
-        MasterSubsystem.getInstance().stop();
+        case 'Q' -> MasterSubsystem.getInstance().stop();
+        default -> {}
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    } else if (ks.getKeyType() == KeyType.EOF) {
+      MasterSubsystem.getInstance().stop();
     }
   }
 

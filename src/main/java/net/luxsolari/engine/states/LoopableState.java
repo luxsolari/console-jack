@@ -1,6 +1,6 @@
 package net.luxsolari.engine.states;
 
-import net.luxsolari.engine.systems.RenderSubsystem;
+import net.luxsolari.engine.systems.internal.RenderSubsystem;
 
 /**
  * This is an interface that will be implemented by the different states of the game loop. Each
