@@ -9,6 +9,7 @@ import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.Visual;
 import net.luxsolari.engine.records.RenderCmd;
+import net.luxsolari.engine.render.LayerRenderer;
 import net.luxsolari.engine.systems.RenderSubsystem;
 import net.luxsolari.game.ecs.CardSprite;
 
@@ -21,11 +22,9 @@ import net.luxsolari.game.ecs.CardSprite;
  */
 public class DisplayListSystem implements EcsSystem {
 
-  private final RenderSubsystem render = RenderSubsystem.getInstance();
-
   @Override
   public void update(double dt, EntityPool pool) {
-    if (!render.ready()) {
+    if (!RenderSubsystem.getInstance().ready()) {
       return; // render thread not fully initialized yet
     }
 
@@ -61,6 +60,6 @@ public class DisplayListSystem implements EcsSystem {
               }
             });
 
-    render.submitDisplayList(list);
+    LayerRenderer.submitDisplayList(list);
   }
 }

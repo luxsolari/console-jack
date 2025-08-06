@@ -5,9 +5,11 @@ import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.screen.Screen;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
+import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.systems.RenderSubsystem;
 
 /**
@@ -305,6 +307,18 @@ public final class LayerRenderer {
   /* ======================================================================== */
   /*                               INTERNALS                                  */
   /* ======================================================================== */
+
+  /**
+   * Submits a pre-built display list to the RenderSubsystem. Acts as a batch hand-off so logic
+   * code does not need to reach into {@link RenderSubsystem} directly.
+   */
+  public static void submitDisplayList(List<RenderCmd> list) {
+    RenderSubsystem rs = RenderSubsystem.getInstance();
+    if (!rs.ready()) {
+      return; // render thread not yet initialised
+    }
+    rs.submitDisplayList(list);
+  }
 
   private static ZLayerData getLayer(int idx) {
     RenderSubsystem rs = RenderSubsystem.getInstance();
