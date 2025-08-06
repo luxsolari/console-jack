@@ -47,9 +47,9 @@ public interface LoopableState {
 
   /**
    * Convenience helper available to every state: returns {@code true} when the {@link
-   * RenderSubsystem} is running <em>and</em> its main {@code Screen}
-   * reference has been initialised. States can use this to early-exit input or render logic in a
-   * multi-threaded startup scenario without duplicating the same checks.
+   * RenderSubsystem} is running <em>and</em> its main {@code Screen} reference has been
+   * initialised. States can use this to early-exit input or render logic in a multi-threaded
+   * startup scenario without duplicating the same checks.
    */
   default boolean renderReady() {
     return RenderSubsystem.getInstance().ready();

@@ -47,9 +47,9 @@ public class GameplayState implements LoopableState {
 
       if (keyStroke.getKeyType() == KeyType.Character) {
         switch (Character.toUpperCase(keyStroke.getCharacter())) {
-          case 'P' -> 
-            // push pause state
-            MasterSubsystem.getInstance().stateManager().push(new PauseState());
+          case 'P' ->
+              // push pause state
+              MasterSubsystem.getInstance().stateManager().push(new PauseState());
           case 'Q' -> {
             // also push pause state
             MasterSubsystem.getInstance().stateManager().push(new PauseState());

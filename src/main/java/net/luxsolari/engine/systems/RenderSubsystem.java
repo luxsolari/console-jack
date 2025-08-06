@@ -51,8 +51,7 @@ public class RenderSubsystem implements Subsystem {
   private boolean running = false;
   private final AtomicReference<Screen> mainScreen = new AtomicReference<>();
   private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
-  private final AtomicReference<List<RenderCmd>> displayList =
-      new AtomicReference<>(List.of());
+  private final AtomicReference<List<RenderCmd>> displayList = new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
 
   private RenderSubsystem() {}
@@ -79,8 +78,8 @@ public class RenderSubsystem implements Subsystem {
   }
 
   /**
-   * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the
-   * main {@link Screen} reference has been initialised. States can use this to early-exit their
+   * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the main
+   * {@link Screen} reference has been initialised. States can use this to early-exit their
    * rendering logic instead of duplicating the same null / running checks everywhere.
    */
   public boolean ready() {
@@ -247,8 +246,7 @@ public class RenderSubsystem implements Subsystem {
 
         // sleep for the remaining time to target render interval if needed to keep the game loop
         // stable
-        sleepTime =
-            (RENDER_INTERVAL - (System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
+        sleepTime = (RENDER_INTERVAL - (System.nanoTime() - elapsedTime)) / SECOND_IN_NANOS;
         if (sleepTime >= 0) {
 
           Thread.sleep((long) (sleepTime * 1000), (int) (sleepTime * 1000));
@@ -423,7 +421,7 @@ public class RenderSubsystem implements Subsystem {
         }
       }
     }
-    
+
     // Then clear all layer data
     for (int i = 0; i < MAX_LAYERS; i++) {
       clearLayer(i);

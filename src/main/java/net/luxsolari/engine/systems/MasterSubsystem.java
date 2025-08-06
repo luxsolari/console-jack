@@ -2,21 +2,20 @@ package net.luxsolari.engine.systems;
 
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.EcsSystem;
-import net.luxsolari.engine.ecs.Position;
+import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
+import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.Visual;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateManager;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.game.states.MainMenuState;
 import net.luxsolari.game.ecs.*;
+import net.luxsolari.game.states.MainMenuState;
 
 public class MasterSubsystem implements Subsystem {
 
@@ -71,11 +70,10 @@ public class MasterSubsystem implements Subsystem {
     var demo = entityPool.create();
     demo.add(new Position(10, 10));
     demo.add(new Layer(4));
-    demo.add(new Visual(
-        TextCharacter.fromCharacter('♠',
-            TextColor.ANSI.WHITE,
-            new TextColor.RGB(40, 55, 40))[0]
-    ));
+    demo.add(
+        new Visual(
+            TextCharacter.fromCharacter('♠', TextColor.ANSI.WHITE, new TextColor.RGB(40, 55, 40))[
+                0]));
     demo.add(new Card(Card.Rank.A, Card.Suit.SPADES));
     demo.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), true));
 

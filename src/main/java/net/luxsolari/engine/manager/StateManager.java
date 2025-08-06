@@ -4,8 +4,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.render.LayerRenderer;
+import net.luxsolari.engine.states.LoopableState;
 
 /**
  * Manages a stack of {@link LoopableState} instances, providing push/pop/replace semantics and
@@ -97,7 +97,8 @@ public final class StateManager {
   }
 
   /**
-   * Replaces the current active state with the given state. Equivalent to {@code pop(); push(newState)}.
+   * Replaces the current active state with the given state. Equivalent to {@code pop();
+   * push(newState)}.
    */
   public void replace(LoopableState state) {
     if (state == null) {
@@ -108,8 +109,12 @@ public final class StateManager {
       if (!stack.isEmpty()) {
         LoopableState removed = stack.pop();
         LayerRenderer.clearAll();
-        LOGGER.fine(() -> "Replaced state: " + removed.getClass().getSimpleName() + " -> "
-                + state.getClass().getSimpleName());
+        LOGGER.fine(
+            () ->
+                "Replaced state: "
+                    + removed.getClass().getSimpleName()
+                    + " -> "
+                    + state.getClass().getSimpleName());
         removed.end();
       }
       stack.push(state);
@@ -120,9 +125,7 @@ public final class StateManager {
     }
   }
 
-  /**
-   * Clears all states by calling {@link LoopableState#end()} on each in LIFO order.
-   */
+  /** Clears all states by calling {@link LoopableState#end()} on each in LIFO order. */
   public void clear() {
     lock.lock();
     try {

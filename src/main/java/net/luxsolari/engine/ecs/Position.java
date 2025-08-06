@@ -6,5 +6,4 @@ package net.luxsolari.engine.ecs;
  * @param x column index (0-based)
  * @param y row index (0-based)
  */
-public record Position(int x, int y) implements Component {
-}
+public record Position(int x, int y) implements Component {}
