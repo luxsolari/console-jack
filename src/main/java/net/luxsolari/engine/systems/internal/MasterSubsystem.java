@@ -7,15 +7,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import net.luxsolari.engine.ecs.EcsSystem;
 import net.luxsolari.engine.ecs.EntityPool;
-import net.luxsolari.engine.ecs.Layer;
-import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.Subsystem;
-import net.luxsolari.game.ecs.Card;
-import net.luxsolari.game.ecs.CardArt;
-import net.luxsolari.game.ecs.CardSprite;
 import net.luxsolari.game.states.MainMenuState;
 
 /**
@@ -38,50 +33,49 @@ public enum MasterSubsystem implements Subsystem {
   // tracking statistics for FPS and UPS counters
   private long lastStatsTime = System.nanoTime();
   private int updateCount = 0;
-  private int currentUPS = 0;
+  private int currentUps = 0;
   private boolean running = false;
 
   // --- ECS ---
   private final EntityPool entityPool = new EntityPool();
   private final List<EcsSystem> ecsSystems = new ArrayList<>();
 
-  MasterSubsystem() {}
+  public EntityPool getEntityPool() {
+    return entityPool;
+  }
 
   @Override
   public void init() {
     LOGGER.info("[%s] Initializing Master Game Handler".formatted(TAG));
     this.start();
 
-    RenderSubsystem renderSystem = RenderSubsystem.INSTANCE;
-    Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
-    renderSystemHandlerThread.start();
-
-    InputSubsystem inputSystem = InputSubsystem.INSTANCE;
-    Thread inputSystemHandlerThread = new Thread(inputSystem, "Input Subsystem Thread");
-    inputSystemHandlerThread.start();
-
-    AudioSubsystem audioSystem = AudioSubsystem.INSTANCE;
-    Thread audioSystemHandlerThread = new Thread(audioSystem, "Audio Subsystem Thread");
-    audioSystemHandlerThread.start();
+    startRenderSubsystem();
+    startInputSubsystem();
+    startAudioSubsystem();
 
     // Push initial game state (Main Menu)
     StateMachineManager.push(new MainMenuState());
 
     // --- ECS setup ---
     ecsSystems.add(new DisplayListSystem());
+  }
 
-    // Demo entity to verify pipeline
-    var card = entityPool.create();
-    card.add(new Position(20, 8));
-    card.add(new Layer(2));
-    card.add(new Card(Card.Rank.A, Card.Suit.SPADES));
-    card.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), true));
+  private void startAudioSubsystem() {
+    AudioSubsystem audioSystem = AudioSubsystem.INSTANCE;
+    Thread audioSystemHandlerThread = new Thread(audioSystem, "Audio Subsystem Thread");
+    audioSystemHandlerThread.start();
+  }
 
-    var card2 = entityPool.create();
-    card2.add(new Position(30, 8));
-    card2.add(new Layer(2));
-    card2.add(new Card(Card.Rank.Q, Card.Suit.HEARTS));
-    card2.add(new CardSprite(CardArt.aceOfSpadesFace(), CardArt.defaultBack(), false));
+  private void startInputSubsystem() {
+    InputSubsystem inputSystem = InputSubsystem.INSTANCE;
+    Thread inputSystemHandlerThread = new Thread(inputSystem, "Input Subsystem Thread");
+    inputSystemHandlerThread.start();
+  }
+
+  private void startRenderSubsystem() {
+    RenderSubsystem renderSystem = RenderSubsystem.INSTANCE;
+    Thread renderSystemHandlerThread = new Thread(renderSystem, "Render Subsystem Thread");
+    renderSystemHandlerThread.start();
   }
 
   @Override
@@ -110,7 +104,7 @@ public enum MasterSubsystem implements Subsystem {
         long currentTime = System.nanoTime();
 
         if (currentTime - lastStatsTime >= SECOND_IN_NANOS) {
-          currentUPS = updateCount;
+          currentUps = updateCount;
           updateCount = 0;
           lastStatsTime = currentTime;
         }
@@ -135,7 +129,7 @@ public enum MasterSubsystem implements Subsystem {
               .setBackgroundColor(new TextColor.RGB(40, 55, 40))
               .setForegroundColor(new TextColor.RGB(255, 255, 255))
               .putString(1, 7, "Master Game Subsystem Stats")
-              .putString(1, 8, "UPS: %d".formatted(currentUPS))
+              .putString(1, 8, "UPS: %d".formatted(currentUps))
               .putString(1, 9, "Tick Count: %d".formatted(updateCount))
               .putString(
                   1,

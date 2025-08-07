@@ -35,7 +35,8 @@ public record Card(Rank rank, Suit suit) implements Component {
     TEN("10"),
     J("J"),
     Q("Q"),
-    K("K");
+    K("K"),
+    JOKER("Joker");
 
     private final String label;
 

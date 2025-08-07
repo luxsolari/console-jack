@@ -2,12 +2,20 @@ package net.luxsolari.game.states;
 
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
+import java.util.Random;
 import java.util.logging.Logger;
+import net.luxsolari.engine.ecs.Entity;
+import net.luxsolari.engine.ecs.EntityPool;
+import net.luxsolari.engine.ecs.Layer;
+import net.luxsolari.engine.ecs.Position;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
+import net.luxsolari.game.ecs.Card;
+import net.luxsolari.game.ecs.CardArt;
+import net.luxsolari.game.ecs.CardSprite;
 
 /** Simple placeholder gameplay state used to demonstrate state transitions. */
 public class GameplayState implements LoopableState {
@@ -15,9 +23,15 @@ public class GameplayState implements LoopableState {
   private static final String TAG = GameplayState.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
+  private Random random;
+  private int cardsCreated = 0;
+  private static final int CARD_LAYER = 2;
+
   @Override
   public void start() {
     LOGGER.info("Gameplay started");
+    random = new Random();
+    cardsCreated = 0;
   }
 
   @Override
@@ -53,6 +67,7 @@ public class GameplayState implements LoopableState {
           // also push pause state
           StateMachineManager.push(new PauseState());
         }
+        case '1' -> createRandomCardEntity();
         default -> {}
       }
     }
@@ -71,12 +86,39 @@ public class GameplayState implements LoopableState {
   public void render() {
     RenderManager.clear(RenderManager.UI_LAYER);
     if (!renderReady()) return;
-    String[] lines = {" Gameplay state ", "Press P or Q", "or Esc to pause"};
+    String[] lines = {" Gameplay state ", "Press P or Q or Esc to pause", "Press 1 to create a card"};
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
 
   @Override
   public void end() {
     LOGGER.info("Gameplay ended");
+    // In a real game, we might want to clean up entities created in this state.
+    // For this demo, we'll let them persist.
+  }
+
+  private void createRandomCardEntity() {
+    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
+
+    // 1. Create a random card
+    Card.Rank rank = Card.Rank.values()[random.nextInt(Card.Rank.values().length)];
+    Card.Suit suit = Card.Suit.values()[random.nextInt(Card.Suit.values().length)];
+    Card card = new Card(rank, suit);
+
+    LOGGER.warning("Creating card: " + card);
+
+    // 2. Create the entity and its components
+    Entity cardEntity = entityPool.create();
+    boolean isFaceUp = random.nextBoolean();
+    cardEntity.add(new CardSprite(CardArt.fromCard(card), CardArt.defaultBack(), isFaceUp));
+
+    // Position cards in a row
+    int cardSpacing = CardArt.CARD_COLS + 2;
+    int startX = 5;
+    int startY = 15;
+    cardEntity.add(new Position(startX + (cardsCreated * cardSpacing), startY + 5));
+    cardEntity.add(new Layer(CARD_LAYER));
+
+    cardsCreated++;
   }
 }
