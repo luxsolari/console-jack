@@ -23,7 +23,13 @@ public final class CardArt {
   };
 
   private static final String[] JOKER_FACE = {
-    "┌─────┐", "JOKER │", "JOKER │", "│JOKER │", "│JOKER │", "│JOKER │", "└─────┘"
+    "┌─────┐",
+    "JOK   │",
+    "│     │",
+    "│     │",
+    "│     │",
+    "│   JOK",
+    "└─────┘"
   };
 
   private static final String[] DEFAULT_BACK = {
@@ -69,11 +75,11 @@ public final class CardArt {
     // Basic template for a card face
     return new String[] {
       "┌─────┐",
-      String.format("│%-2s   │", rankLabel),
+      String.format("%-3s   │", rankLabel),
       "│     │",
       String.format("│  %c  │", suitSymbol),
       "│     │",
-      String.format("│   %2s│", rankLabel),
+      String.format("│   %3s", rankLabel),
       "└─────┘"
     };
   }

@@ -68,6 +68,7 @@ public class GameplayState implements LoopableState {
           StateMachineManager.push(new PauseState());
         }
         case '1' -> createRandomCardEntity();
+        case '2' -> clearCards();
         default -> {}
       }
     }
@@ -86,7 +87,7 @@ public class GameplayState implements LoopableState {
   public void render() {
     RenderManager.clear(RenderManager.UI_LAYER);
     if (!renderReady()) return;
-    String[] lines = {" Gameplay state ", "Press P or Q or Esc to pause", "Press 1 to create a card"};
+    String[] lines = {" Gameplay state ", "Press P or Q or Esc to pause", "Press 1 to create a card", "Press 2 to clear cards"};
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
 
@@ -95,6 +96,14 @@ public class GameplayState implements LoopableState {
     LOGGER.info("Gameplay ended");
     // In a real game, we might want to clean up entities created in this state.
     // For this demo, we'll let them persist.
+    clearCards(); // just for this demo.
+  }
+
+  private void clearCards() {
+    RenderManager.clear(CARD_LAYER);
+    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
+    entityPool.removeWith(CardSprite.class);
+    cardsCreated = 0;
   }
 
   private void createRandomCardEntity() {
@@ -109,9 +118,11 @@ public class GameplayState implements LoopableState {
 
     // 2. Create the entity and its components
     Entity cardEntity = entityPool.create();
-    boolean isFaceUp = random.nextBoolean();
-    cardEntity.add(new CardSprite(CardArt.fromCard(card), CardArt.defaultBack(), isFaceUp));
-
+    if (card.rank() == Card.Rank.JOKER) {
+      cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
+    } else {
+      cardEntity.add(new CardSprite(CardArt.fromCard(card), CardArt.defaultBack(), true));
+    }
     // Position cards in a row
     int cardSpacing = CardArt.CARD_COLS + 2;
     int startX = 5;

@@ -41,7 +41,7 @@ public enum RenderSubsystem implements Subsystem {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private static final int TARGET_FPS =
-      30; // Target frames per second, this is the maximum FPS we want to achieve.
+      10; // Target frames per second, this is the maximum FPS we want to achieve.
   private static final int SECOND_IN_NANOS =
       1_000_000_000; // 1 second, expressed in nanoseconds. This is used for time calculations.
   private static final long RENDER_INTERVAL =

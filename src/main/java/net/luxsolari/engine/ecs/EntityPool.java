@@ -36,4 +36,15 @@ public class EntityPool {
   public final List<Entity> with(Class<? extends Component>... types) {
     return entities.stream().filter(e -> Arrays.stream(types).allMatch(e::has)).toList();
   }
+
+  /**
+   * Clears entities from the pool of the requested component types. Simple linear filter—good
+   * enough for small entity counts.
+   */
+  @SafeVarargs
+  public final void removeWith(Class<? extends Component>... types) {
+    entities.removeIf(e ->
+            Arrays.stream(types).allMatch(e::has)
+    );
+  }
 }
