@@ -4,9 +4,9 @@ import java.util.logging.Logger;
 import net.luxsolari.engine.systems.Subsystem;
 
 /**
- * Audio subsystem implemented as an enum singleton (see {@link #INSTANCE}) following
- * Effective Java Item 3. It manages audio initialization, lifecycle control and update
- * logic for all in-game sounds.
+ * Audio subsystem implemented as an enum singleton (see {@link #INSTANCE}) following Effective Java
+ * Item 3. It manages audio initialization, lifecycle control and update logic for all in-game
+ * sounds.
  */
 public enum AudioSubsystem implements Subsystem {
   INSTANCE;
@@ -42,13 +42,9 @@ public enum AudioSubsystem implements Subsystem {
       return; // Exit if we can't initialize
     }
 
-    try {
-      while (running) {
-        // TODO Add audio update logic here.
-        Thread.sleep(1000);
-      }
-    } catch (InterruptedException e) {
-      LOGGER.severe("[%s] Audio update interrupted: %s".formatted(TAG, e.getMessage()));
+    while (running) {
+      // TODO Add audio update logic here.
+      Thread.yield();
     }
   }
 
