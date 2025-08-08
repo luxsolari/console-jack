@@ -1,29 +1,50 @@
+# This GitHub Actions workflow runs Qodana, a static code analysis tool from JetBrains,
+# to find and report code quality issues.
 name: Qodana Code Quality
 
+# Defines when the workflow will run.
 on:
+  # Triggers on pushes to the main development branches.
   push:
     branches: [ "master", "develop"]
+  # Triggers on pull requests targeting the main, release, hotfix, or feature branches.
   pull_request:
     branches: [ "master", "develop", "release/*", "hotfix/*", "feature/*" ]
 
+# Defines the jobs to be executed.
 jobs:
+  # The main job that runs the Qodana scan.
   qodana:
+    # Runs on the latest version of Ubuntu provided by GitHub Actions.
     runs-on: ubuntu-latest
+    # Defines the permissions granted to the GITHUB_TOKEN for this job.
     permissions:
-      contents: write
-      pull-requests: write
-      checks: write
+      contents: write       # Allows Qodana to write check results.
+      pull-requests: write  # Allows Qodana to post comments on pull requests.
+      checks: write         # Allows Qodana to create check runs.
     steps:
+      # Step 1: Check out the repository code.
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
+          # Checks out the actual pull request commit, not the merge commit.
+          # This is crucial for accurate analysis of the changes in the PR.
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Fetches the entire git history. Qodana requires a full history
+          # for a comprehensive pull request analysis.
+          fetch-depth: 0
+      # Step 2: Run the Qodana Scan.
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.1
         with:
+          # Enables pull request mode, which focuses the analysis on the changes introduced.
           pr-mode: 'true'
+          # Allows the action to post the analysis results as a comment in the pull request.
           post-pr-comment: 'true'
+          # Additional arguments for the Qodana CLI.
+          # --baseline uses a SARIF file to track existing issues, so only new issues are reported.
           args: --baseline,qodana.sarif.json
         env:
+          # Qodana Cloud project token. This is a secret to authenticate with the Qodana Cloud service.
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_1031866420 }}
+          # The endpoint for the Qodana Cloud instance.
           QODANA_ENDPOINT: 'https://qodana.cloud'
