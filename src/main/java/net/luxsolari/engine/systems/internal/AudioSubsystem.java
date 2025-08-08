@@ -44,7 +44,13 @@ public enum AudioSubsystem implements Subsystem {
 
     while (running) {
       // TODO Add audio update logic here.
-      Thread.yield();
+      try {
+        Thread.sleep(16); // ~60fps, prevents busy-wait
+      } catch (InterruptedException ie) {
+        LOGGER.warning("[%s] Audio update loop interrupted: %s".formatted(TAG, ie.getMessage()));
+        Thread.currentThread().interrupt();
+        break;
+      }
     }
   }
 
