@@ -46,7 +46,6 @@ public enum RenderSubsystem implements Subsystem {
       1_000_000_000; // 1 second, expressed in nanoseconds. This is used for time calculations.
   private static final long RENDER_INTERVAL =
       TimeUnit.MILLISECONDS.toNanos(1000L / TARGET_FPS); // ~100ms per frame
-  private static final int MAX_LAYERS = 10; // maximum number of layers for rendering
   // Reserve lower half for game objects (ECS), upper half for UI/overlays
   private static final int ECS_LAYER_MAX = 4; // layers 0..4 cleared each frame
 
@@ -62,9 +61,8 @@ public enum RenderSubsystem implements Subsystem {
   private Map<ZLayer, ZLayerData> layers; // map of layers for rendering
   private final AtomicReference<List<RenderCmd>> displayList = new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
-
-  RenderSubsystem() {}
-
+  public static final int MAX_LAYERS = 10; // maximum number of layers for rendering
+    
   /**
    * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the main
    * {@link Screen} reference has been initialised. States can use this to early-exit their

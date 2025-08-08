@@ -60,13 +60,9 @@ public class GameplayState implements LoopableState {
 
     if (keyStroke.getKeyType() == KeyType.Character) {
       switch (Character.toUpperCase(keyStroke.getCharacter())) {
-        case 'P' ->
-            // push pause state
+        case 'P', 'Q' ->
+            // P or Q opens pause menu
             StateMachineManager.push(new PauseState());
-        case 'Q' -> {
-          // also push pause state
-          StateMachineManager.push(new PauseState());
-        }
         case '1' -> createRandomCardEntity();
         case '2' -> clearCards();
         default -> {}
