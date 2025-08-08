@@ -63,7 +63,7 @@ public enum RenderSubsystem implements Subsystem {
   private final AtomicReference<List<RenderCmd>> displayList = new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
 
-  private RenderSubsystem() {}
+  RenderSubsystem() {}
 
   /**
    * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the main

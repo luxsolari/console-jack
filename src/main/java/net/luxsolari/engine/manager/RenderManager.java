@@ -209,15 +209,21 @@ public final class RenderManager {
   /* ======================================================================== */
 
   /**
-   * Draws a single-line centred menu/label block with optional rainbow header and a surrounding
+   *
+   * Draws a single-line centred menu/label block with an optional rainbow header and a surrounding
    * box.
    *
    * <p>This is basically the code that was duplicated across {@code MainMenuState} and {@code
    * GameplayState}. It centres the given {@code lines} horizontally & vertically, prints them and
    * finally draws a 1-character-padding border around the block. If {@code rainbowHeader} is {@code
    * true}, the first line is drawn with {@link #putStringRainbow}.
+   * Public overload that hides the Screen reference from callers.
+   *
+   * @param layerIdx the Z-layer to draw on.
+   * @param lines the lines to draw. Each line must be a single-line string.
+   * @param rainbowHeader whether to draw a rainbow header line.
+   *
    */
-  /** Public overload that hides the Screen reference from callers. */
   public static void drawCenteredTextBlock(int layerIdx, String[] lines, boolean rainbowHeader) {
 
     Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
@@ -265,11 +271,13 @@ public final class RenderManager {
 
   /**
    * Draws an empty box centred on the screen.
+   * Public overload: centred empty box without exposing Screen.
    *
    * @param contentWidth width of the inner content area (without 2-char padding/borders)
-   * @param contentHeight height of the inner content area
-   */
-  /** Public overload: centred empty box without exposing Screen. */
+   * @param contentHeight height of the inner content area (without 2-char padding/borders)
+   * @param fg foreground colour
+   * @param bg background colour
+   **/
   public static void drawCenteredBox(
       int layerIdx, int contentWidth, int contentHeight, TextColor fg, TextColor bg) {
 
