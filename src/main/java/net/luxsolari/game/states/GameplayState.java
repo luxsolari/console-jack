@@ -59,7 +59,7 @@ public class GameplayState implements LoopableState {
     }
 
     if (keyStroke.getKeyType() == KeyType.Character) {
-      switch (keyStroke.getCharacter()) {
+      switch (Character.toUpperCase(keyStroke.getCharacter())) {
         case 'P', 'Q' ->
             // P or Q opens pause menu
             StateMachineManager.push(new PauseState());
