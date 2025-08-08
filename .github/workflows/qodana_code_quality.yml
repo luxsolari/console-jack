@@ -1,13 +1,10 @@
-name: Qodana
+name: Qodana Code Quality
+
 on:
-  pull_request:
-    branches: # Specify your branches here
-      - 'feature/*'
   push:
-    branches: # Specify your branches here
-      - 'master' # The 'main' branch
-      - 'develop' # The 'develop' branch
-      - 'release/*' # The release branches
+    branches: [ "master", "develop"]
+  pull_request:
+    branches: [ "master", "develop", "release/*", "hotfix/*", "feature/*" ]
 
 jobs:
   qodana:
