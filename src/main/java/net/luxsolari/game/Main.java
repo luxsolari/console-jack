@@ -34,7 +34,7 @@ public class Main {
 
     LOGGER.info("[%s] Starting Main".formatted(TAG));
 
-    // Spawn master thread for GameMasterHandler instance
+    // Spawn master thread for the GameMasterHandler instance
     MasterSubsystem masterGameSystem = MasterSubsystem.INSTANCE;
     masterGameSystem.run();
 
