@@ -67,3 +67,4 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 
 ## Entry Point
 Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSubsystem.INSTANCE`
+- Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use @ARCHITECT_MODE.md ruleset.
