@@ -27,7 +27,7 @@ Console Jack is a console-based, text-graphics implementation of the classic cas
 ### Core Design Pattern
 The application uses the **enum singleton pattern** (Effective Java, Item 3) for core subsystems. Access subsystems via:
 - `RenderSubsystem.INSTANCE`
-- `InputSubsystem.INSTANCE` 
+- `InputSubsystem.INSTANCE`
 - `AudioSubsystem.INSTANCE`
 - `MasterSubsystem.INSTANCE`
 - `StateMachineSubsystem.INSTANCE`
@@ -68,3 +68,4 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 ## Entry Point
 Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSubsystem.INSTANCE`
 - Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use @ARCHITECT_MODE.md ruleset.
+- Enter RIPER mode when commanded with either "Enter RIPER Mode" or "/riper-mode". Use @RIPER_MODE.md ruleset.
