@@ -10,11 +10,12 @@ public class MainEngine {
     private static final String NAME = "Solari Engine v" + VERSION;
     private static final String TAG = MainEngine.class.getSimpleName();
     private static final Logger LOGGER = Logger.getLogger(TAG);
+    private static final String LOGGING_CONFIG = "logging.properties";
 
     public static void bootstrap(String[] args) {
         LOGGER.info(NAME);
         // Load logging configuration
-        try (var is = MainEngine.class.getClassLoader().getResourceAsStream("logging.properties")) {
+        try (var is = MainEngine.class.getClassLoader().getResourceAsStream(LOGGING_CONFIG)) {
             if (is != null) {
                 LogManager.getLogManager().readConfiguration(is);
             } else {
