@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class MainEngine {
     private static final String VERSION = "0.0.1";
-    private static final String NAME = "Solari Engine v" + VERSION;
+    private static final String NAME = "Solari TUI v" + VERSION;
     private static final String TAG = MainEngine.class.getSimpleName();
     private static final Logger LOGGER = Logger.getLogger(TAG);
     private static final String LOGGING_CONFIG = "logging.properties";
