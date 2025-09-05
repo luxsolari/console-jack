@@ -28,7 +28,7 @@ audio/
 
 ## Audio Format Requirements
 
-- **Format**: WAV (recommended) or OGG
+- **Format**: WAV (AudioCue only supports WAV), might support OGG in the future
 - **Sample Rate**: 44.1kHz
 - **Bit Depth**: 16-bit
 - **Channels**: Stereo (2 channels)
@@ -43,7 +43,7 @@ audio/
 - **Style**: Match casino atmosphere - jazzy, sophisticated, ambient
 
 ### SFX (Sound Effects)
-- **Short Duration**: Most SFX should be under 2 seconds
+- **Short Duration**: Most SFX should have a short duration
 - **Clear Impact**: Distinct, recognizable sounds
 - **Consistent Volume**: Similar perceived loudness across all SFX
 - **No Clipping**: Clean audio without distortion
@@ -71,8 +71,8 @@ AudioManager.setSFXVolume(0.9f);                // SFX specific
 
 Audio assets should be sourced from:
 - **Royalty-free sites**: Freesound.org, Zapsplat, Adobe Stock Audio
-- **Creative Commons**: Ensure proper licensing
-- **Generated**: Tools like Audacity, LMMS for simple effects
+- **Permissive Licenses**: Ensure proper licensing (CC BY, CC BY-NC, etc.)
+- **Generated**: Tools like Audacity, LMMS for simple effects, perhaps use AI to generate sounds
 
 ## Notes
 
