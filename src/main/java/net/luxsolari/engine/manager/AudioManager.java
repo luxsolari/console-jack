@@ -23,18 +23,133 @@ public final class AudioManager {
     return AudioSubsystem.INSTANCE.running();
   }
 
+  // BGM Controls
+
   /**
-   * High-level helper to play a sound effect. For now this is just a stub that logs the request
-   * until the audio pipeline is fully implemented.
+   * Plays background music by ID.
    *
-   * @param soundId identifier of the sound to play (e.g. filename or enum)
+   * @param bgmId identifier of the BGM to play
+   * @param loop whether to loop the BGM continuously
    */
-  public static void play(String soundId) {
+  public static void playBGM(String bgmId, boolean loop) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring play request for: " + soundId);
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring BGM play request for: " + bgmId);
       return;
     }
-    // TODO: delegate to AudioSubsystem once concrete playback implementation exists
-    LOGGER.info("[" + TAG + "] (stub) would play sound: " + soundId);
+    AudioSubsystem.INSTANCE.playBGM(bgmId, loop);
+  }
+
+  /**
+   * Stops currently playing background music.
+   */
+  public static void stopBGM() {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring BGM stop request.");
+      return;
+    }
+    AudioSubsystem.INSTANCE.stopBGM();
+  }
+
+  // SFX Controls
+
+  /**
+   * Plays a sound effect by ID with default volume and pan settings.
+   *
+   * @param sfxId identifier of the SFX to play
+   */
+  public static void playSFX(String sfxId) {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      return;
+    }
+    AudioSubsystem.INSTANCE.playSFX(sfxId);
+  }
+
+  /**
+   * Plays a sound effect by ID with custom volume and pan.
+   *
+   * @param sfxId identifier of the SFX to play
+   * @param volume volume level (0.0f to 1.0f)
+   * @param pan stereo panning (-1.0f = left, 0.0f = center, 1.0f = right)
+   */
+  public static void playSFX(String sfxId, float volume, float pan) {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      return;
+    }
+    AudioSubsystem.INSTANCE.playSFX(sfxId, volume, pan);
+  }
+
+  // Volume Controls
+
+  /**
+   * Sets the master volume level affecting all audio.
+   *
+   * @param volume volume level (0.0f to 1.0f)
+   */
+  public static void setMasterVolume(float volume) {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring master volume change.");
+      return;
+    }
+    AudioSubsystem.INSTANCE.setMasterVolume(volume);
+  }
+
+  /**
+   * Sets the BGM volume level.
+   *
+   * @param volume volume level (0.0f to 1.0f)
+   */
+  public static void setBGMVolume(float volume) {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring BGM volume change.");
+      return;
+    }
+    AudioSubsystem.INSTANCE.setBGMVolume(volume);
+  }
+
+  /**
+   * Sets the SFX volume level.
+   *
+   * @param volume volume level (0.0f to 1.0f)
+   */
+  public static void setSFXVolume(float volume) {
+    if (!ready()) {
+      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring SFX volume change.");
+      return;
+    }
+    AudioSubsystem.INSTANCE.setSFXVolume(volume);
+  }
+
+  // Volume Getters
+
+  /**
+   * Gets the current master volume level.
+   *
+   * @return volume level (0.0f to 1.0f)
+   */
+  public static float getMasterVolume() {
+    if (!ready()) return 0.0f;
+    return AudioSubsystem.INSTANCE.getMasterVolume();
+  }
+
+  /**
+   * Gets the current BGM volume level.
+   *
+   * @return volume level (0.0f to 1.0f)
+   */
+  public static float getBGMVolume() {
+    if (!ready()) return 0.0f;
+    return AudioSubsystem.INSTANCE.getBGMVolume();
+  }
+
+  /**
+   * Gets the current SFX volume level.
+   *
+   * @return volume level (0.0f to 1.0f)
+   */
+  public static float getSFXVolume() {
+    if (!ready()) return 0.0f;
+    return AudioSubsystem.INSTANCE.getSFXVolume();
   }
 }

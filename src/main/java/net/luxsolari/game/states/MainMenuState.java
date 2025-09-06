@@ -3,6 +3,8 @@ package net.luxsolari.game.states;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
+
+import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
@@ -23,16 +25,19 @@ public class MainMenuState implements LoopableState {
   @Override
   public void start() {
     LOGGER.info("Main menu started");
+    AudioManager.playBGM("menu_theme", true);
   }
 
   @Override
   public void pause() {
     LOGGER.info("Main menu paused");
+    AudioManager.stopBGM();
   }
 
   @Override
   public void resume() {
     LOGGER.info("Main menu resumed");
+    AudioManager.playBGM("menu_theme", true);
   }
 
   @Override
@@ -75,5 +80,6 @@ public class MainMenuState implements LoopableState {
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
+    AudioManager.stopBGM();
   }
 }
