@@ -4,7 +4,7 @@ This directory contains all audio assets for Console Jack, organized into BGM (b
 
 ## Directory Structure
 
-```
+```text
 audio/
 ├── bgm/                    # Background Music
 │   ├── casino_downtown.wav     # Downtown casino ambient music

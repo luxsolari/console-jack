@@ -80,5 +80,6 @@ public class MainMenuState implements LoopableState {
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
+    AudioManager.stopBGM();
   }
 }

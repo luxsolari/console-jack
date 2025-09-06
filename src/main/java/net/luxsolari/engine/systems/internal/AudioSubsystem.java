@@ -82,10 +82,7 @@ public enum AudioSubsystem implements Subsystem {
   public void cleanUp() {
     LOGGER.info("[%s] Cleaning Up Audio Subsystem".formatted(TAG));
     // Stop current BGM
-    if (currentBGM != null) {
-      currentBGM.stop(0);
-      currentBGM = null;
-    }
+    stopBGM();
     // Close all loaded audio resources
     for (AudioCue bgm : loadedBGM.values()) {
       bgm.close();
@@ -102,9 +99,7 @@ public enum AudioSubsystem implements Subsystem {
     return running && RenderSubsystem.INSTANCE.ready();
   }
 
-  /**
-   * Loads all audio assets into dictionaries for fast access during gameplay.
-   */
+  /** Loads all audio assets into dictionaries for fast access during gameplay. */
   private void loadAudioAssets() {
     LOGGER.info("[%s] Loading audio assets...".formatted(TAG));
 
@@ -113,6 +108,7 @@ public enum AudioSubsystem implements Subsystem {
     loadBGMAsset("casino_upscale", "/audio/bgm/casino_upscale.wav");
     loadBGMAsset("casino_elite", "/audio/bgm/casino_elite.wav");
     loadBGMAsset("menu_theme", "/audio/bgm/menu_theme.wav");
+    loadBGMAsset("menu_theme_2", "/audio/bgm/menu_theme_2.wav");
 
     // Load SFX assets (with max concurrent play counts)
     loadSFXAsset("card_deal", "/audio/sfx/card_deal.wav", 4);
@@ -127,12 +123,12 @@ public enum AudioSubsystem implements Subsystem {
     loadSFXAsset("lose", "/audio/sfx/lose.wav", 2);
     loadSFXAsset("button_click", "/audio/sfx/button_click.wav", 4);
 
-    LOGGER.info("[%s] Audio asset loading completed. BGM: %d, SFX: %d".formatted(TAG, loadedBGM.size(), loadedSFX.size()));
+    LOGGER.info(
+        "[%s] Audio asset loading completed. BGM: %d, SFX: %d"
+            .formatted(TAG, loadedBGM.size(), loadedSFX.size()));
   }
 
-  /**
-   * Loads a BGM asset into the BGM dictionary.
-   */
+  /** Loads a BGM asset into the BGM dictionary. */
   private void loadBGMAsset(String id, String resourcePath) {
     try {
       URL audioURL = getClass().getResource(resourcePath);
@@ -149,9 +145,7 @@ public enum AudioSubsystem implements Subsystem {
     }
   }
 
-  /**
-   * Loads an SFX asset into the SFX dictionary.
-   */
+  /** Loads an SFX asset into the SFX dictionary. */
   private void loadSFXAsset(String id, String resourcePath, int maxConcurrent) {
     try {
       URL audioURL = getClass().getResource(resourcePath);
@@ -168,10 +162,8 @@ public enum AudioSubsystem implements Subsystem {
     }
   }
 
-  /**
-   * Plays background music by ID.
-   */
-  public void playBGM(String bgmId, boolean loop) {
+  /** Plays background music by ID. */
+  public synchronized void playBGM(String bgmId, boolean loop) {
     AudioCue bgm = loadedBGM.get(bgmId);
     if (bgm == null) {
       LOGGER.warning("[%s] BGM not found: %s".formatted(TAG, bgmId));
@@ -181,6 +173,7 @@ public enum AudioSubsystem implements Subsystem {
     // Stop current BGM if different
     if (currentBGM != null && currentBGM != bgm) {
       currentBGM.stop(0);
+      currentBGM.releaseInstance(0);
     }
 
     currentBGM = bgm;
@@ -192,30 +185,27 @@ public enum AudioSubsystem implements Subsystem {
       currentBGM.play(effectiveVolume, 0.0f, 1.0f, 0);
     }
 
-    LOGGER.info("[%s] Playing BGM: %s (loop: %b, volume: %.2f)".formatted(TAG, bgmId, loop, effectiveVolume));
+    LOGGER.info(
+        "[%s] Playing BGM: %s (loop: %b, volume: %.2f)"
+            .formatted(TAG, bgmId, loop, effectiveVolume));
   }
 
-  /**
-   * Stops currently playing background music.
-   */
-  public void stopBGM() {
+  /** Stops currently playing background music. */
+  public synchronized void stopBGM() {
     if (currentBGM != null) {
       currentBGM.stop(0);
+      currentBGM.releaseInstance(0);
       currentBGM = null;
       LOGGER.info("[%s] Stopped BGM".formatted(TAG));
     }
   }
 
-  /**
-   * Plays a sound effect by ID.
-   */
+  /** Plays a sound effect by ID. */
   public void playSFX(String sfxId) {
     playSFX(sfxId, sfxVolume, 0.0f); // Default volume and center pan
   }
 
-  /**
-   * Plays a sound effect by ID with custom volume and pan.
-   */
+  /** Plays a sound effect by ID with custom volume and pan. */
   public void playSFX(String sfxId, float volume, float pan) {
     AudioCue sfx = loadedSFX.get(sfxId);
     if (sfx == null) {
@@ -225,35 +215,39 @@ public enum AudioSubsystem implements Subsystem {
 
     float effectiveVolume = masterVolume * volume;
     sfx.play(effectiveVolume, pan, 1.0f, 0); // No looping for SFX
-    LOGGER.fine("[%s] Playing SFX: %s (volume: %.2f, pan: %.2f)".formatted(TAG, sfxId, effectiveVolume, pan));
+    LOGGER.fine(
+        "[%s] Playing SFX: %s (volume: %.2f, pan: %.2f)"
+            .formatted(TAG, sfxId, effectiveVolume, pan));
   }
 
-  /**
-   * Sets the master volume level (0.0f to 1.0f).
-   */
+  /** Sets the master volume level (0.0f to 1.0f). */
   public void setMasterVolume(float volume) {
     this.masterVolume = Math.max(0.0f, Math.min(1.0f, volume));
     LOGGER.info("[%s] Master volume set to: %.2f".formatted(TAG, this.masterVolume));
   }
 
-  /**
-   * Sets the BGM volume level (0.0f to 1.0f).
-   */
+  /** Sets the BGM volume level (0.0f to 1.0f). */
   public void setBGMVolume(float volume) {
     this.bgmVolume = Math.max(0.0f, Math.min(1.0f, volume));
     LOGGER.info("[%s] BGM volume set to: %.2f".formatted(TAG, this.bgmVolume));
   }
 
-  /**
-   * Sets the SFX volume level (0.0f to 1.0f).
-   */
+  /** Sets the SFX volume level (0.0f to 1.0f). */
   public void setSFXVolume(float volume) {
     this.sfxVolume = Math.max(0.0f, Math.min(1.0f, volume));
     LOGGER.info("[%s] SFX volume set to: %.2f".formatted(TAG, this.sfxVolume));
   }
 
   // Volume getters
-  public float getMasterVolume() { return masterVolume; }
-  public float getBGMVolume() { return bgmVolume; }
-  public float getSFXVolume() { return sfxVolume; }
+  public float getMasterVolume() {
+    return masterVolume;
+  }
+
+  public float getBGMVolume() {
+    return bgmVolume;
+  }
+
+  public float getSFXVolume() {
+    return sfxVolume;
+  }
 }

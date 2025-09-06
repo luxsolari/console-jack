@@ -8,6 +8,7 @@ import net.luxsolari.engine.ecs.Entity;
 import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
+import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
@@ -32,6 +33,7 @@ public class GameplayState implements LoopableState {
     LOGGER.info("Gameplay started");
     random = new Random();
     cardsCreated = 0;
+    AudioManager.playBGM("menu_theme_2", true);
   }
 
   @Override
@@ -82,7 +84,9 @@ public class GameplayState implements LoopableState {
   @Override
   public void render() {
     RenderManager.clear(RenderManager.UI_LAYER);
-    if (!renderReady()) return;
+    if (!renderReady()) {
+      return;
+    }
     String[] lines = {" Gameplay state ", "Press P or Q or Esc to pause", "Press 1 to create a card", "Press 2 to clear cards"};
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
@@ -93,6 +97,7 @@ public class GameplayState implements LoopableState {
     // In a real game, we might want to clean up entities created in this state.
     // For this demo, we'll let them persist.
     clearCards(); // just for this demo.
+    AudioManager.stopBGM();
   }
 
   private void clearCards() {
