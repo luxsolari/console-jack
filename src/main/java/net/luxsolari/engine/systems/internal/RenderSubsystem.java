@@ -62,7 +62,7 @@ public enum RenderSubsystem implements Subsystem {
   private final AtomicReference<List<RenderCmd>> displayList = new AtomicReference<>(List.of());
   private TextCharacter mainBackgroundCharacter;
   public static final int MAX_LAYERS = 10; // maximum number of layers for rendering
-    
+
   /**
    * Convenience helper: returns {@code true} when the RenderSubsystem is running **and** the main
    * {@link Screen} reference has been initialised. States can use this to early-exit their
@@ -202,13 +202,12 @@ public enum RenderSubsystem implements Subsystem {
       }
 
       try {
-        if (this.mainScreen.get().doResizeIfNecessary() != null) {
-          // resize the screen if the terminal size has changed
-          this.mainScreen.get().doResizeIfNecessary();
-          this.screenColumns = this.mainScreen.get().getTerminalSize().getColumns();
-          this.screenRows = this.mainScreen.get().getTerminalSize().getRows();
+        TerminalSize newSize = this.mainScreen.get().doResizeIfNecessary();
+        if (newSize != null) {
+          this.screenColumns = newSize.getColumns();
+          this.screenRows = newSize.getRows();
 
-          // draw a green background to simulate a game table
+          // Redraw the background to simulate a game table
           this.mainScreen.get().clear();
           for (int i = 0; i < screenColumns; i++) {
             for (int j = 0; j < screenRows; j++) {

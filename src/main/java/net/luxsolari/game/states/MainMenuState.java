@@ -3,7 +3,6 @@ package net.luxsolari.game.states;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
-
 import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
@@ -71,6 +70,10 @@ public class MainMenuState implements LoopableState {
 
   @Override
   public void render() {
+    redrawLayers();
+  }
+
+  private void redrawLayers() {
     RenderManager.clear(RenderManager.UI_LAYER);
     if (!renderReady()) return;
     String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};

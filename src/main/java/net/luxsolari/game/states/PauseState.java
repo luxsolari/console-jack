@@ -63,14 +63,21 @@ public class PauseState implements LoopableState {
 
   @Override
   public void render() {
-    RenderManager.clear(RenderManager.UI_LAYER);
-    if (!renderReady()) return;
-    String[] lines = {"Paused", "Press P to resume", "Press Q to quit to main menu"};
-    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
+    redrawLayers();
   }
 
   @Override
   public void end() {
     LOGGER.info("Pause menu closed");
+  }
+
+  private void redrawLayers() {
+    if (!renderReady()) {
+      return;
+    }
+
+    RenderManager.clear(RenderManager.UI_LAYER);
+    String[] lines = {"Paused", "Press P to resume", "Press Q to quit to main menu"};
+    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
 }

@@ -1,7 +1,6 @@
 package net.luxsolari.game;
 
 import java.util.logging.Logger;
-
 import net.luxsolari.engine.MainEngine;
 
 /**
@@ -18,6 +17,6 @@ public class Main {
    * @param args Command line arguments (not used)
    */
   public static void main(String[] args) {
-      MainEngine.bootstrap(args);
+    MainEngine.bootstrap(args);
   }
 }

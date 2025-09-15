@@ -1,11 +1,10 @@
 package net.luxsolari.engine.systems.internal;
 
+import com.adonax.audiocue.AudioCue;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
-import com.adonax.audiocue.AudioCue;
 import net.luxsolari.engine.systems.Subsystem;
 
 /**
@@ -26,8 +25,8 @@ public enum AudioSubsystem implements Subsystem {
 
   // Volume controls
   private float masterVolume = 1.0f;
-  private float bgmVolume = 0.7f;
-  private float sfxVolume = 0.8f;
+  private float bgmVolume = 1.0f;
+  private float sfxVolume = 1.0f;
 
   // Current BGM tracking
   private AudioCue currentBGM = null;
