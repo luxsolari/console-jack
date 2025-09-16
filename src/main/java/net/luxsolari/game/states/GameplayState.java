@@ -94,6 +94,7 @@ public class GameplayState implements LoopableState {
     // For this demo, we'll let them persist.
     clearCards(); // just for this demo.
     RenderManager.clear(RenderManager.UI_LAYER); // Clear the text UI
+    RenderManager.clear(CARD_LAYER);
     AudioManager.stopBGM();
   }
 

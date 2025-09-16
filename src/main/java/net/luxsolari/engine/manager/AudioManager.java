@@ -10,6 +10,7 @@ import net.luxsolari.engine.systems.internal.AudioSubsystem;
  * the internal subsystem implementation. This keeps the subsystem encapsulated while providing a
  * minimal, stateless API surface.
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public final class AudioManager {
 
   private static final String TAG = AudioManager.class.getSimpleName();
@@ -31,9 +32,11 @@ public final class AudioManager {
    * @param bgmId identifier of the BGM to play
    * @param loop whether to loop the BGM continuously
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void playBGM(String bgmId, boolean loop) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring BGM play request for: " + bgmId);
+      LOGGER.warning("[" + TAG 
+          + "] Audio subsystem not ready. Ignoring BGM play request for: " + bgmId);
       return;
     }
     AudioSubsystem.INSTANCE.playBGM(bgmId, loop);
@@ -42,6 +45,7 @@ public final class AudioManager {
   /**
    * Stops currently playing background music.
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void stopBGM() {
     if (!ready()) {
       LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring BGM stop request.");
@@ -57,9 +61,11 @@ public final class AudioManager {
    *
    * @param sfxId identifier of the SFX to play
    */
+  @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void playSFX(String sfxId) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      LOGGER.warning("[" + TAG 
+          + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
       return;
     }
     AudioSubsystem.INSTANCE.playSFX(sfxId);
@@ -74,7 +80,8 @@ public final class AudioManager {
    */
   public static void playSFX(String sfxId, float volume, float pan) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      LOGGER.warning("[" + TAG 
+          + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
       return;
     }
     AudioSubsystem.INSTANCE.playSFX(sfxId, volume, pan);
@@ -129,7 +136,9 @@ public final class AudioManager {
    * @return volume level (0.0f to 1.0f)
    */
   public static float getMasterVolume() {
-    if (!ready()) return 0.0f;
+    if (!ready()) {
+      return 0.0f;
+    }
     return AudioSubsystem.INSTANCE.getMasterVolume();
   }
 
@@ -139,7 +148,9 @@ public final class AudioManager {
    * @return volume level (0.0f to 1.0f)
    */
   public static float getBGMVolume() {
-    if (!ready()) return 0.0f;
+    if (!ready()) {
+      return 0.0f;
+    }
     return AudioSubsystem.INSTANCE.getBGMVolume();
   }
 
@@ -149,7 +160,9 @@ public final class AudioManager {
    * @return volume level (0.0f to 1.0f)
    */
   public static float getSFXVolume() {
-    if (!ready()) return 0.0f;
+    if (!ready()) {
+      return 0.0f;
+    }
     return AudioSubsystem.INSTANCE.getSFXVolume();
   }
 }

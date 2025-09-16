@@ -1,3 +1,5 @@
+package net.luxsolari.engine.ecs;
+
 /**
  * Marker interface for all data components in the Entity-Component-System (ECS) architecture.
  *
@@ -10,6 +12,5 @@
  * component type. <strong>Note:</strong> All ECS components in this project must implement this
  * interface.
  */
-package net.luxsolari.engine.ecs;
-
-public interface Component {}
+public interface Component {
+}

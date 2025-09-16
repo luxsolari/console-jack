@@ -1,7 +1,6 @@
 package net.luxsolari.engine.systems.internal;
 
 import com.googlecode.lanterna.input.KeyStroke;
-
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -25,6 +24,11 @@ public enum InputSubsystem implements Subsystem {
   private final Deque<KeyStroke> inputQueue = new ArrayDeque<>();
   private final ReentrantLock lock = new ReentrantLock();
 
+  /**
+   * Returns whether the input subsystem is currently running.
+   *
+   * @return true if the subsystem is running, false otherwise
+   */
   public boolean running() {
     return running;
   }

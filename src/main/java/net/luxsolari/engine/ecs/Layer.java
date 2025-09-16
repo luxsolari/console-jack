@@ -11,6 +11,12 @@ import net.luxsolari.engine.systems.internal.RenderSubsystem;
  *     RenderSubsystem#MAX_LAYERS})
  */
 public record Layer(int index) implements Component {
+  
+  /**
+   * Compact constructor that validates the layer index.
+   *
+   * @throws IllegalArgumentException if index is negative
+   */
   public Layer {
     if (index < 0) {
       throw new IllegalArgumentException("Layer index must be non-negative");

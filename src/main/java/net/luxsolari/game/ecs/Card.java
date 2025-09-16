@@ -5,6 +5,9 @@ import net.luxsolari.engine.ecs.Component;
 /** Logical identity of a playing card. */
 public record Card(Rank rank, Suit suit) implements Component {
 
+  /**
+   * Represents the suit of a playing card.
+   */
   public enum Suit {
     SPADES('♠'),
     HEARTS('♥'),
@@ -17,11 +20,19 @@ public record Card(Rank rank, Suit suit) implements Component {
       this.symbol = symbol;
     }
 
+    /**
+     * Returns the symbol character for this suit.
+     *
+     * @return the symbol character
+     */
     public char symbol() {
       return symbol;
     }
   }
 
+  /**
+   * Represents the rank of a playing card.
+   */
   public enum Rank {
     A("A"),
     TWO("2"),
@@ -44,6 +55,11 @@ public record Card(Rank rank, Suit suit) implements Component {
       this.label = label;
     }
 
+    /**
+     * Returns the label string for this rank.
+     *
+     * @return the label string
+     */
     public String label() {
       return label;
     }

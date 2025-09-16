@@ -27,7 +27,9 @@ public enum StateMachineSubsystem {
   /* -------------------------- Queries -------------------------- */
 
   /**
-   * @return {@code true} if at least one state exists in the stack.
+   * Checks if at least one state exists in the stack.
+   *
+   * @return {@code true} if at least one state exists in the stack
    */
   public boolean hasStates() {
     lock.lock();
@@ -39,7 +41,9 @@ public enum StateMachineSubsystem {
   }
 
   /**
-   * @return The active (top) state, or {@code null} if the stack is empty.
+   * Gets the active (top) state from the stack.
+   *
+   * @return The active (top) state, or {@code null} if the stack is empty
    */
   public LoopableState active() {
     lock.lock();

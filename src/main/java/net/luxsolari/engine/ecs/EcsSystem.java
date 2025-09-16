@@ -10,6 +10,8 @@ package net.luxsolari.engine.ecs;
 @FunctionalInterface
 public interface EcsSystem {
   /**
+   * Updates the system logic for the current frame.
+   *
    * @param dt time elapsed since the previous update (seconds)
    * @param pool shared pool containing all active entities
    */

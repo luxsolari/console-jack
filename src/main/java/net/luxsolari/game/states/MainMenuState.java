@@ -46,7 +46,9 @@ public class MainMenuState implements LoopableState {
     }
 
     KeyStroke ks = InputManager.poll();
-    if (ks == null) return;
+    if (ks == null) {
+      return;
+    }
 
     if (ks.getKeyType() == KeyType.Character) {
       char c = Character.toUpperCase(ks.getCharacter());
@@ -56,7 +58,8 @@ public class MainMenuState implements LoopableState {
           this.running = false;
         }
         case 'Q' -> MasterSubsystem.INSTANCE.stop();
-        default -> {}
+        default -> {
+        }
       }
     } else if (ks.getKeyType() == KeyType.EOF) {
       MasterSubsystem.INSTANCE.stop();
@@ -75,7 +78,9 @@ public class MainMenuState implements LoopableState {
 
   private void redrawLayers() {
     RenderManager.clear(RenderManager.UI_LAYER);
-    if (!renderReady()) return;
+    if (!renderReady()) {
+      return;
+    }
     String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
   }
