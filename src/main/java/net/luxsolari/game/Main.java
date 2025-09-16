@@ -1,6 +1,5 @@
 package net.luxsolari.game;
 
-import java.util.logging.Logger;
 import net.luxsolari.engine.MainEngine;
 
 /**
@@ -8,9 +7,6 @@ import net.luxsolari.engine.MainEngine;
  * manages the MasterGameSubsystem.
  */
 public class Main {
-  private static final String TAG = Main.class.getSimpleName() + "System";
-  private static final Logger LOGGER = Logger.getLogger(TAG);
-
   /**
    * Main entry point for the application. Initializes and starts the MasterGameSubsystem.
    *

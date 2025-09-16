@@ -64,7 +64,7 @@ public final class RenderManager {
     }
 
     var screen = renderSubsystem.mainScreen().get();
-    var backgroundChar = new TextCharacter(' ', DEFAULT_FG, DEFAULT_BG);
+    var backgroundChar = TextCharacter.fromCharacter(' ', DEFAULT_FG, DEFAULT_BG)[0];
 
     // Clear each position that was occupied by this layer
     for (ZLayerPosition pos : layer.contents().keySet()) {
@@ -164,7 +164,7 @@ public final class RenderManager {
     if (layer == null) {
       return;
     }
-    layer.contents().put(new ZLayerPosition(x, y), new TextCharacter(ch, fg, bg));
+    layer.contents().put(new ZLayerPosition(x, y), TextCharacter.fromCharacter(ch, fg, bg)[0]);
   }
 
   /** Shortcut: specify only foreground. */
