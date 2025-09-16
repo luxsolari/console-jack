@@ -115,9 +115,12 @@ public class GameplayState implements LoopableState {
 
     // 2. Create the entity and its components
     Entity cardEntity = entityPool.create();
-    int cardCount = entityPool.with(CardSprite.class).size();
-    int x = 2 + cardCount * CardArt.CARD_COLS; // spacing of CARD_COLS
-    int y = 2;
+    int cardCount = entityPool.with(CardSprite.class).size(); // existing cards count
+
+    // Compute initial position consistent with redrawLayers using shared helper
+    CardLayout layout = computeCardLayout(cardCount + 1);
+    int x = layout.startX + cardCount * layout.cardSpacing;
+    int y = layout.startY;
     cardEntity.add(new Position(x, y));
     if (card.rank() == Card.Rank.JOKER) {
       cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
@@ -148,20 +151,37 @@ public class GameplayState implements LoopableState {
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
     List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class);
 
+    CardLayout layout = computeCardLayout(cardEntities.size());
+    int currentX = layout.startX;
+    for (Entity cardEntity : cardEntities) {
+      cardEntity.add(new Position(currentX, layout.startY));
+      currentX += layout.cardSpacing;
+    }
+  }
+
+  // Small helper for consistent layout calculations between creation and redraw
+  private CardLayout computeCardLayout(int cardCount) {
     TerminalSize terminalSize = RenderSubsystem.INSTANCE.mainScreen().get().getTerminalSize();
     int screenWidth = terminalSize.getColumns();
     int screenHeight = terminalSize.getRows();
 
     int cardSpacing = CardArt.CARD_COLS + 2;
-    int totalCardsWidth = cardEntities.isEmpty() ? 0 : 
-        (cardEntities.size() - 1) * cardSpacing + CardArt.CARD_COLS;
+    int totalCardsWidth = (cardCount <= 0) ? 0 : (cardCount - 1) * cardSpacing + CardArt.CARD_COLS;
     int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
     int startY = Math.max(0, (screenHeight / 2) + 5);
 
-    int currentX = startX;
-    for (Entity cardEntity : cardEntities) {
-      cardEntity.add(new Position(currentX, startY));
-      currentX += cardSpacing;
+    return new CardLayout(startX, startY, cardSpacing);
+  }
+
+  private static class CardLayout {
+    final int startX;
+    final int startY;
+    final int cardSpacing;
+
+    CardLayout(int startX, int startY, int cardSpacing) {
+      this.startX = startX;
+      this.startY = startY;
+      this.cardSpacing = cardSpacing;
     }
   }
 
