@@ -21,8 +21,8 @@ import net.luxsolari.engine.systems.internal.RenderSubsystem;
 public final class RenderManager {
 
   // ---------- configuration / theme ----------
-  public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE;
-  public static final TextColor DEFAULT_BG = new TextColor.RGB(40, 55, 40);
+  public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE; // white
+  public static final TextColor DEFAULT_BG = new TextColor.RGB(53, 53, 47); // dark gray
 
   // Recommended default Z-layer for UI overlays (kept intact by RenderSubsystem each frame)
   public static final int UI_LAYER = 6;

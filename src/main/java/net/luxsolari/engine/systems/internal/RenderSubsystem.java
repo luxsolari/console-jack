@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import net.luxsolari.engine.exceptions.ResourceCleanupException;
 import net.luxsolari.engine.exceptions.ResourceInitializationException;
+import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
@@ -139,10 +140,8 @@ public enum RenderSubsystem implements Subsystem {
             new ZLayer("Layer %d".formatted(i), i), new ZLayerData(new ConcurrentHashMap<>()));
       }
 
-      TextColor backgroundColor = new TextColor.RGB(40, 55, 40);
-
       this.mainBackgroundCharacter =
-          TextCharacter.fromCharacter(' ', backgroundColor, backgroundColor)[0];
+          TextCharacter.fromCharacter(' ', RenderManager.DEFAULT_FG, RenderManager.DEFAULT_BG)[0];
       // draw a green background to simulate a game table
       this.mainScreen.get().clear();
       for (int i = 0; i < screenColumns; i++) {
@@ -284,7 +283,7 @@ public enum RenderSubsystem implements Subsystem {
     for (int i = 0; i < this.mainScreen.get().getTerminalSize().getColumns(); i++) {
       textGraphics
           .drawLine(i, 0, i, 0, Symbols.SINGLE_LINE_HORIZONTAL)
-          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setBackgroundColor(RenderManager.DEFAULT_BG)
           .setForegroundColor(TextColor.ANSI.RED);
     }
 
@@ -297,7 +296,7 @@ public enum RenderSubsystem implements Subsystem {
               i,
               this.mainScreen.get().getTerminalSize().getRows() - 1,
               Symbols.SINGLE_LINE_HORIZONTAL)
-          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setBackgroundColor(RenderManager.DEFAULT_BG)
           .setForegroundColor(TextColor.ANSI.RED);
     }
 
@@ -305,7 +304,7 @@ public enum RenderSubsystem implements Subsystem {
     for (int i = 0; i < this.mainScreen.get().getTerminalSize().getRows(); i++) {
       textGraphics
           .drawLine(0, i, 0, i, Symbols.SINGLE_LINE_VERTICAL)
-          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setBackgroundColor(RenderManager.DEFAULT_BG)
           .setForegroundColor(TextColor.ANSI.RED);
     }
 
@@ -319,42 +318,42 @@ public enum RenderSubsystem implements Subsystem {
               this.mainScreen.get().getTerminalSize().getColumns() - 1,
               i,
               Symbols.SINGLE_LINE_VERTICAL)
-          .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+          .setBackgroundColor(RenderManager.DEFAULT_BG)
           .setForegroundColor(TextColor.ANSI.RED);
     }
 
     // draw corners
     textGraphics
         .setCharacter(0, 0, Symbols.SINGLE_LINE_TOP_LEFT_CORNER)
-        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setBackgroundColor(RenderManager.DEFAULT_BG)
         .setForegroundColor(TextColor.ANSI.RED);
     textGraphics
         .setCharacter(
             this.mainScreen.get().getTerminalSize().getColumns() - 1,
             0,
             Symbols.SINGLE_LINE_TOP_RIGHT_CORNER)
-        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setBackgroundColor(RenderManager.DEFAULT_BG)
         .setForegroundColor(TextColor.ANSI.RED);
     textGraphics
         .setCharacter(
             0,
             this.mainScreen.get().getTerminalSize().getRows() - 1,
             Symbols.SINGLE_LINE_BOTTOM_LEFT_CORNER)
-        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setBackgroundColor(RenderManager.DEFAULT_BG)
         .setForegroundColor(TextColor.ANSI.RED);
     textGraphics
         .setCharacter(
             this.mainScreen.get().getTerminalSize().getColumns() - 1,
             this.mainScreen.get().getTerminalSize().getRows() - 1,
             Symbols.SINGLE_LINE_BOTTOM_RIGHT_CORNER)
-        .setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor())
+        .setBackgroundColor(RenderManager.DEFAULT_BG)
         .setForegroundColor(TextColor.ANSI.RED);
   }
 
   private void displayRenderStats(double deltaTime, double sleepTime) {
     TextGraphics textGraphics = this.mainScreen.get().newTextGraphics();
-    textGraphics.setForegroundColor(TextColor.ANSI.WHITE_BRIGHT);
-    textGraphics.setBackgroundColor(this.mainBackgroundCharacter.getBackgroundColor());
+    textGraphics.setForegroundColor(RenderManager.DEFAULT_FG);
+    textGraphics.setBackgroundColor(RenderManager.DEFAULT_BG);
     textGraphics.putString(1, 1, "Render Subsystem Stats");
     textGraphics.putString(1, 2, "FPS: %d (Target %d)".formatted(currentFps, TARGET_FPS));
     textGraphics.putString(1, 3, "Delta Time: %dms".formatted((int) (deltaTime * 1000)));

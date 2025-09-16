@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import net.luxsolari.engine.ecs.EcsSystem;
 import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
+import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.Subsystem;
@@ -126,8 +127,8 @@ public enum MasterSubsystem implements Subsystem {
               .mainScreen()
               .get()
               .newTextGraphics()
-              .setBackgroundColor(new TextColor.RGB(40, 55, 40))
-              .setForegroundColor(new TextColor.RGB(255, 255, 255))
+              .setBackgroundColor(RenderManager.DEFAULT_BG)
+              .setForegroundColor(RenderManager.DEFAULT_FG)
               .putString(1, 7, "Master Game Subsystem Stats")
               .putString(1, 8, "UPS: %d".formatted(currentUps))
               .putString(1, 9, "Tick Count: %d".formatted(updateCount))
