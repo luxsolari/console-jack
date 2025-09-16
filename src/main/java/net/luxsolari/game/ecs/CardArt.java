@@ -36,26 +36,56 @@ public final class CardArt {
     "┌─────┐", "│░░░░░│", "│░░░░░│", "│░░░░░│", "│░░░░░│", "│░░░░░│", "└─────┘"
   };
 
+  /**
+   * Returns the ASCII art face for the Ace of Spades.
+   *
+   * @return a String array representing the Ace of Spades face.
+   */
   public static String[] aceOfSpadesFace() {
     return ACE_SPADES_FACE;
   }
 
+  /**
+   * Returns the ASCII art face for the Ace of Hearts.
+   *
+   * @return a String array representing the Ace of Hearts face.
+   */
   public static String[] aceOfHeartsFace() {
     return ACE_HEARTS_FACE;
   }
 
+  /**
+   * Returns the ASCII art face for the Ace of Diamonds.
+   *
+   * @return a String array representing the Ace of Diamonds face.
+   */
   public static String[] aceOfDiamondsFace() {
     return ACE_DIAMONDS_FACE;
   }
 
+  /**
+   * Returns the ASCII art face for the Ace of Clubs.
+   *
+   * @return a String array representing the Ace of Clubs face.
+   */
   public static String[] aceOfClubsFace() {
     return ACE_CLUBS_FACE;
   }
 
+  /**
+   * Returns the ASCII art face for the Joker card.
+   *
+   * @return a String array representing the Joker face.
+   */
   public static String[] jokerFace() {
     return JOKER_FACE;
   }
 
+  /**
+   * Returns the ASCII art for the default card back.
+   *
+   * @return a String array representing the default card back.
+   */
   public static String[] defaultBack() {
     return DEFAULT_BACK;
   }

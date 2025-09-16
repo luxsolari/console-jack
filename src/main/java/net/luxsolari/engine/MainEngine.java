@@ -4,6 +4,10 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 
+/**
+ * Main engine class responsible for bootstrapping the game system.
+ * This class handles initial setup and starts the master subsystem.
+ */
 public class MainEngine {
   private static final String VERSION = "0.0.1";
   private static final String NAME = "Solari TUI v" + VERSION;
@@ -11,6 +15,11 @@ public class MainEngine {
   private static final Logger LOGGER = Logger.getLogger(TAG);
   private static final String LOGGING_CONFIG = "logging.properties";
 
+  /**
+   * Bootstrap method to initialize and start the game engine.
+   *
+   * @param args command line arguments passed to the application
+   */
   public static void bootstrap(String[] args) {
     LOGGER.info(NAME);
     // Load logging configuration

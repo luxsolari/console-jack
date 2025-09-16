@@ -68,7 +68,7 @@ public class GameplayState implements LoopableState {
             StateMachineManager.push(new PauseState());
         case '1' -> createRandomCardEntity();
         case '2' -> clearCards();
-        default -> {}
+        default -> { }
       }
     }
     if (keyStroke.getKeyType() == KeyType.Escape) {

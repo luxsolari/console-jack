@@ -423,6 +423,14 @@ public enum RenderSubsystem implements Subsystem {
     }
   }
 
+  /**
+   * Queues a character to be rendered at a specific layer and position.
+   *
+   * @param layerIndex the index of the layer to render on
+   * @param x the x coordinate
+   * @param y the y coordinate
+   * @param character the character to render
+   */
   public void queueChar(int layerIndex, int x, int y, TextCharacter character) {
     ZLayer zlayer = new ZLayer("Layer %d".formatted(layerIndex), layerIndex);
     ZLayerData data = layers.get(zlayer);

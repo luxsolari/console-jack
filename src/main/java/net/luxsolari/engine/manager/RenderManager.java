@@ -101,7 +101,9 @@ public final class RenderManager {
   public static void putString(
       int layerIdx, int x, int y, String text, TextColor fg, TextColor bg) {
     ZLayerData layer = getLayer(layerIdx);
-    if (layer == null) return;
+    if (layer == null) {
+      return;
+    }
     for (int i = 0; i < text.length(); i++) {
       putChar(layerIdx, x + i, y, text.charAt(i), fg, bg);
     }
@@ -124,7 +126,9 @@ public final class RenderManager {
    */
   public static void putStringRainbow(int layerIdx, int x, int y, String text) {
     ZLayerData layer = getLayer(layerIdx);
-    if (layer == null) return;
+    if (layer == null) {
+      return;
+    }
     for (int i = 0; i < text.length(); i++) {
       TextColor fg = RAINBOW[i % RAINBOW.length];
       putChar(layerIdx, x + i, y, text.charAt(i), fg, DEFAULT_BG);
@@ -141,7 +145,9 @@ public final class RenderManager {
       int layerIdx, int x, int y, String text, TextColor.RGB from, TextColor.RGB to) {
 
     ZLayerData layer = getLayer(layerIdx);
-    if (layer == null) return;
+    if (layer == null) {
+      return;
+    }
     int len = text.length();
     for (int i = 0; i < len; i++) {
       double t = (double) i / Math.max(len - 1, 1); // [0,1]
@@ -155,7 +161,9 @@ public final class RenderManager {
   /** Draws a single glyph (foreground/background fully configurable). */
   public static void putChar(int layerIdx, int x, int y, char ch, TextColor fg, TextColor bg) {
     ZLayerData layer = getLayer(layerIdx);
-    if (layer == null) return;
+    if (layer == null) {
+      return;
+    }
     layer.contents().put(new ZLayerPosition(x, y), new TextCharacter(ch, fg, bg));
   }
 
@@ -183,7 +191,9 @@ public final class RenderManager {
       int layerIdx, int x1, int y1, int x2, int y2, TextColor fg, TextColor bg) {
 
     ZLayerData layer = getLayer(layerIdx);
-    if (layer == null) return;
+    if (layer == null) {
+      return;
+    }
 
     // top & bottom horizontal lines
     for (int x = x1 + 1; x < x2; x++) {
@@ -225,7 +235,9 @@ public final class RenderManager {
   public static void drawCenteredTextBlock(int layerIdx, String[] lines, boolean rainbowHeader) {
 
     Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
-    if (screen == null) return;
+    if (screen == null) {
+      return;
+    }
 
     drawCenteredTextBlock(layerIdx, screen, lines, rainbowHeader);
   }
@@ -234,7 +246,9 @@ public final class RenderManager {
   static void drawCenteredTextBlock(
       int layerIdx, Screen screen, String[] lines, boolean rainbowHeader) {
 
-    if (screen == null) return;
+    if (screen == null) {
+      return;
+    }
 
     int cols = screen.getTerminalSize().getColumns();
     int rows = screen.getTerminalSize().getRows();
@@ -280,7 +294,9 @@ public final class RenderManager {
       int layerIdx, int contentWidth, int contentHeight, TextColor fg, TextColor bg) {
 
     Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
-    if (screen == null) return;
+    if (screen == null) {
+      return;
+    }
 
     drawCenteredBox(layerIdx, screen, contentWidth, contentHeight, fg, bg);
   }
@@ -294,7 +310,9 @@ public final class RenderManager {
       TextColor fg,
       TextColor bg) {
 
-    if (screen == null) return;
+    if (screen == null) {
+      return;
+    }
 
     int cols = screen.getTerminalSize().getColumns();
     int rows = screen.getTerminalSize().getRows();

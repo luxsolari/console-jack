@@ -36,7 +36,9 @@ public class PauseState implements LoopableState {
       return;
     }
     KeyStroke ks = InputManager.poll();
-    if (ks == null) return;
+    if (ks == null) {
+      return;
+    }
     if (ks.getKeyType() == KeyType.EOF) {
       MasterSubsystem.INSTANCE.stop();
       return;
@@ -51,7 +53,8 @@ public class PauseState implements LoopableState {
           StateMachineManager.clear();
           StateMachineManager.push(new MainMenuState());
         }
-        default -> {}
+        default -> {
+        }
       }
     } else if (ks.getKeyType() == KeyType.Escape) {
       StateMachineManager.pop();

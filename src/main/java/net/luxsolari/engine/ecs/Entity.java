@@ -17,24 +17,37 @@ public class Entity {
   private final Map<Class<? extends Component>, Component> components = new HashMap<>();
 
   /**
+   * Gets the unique integer identifier for this entity.
+   *
    * @return unique integer identifier
    */
   public int id() {
     return id;
   }
 
-  /** Attach a component to this entity (replaces existing of same type). */
+  /** 
+   * Attach a component to this entity (replaces existing of same type).
+   *
+   * @param component the component to attach to this entity
+   */
   public <T extends Component> void add(T component) {
     components.put(component.getClass(), component);
   }
 
-  /** Retrieve a component of the requested type (null if missing). */
+  /** 
+   * Retrieve a component of the requested type (null if missing).
+   *
+   * @param type the class type of the component to retrieve
+   * @return the component instance or null if not found
+   */
   @SuppressWarnings("unchecked")
   public <T extends Component> T get(Class<T> type) {
     return (T) components.get(type);
   }
 
   /**
+   * Checks if this entity has a component of the given type.
+   *
    * @return true when this entity owns a component of the given type.
    */
   public boolean has(Class<? extends Component> type) {

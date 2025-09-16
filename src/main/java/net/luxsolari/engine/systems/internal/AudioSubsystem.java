@@ -12,6 +12,7 @@ import net.luxsolari.engine.systems.Subsystem;
  * Item 3. It manages audio initialization, lifecycle control and update logic for all in-game
  * sounds.
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public enum AudioSubsystem implements Subsystem {
   INSTANCE;
 
@@ -31,6 +32,11 @@ public enum AudioSubsystem implements Subsystem {
   // Current BGM tracking
   private AudioCue currentBGM = null;
 
+  /**
+   * Returns whether the audio subsystem is currently running.
+   *
+   * @return true if the subsystem is running, false otherwise
+   */
   public boolean running() {
     return running;
   }
@@ -60,7 +66,6 @@ public enum AudioSubsystem implements Subsystem {
     }
 
     while (running) {
-      // TODO Add audio update logic here.
       try {
         Thread.sleep(16); // ~60fps, prevents busy-wait
       } catch (InterruptedException ie) {

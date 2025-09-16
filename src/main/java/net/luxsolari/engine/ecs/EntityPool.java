@@ -14,7 +14,11 @@ public class EntityPool {
 
   private final List<Entity> entities = new ArrayList<>();
 
-  /** Creates and registers a new {@link Entity}. */
+  /** 
+   * Creates and registers a new Entity in the pool.
+   *
+   * @return newly created entity
+   */
   public Entity create() {
     Entity e = new Entity();
     entities.add(e);
@@ -22,6 +26,8 @@ public class EntityPool {
   }
 
   /**
+   * Gets an immutable snapshot of all entities in the pool.
+   *
    * @return immutable snapshot of all entities.
    */
   public List<Entity> all() {
@@ -29,8 +35,13 @@ public class EntityPool {
   }
 
   /**
-   * Returns entities that possess <em>all</em> of the requested component types. Simple linear
+   * Filters entities that possess all of the requested component types.
+   *
+   * <p>Returns entities that possess <em>all</em> of the requested component types. Simple linear
    * filter—good enough for small entity counts.
+   *
+   * @param types the component types to filter by
+   * @return list of entities that have all the specified components
    */
   @SafeVarargs
   public final List<Entity> with(Class<? extends Component>... types) {
@@ -38,8 +49,12 @@ public class EntityPool {
   }
 
   /**
-   * Clears entities from the pool of the requested component types. Simple linear filter—good
+   * Removes entities from the pool that have all specified component types.
+   * 
+   * <p>Clears entities from the pool of the requested component types. Simple linear filter—good
    * enough for small entity counts.
+   *
+   * @param types the component types to filter by for removal
    */
   @SafeVarargs
   public final void removeWith(Class<? extends Component>... types) {
