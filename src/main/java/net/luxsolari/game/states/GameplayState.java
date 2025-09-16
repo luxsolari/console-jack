@@ -115,7 +115,10 @@ public class GameplayState implements LoopableState {
 
     // 2. Create the entity and its components
     Entity cardEntity = entityPool.create();
-    cardEntity.add(new Position(0, 0)); // Start at origin, repositioning will handle it
+    int cardCount = entityPool.with(CardSprite.class).size();
+    int x = 2 + cardCount * CardArt.CARD_COLS; // spacing of CARD_COLS
+    int y = 2;
+    cardEntity.add(new Position(x, y));
     if (card.rank() == Card.Rank.JOKER) {
       cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
     } else {
@@ -150,7 +153,8 @@ public class GameplayState implements LoopableState {
     int screenHeight = terminalSize.getRows();
 
     int cardSpacing = CardArt.CARD_COLS + 2;
-    int totalCardsWidth = cardEntities.isEmpty() ? 0 : (cardEntities.size() - 1) * cardSpacing + CardArt.CARD_COLS;
+    int totalCardsWidth = cardEntities.isEmpty() ? 0 : 
+        (cardEntities.size() - 1) * cardSpacing + CardArt.CARD_COLS;
     int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
     int startY = Math.max(0, (screenHeight / 2) + 5);
 
