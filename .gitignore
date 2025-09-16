@@ -47,3 +47,4 @@ build/
 ## Claude Code ##
 .history/
 /src/main/java/net/luxsolari/game/states/.editorconfig
+docs/tasks.md

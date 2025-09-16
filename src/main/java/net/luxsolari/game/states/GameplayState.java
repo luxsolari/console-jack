@@ -1,7 +1,9 @@
 package net.luxsolari.game.states;
 
+import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import net.luxsolari.engine.ecs.Entity;
@@ -14,6 +16,7 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
+import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
@@ -25,14 +28,12 @@ public class GameplayState implements LoopableState {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private Random random;
-  private int cardsCreated = 0;
   private static final int CARD_LAYER = 2;
 
   @Override
   public void start() {
     LOGGER.info("Gameplay started");
     random = new Random();
-    cardsCreated = 0;
     AudioManager.playBGM("menu_theme_2", true);
   }
 
@@ -83,12 +84,7 @@ public class GameplayState implements LoopableState {
 
   @Override
   public void render() {
-    RenderManager.clear(RenderManager.UI_LAYER);
-    if (!renderReady()) {
-      return;
-    }
-    String[] lines = {" Gameplay state ", "Press P or Q or Esc to pause", "Press 1 to create a card", "Press 2 to clear cards"};
-    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
+    redrawLayers();
   }
 
   @Override
@@ -97,6 +93,7 @@ public class GameplayState implements LoopableState {
     // In a real game, we might want to clean up entities created in this state.
     // For this demo, we'll let them persist.
     clearCards(); // just for this demo.
+    RenderManager.clear(RenderManager.UI_LAYER); // Clear the text UI
     AudioManager.stopBGM();
   }
 
@@ -104,7 +101,6 @@ public class GameplayState implements LoopableState {
     RenderManager.clear(CARD_LAYER);
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
     entityPool.removeWith(CardSprite.class);
-    cardsCreated = 0;
   }
 
   private void createRandomCardEntity() {
@@ -119,18 +115,74 @@ public class GameplayState implements LoopableState {
 
     // 2. Create the entity and its components
     Entity cardEntity = entityPool.create();
+    int cardCount = entityPool.with(CardSprite.class).size(); // existing cards count
+
+    // Compute initial position consistent with redrawLayers using shared helper
+    CardLayout layout = computeCardLayout(cardCount + 1);
+    int x = layout.startX + cardCount * layout.cardSpacing;
+    int y = layout.startY;
+    cardEntity.add(new Position(x, y));
     if (card.rank() == Card.Rank.JOKER) {
       cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
     } else {
       cardEntity.add(new CardSprite(CardArt.fromCard(card), CardArt.defaultBack(), true));
     }
-    // Position cards in a row
-    int cardSpacing = CardArt.CARD_COLS + 2;
-    int startX = 5;
-    int startY = 15;
-    cardEntity.add(new Position(startX + (cardsCreated * cardSpacing), startY + 5));
     cardEntity.add(new Layer(CARD_LAYER));
-
-    cardsCreated++;
   }
+
+  private void redrawLayers() {
+    if (!renderReady()) {
+      return;
+    }
+
+    RenderManager.clear(CARD_LAYER);
+
+    // Reposition centered text
+    RenderManager.clear(RenderManager.UI_LAYER);
+    String[] lines = {
+      " Gameplay state ",
+      "Press P or Q or Esc to pause",
+      "Press 1 to create a card",
+      "Press 2 to clear cards"
+    };
+    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
+
+    // Reposition cards
+    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
+    List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class);
+
+    CardLayout layout = computeCardLayout(cardEntities.size());
+    int currentX = layout.startX;
+    for (Entity cardEntity : cardEntities) {
+      cardEntity.add(new Position(currentX, layout.startY));
+      currentX += layout.cardSpacing;
+    }
+  }
+
+  // Small helper for consistent layout calculations between creation and redraw
+  private CardLayout computeCardLayout(int cardCount) {
+    TerminalSize terminalSize = RenderSubsystem.INSTANCE.mainScreen().get().getTerminalSize();
+    int screenWidth = terminalSize.getColumns();
+    int screenHeight = terminalSize.getRows();
+
+    int cardSpacing = CardArt.CARD_COLS + 2;
+    int totalCardsWidth = (cardCount <= 0) ? 0 : (cardCount - 1) * cardSpacing + CardArt.CARD_COLS;
+    int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
+    int startY = Math.max(0, (screenHeight / 2) + 5);
+
+    return new CardLayout(startX, startY, cardSpacing);
+  }
+
+  private static class CardLayout {
+    final int startX;
+    final int startY;
+    final int cardSpacing;
+
+    CardLayout(int startX, int startY, int cardSpacing) {
+      this.startX = startX;
+      this.startY = startY;
+      this.cardSpacing = cardSpacing;
+    }
+  }
+
 }
