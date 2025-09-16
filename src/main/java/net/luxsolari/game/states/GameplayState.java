@@ -150,9 +150,9 @@ public class GameplayState implements LoopableState {
     int screenHeight = terminalSize.getRows();
 
     int cardSpacing = CardArt.CARD_COLS + 2;
-    int totalCardsWidth = cardEntities.size() * cardSpacing;
-    int startX = (screenWidth - totalCardsWidth) / 2;
-    int startY = (screenHeight / 2) + 5;
+    int totalCardsWidth = cardEntities.isEmpty() ? 0 : (cardEntities.size() - 1) * cardSpacing + CardArt.CARD_COLS;
+    int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
+    int startY = Math.max(0, (screenHeight / 2) + 5);
 
     int currentX = startX;
     for (Entity cardEntity : cardEntities) {
