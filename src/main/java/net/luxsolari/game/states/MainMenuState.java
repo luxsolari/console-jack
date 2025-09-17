@@ -9,6 +9,7 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
+import net.luxsolari.engine.ui.Menu;
 
 /**
  * Represents the main menu state of the game. This state handles the display and interaction of the
@@ -20,11 +21,24 @@ public class MainMenuState implements LoopableState {
   private static final String TAG = MainMenuState.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
   private boolean running = true;
+  private Menu mainMenu;
 
   @Override
   public void start() {
     LOGGER.info("Main menu started");
     AudioManager.playBGM("menu_theme", true);
+
+    // Initialize the main menu
+    mainMenu = new Menu("Main Menu")
+        .addItem("Start Game", () -> {
+          StateMachineManager.replace(new GameplayState());
+          this.running = false;
+        })
+        .addItem("Options", this::showOptions)
+        .addItem("Quit", () -> MasterSubsystem.INSTANCE.stop())
+        .setBorder(true);
+
+    mainMenu.focus();
   }
 
   @Override
@@ -41,7 +55,7 @@ public class MainMenuState implements LoopableState {
 
   @Override
   public void handleInput() {
-    if (!renderReady() || !running) {
+    if (!renderReady() || !running || mainMenu == null) {
       return;
     }
 
@@ -50,20 +64,14 @@ public class MainMenuState implements LoopableState {
       return;
     }
 
-    if (ks.getKeyType() == KeyType.Character) {
-      char c = Character.toUpperCase(ks.getCharacter());
-      switch (c) {
-        case 'G', '\r' -> {
-          StateMachineManager.replace(new GameplayState());
-          this.running = false;
-        }
-        case 'Q' -> MasterSubsystem.INSTANCE.stop();
-        default -> {
-        }
-      }
-    } else if (ks.getKeyType() == KeyType.EOF) {
+    // Handle EOF to quit
+    if (ks.getKeyType() == KeyType.EOF) {
       MasterSubsystem.INSTANCE.stop();
+      return;
     }
+
+    // Delegate input handling to the menu
+    mainMenu.handleInput(ks);
   }
 
   @Override
@@ -78,16 +86,20 @@ public class MainMenuState implements LoopableState {
 
   private void redrawLayers() {
     RenderManager.clear(RenderManager.UI_LAYER);
-    if (!renderReady()) {
+    if (!renderReady() || mainMenu == null) {
       return;
     }
-    String[] lines = {"Main Menu", "Press G to start game", "Press Q to quit"};
-    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
+    mainMenu.render(RenderManager.UI_LAYER);
   }
 
   @Override
   public void end() {
     LOGGER.info("Main menu ended");
     AudioManager.stopBGM();
+  }
+
+  private void showOptions() {
+    // Placeholder for options menu - could push an OptionsState or show dialog
+    LOGGER.info("Options menu requested - not implemented yet");
   }
 }
