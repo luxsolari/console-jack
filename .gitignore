@@ -50,3 +50,6 @@ build/
 docs/tasks.md
 .claude/settings.local.json
 .claude/
+
+## Serena ##
+.serena/
