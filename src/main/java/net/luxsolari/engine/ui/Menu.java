@@ -20,6 +20,10 @@ public class Menu extends UIContainer implements Focusable {
   private boolean layoutDirty = true; // Track when layout needs update
   private int cachedScreenWidth = -1;
   private int cachedScreenHeight = -1;
+  private int cachedMenuWidth = -1;
+  private int cachedMenuHeight = -1;
+  private long lastLayoutUpdate = 0L; // Timestamp of last layout calculation
+  private static final long LAYOUT_THROTTLE_MS = 16L; // ~60 FPS throttling
 
   /**
    * Creates a menu with the specified title.
@@ -54,7 +58,7 @@ public class Menu extends UIContainer implements Focusable {
   public Menu addItem(String text, MenuAction action) {
     MenuItem item = new MenuItem(0, 0, text, action);
     addChild(item);
-    layoutDirty = true; // Mark layout as needing update
+    invalidateLayout(); // Mark layout as needing update
     return this;
   }
 
@@ -65,8 +69,10 @@ public class Menu extends UIContainer implements Focusable {
    * @return this menu for method chaining
    */
   public Menu setBorder(boolean showBorder) {
-    this.showBorder = showBorder;
-    layoutDirty = true; // Mark layout as needing update
+    if (this.showBorder != showBorder) {
+      this.showBorder = showBorder;
+      invalidateLayout(); // Mark layout as needing update
+    }
     return this;
   }
 
@@ -77,9 +83,11 @@ public class Menu extends UIContainer implements Focusable {
    * @return this menu for method chaining
    */
   public Menu setCenterOnScreen(boolean centerOnScreen) {
-    this.centerOnScreen = centerOnScreen;
-    if (centerOnScreen) {
-      layoutDirty = true; // Mark layout as needing update
+    if (this.centerOnScreen != centerOnScreen) {
+      this.centerOnScreen = centerOnScreen;
+      if (centerOnScreen) {
+        invalidateLayout(); // Mark layout as needing update
+      }
     }
     return this;
   }
@@ -97,9 +105,16 @@ public class Menu extends UIContainer implements Focusable {
   @Override
   public void focus() {
     focused = true;
-    // Auto-focus first menu item if none is focused
+    // Auto-focus first focusable menu item if none is focused
     if (focusedIndex < 0 && !children.isEmpty()) {
-      focusNext();
+      // Find the first focusable item
+      for (int i = 0; i < children.size(); i++) {
+        UIComponent child = children.get(i);
+        if (child instanceof Focusable focusable && focusable.canFocus()) {
+          setFocusToChild(child);
+          break;
+        }
+      }
     }
   }
 
@@ -120,7 +135,13 @@ public class Menu extends UIContainer implements Focusable {
 
   @Override
   public boolean canFocus() {
-    return isVisible() && !children.isEmpty();
+    if (!isVisible() || children.isEmpty()) {
+      return false;
+    }
+    
+    // Can only focus if at least one child is focusable
+    return children.stream()
+        .anyMatch(child -> child instanceof Focusable f && f.canFocus());
   }
 
   @Override
@@ -129,10 +150,27 @@ public class Menu extends UIContainer implements Focusable {
       return false;
     }
 
-    if (keyStroke.getKeyType() == KeyType.ArrowUp) {
-      return focusPrevious();
-    } else if (keyStroke.getKeyType() == KeyType.ArrowDown) {
-      return focusNext();
+    switch (keyStroke.getKeyType()) {
+      case ArrowUp:
+        return focusPrevious();
+      case ArrowDown:
+        return focusNext();
+      case Enter:
+        // Execute action of focused menu item
+        MenuItem selected = getSelectedItem();
+        if (selected != null && selected.getAction() != null) {
+          selected.getAction().execute();
+          return true;
+        }
+        break;
+      case Home:
+        // Focus first item
+        return focusFirstItem();
+      case End:
+        // Focus last item
+        return focusLastItem();
+      default:
+        break;
     }
 
     return false;
@@ -144,10 +182,16 @@ public class Menu extends UIContainer implements Focusable {
       return;
     }
 
-    // Only update layout if needed or screen size changed
-    if (layoutDirty || (centerOnScreen && hasScreenSizeChanged())) {
+    // Only update layout if needed, screen size changed, or enough time has passed
+    long currentTime = System.currentTimeMillis();
+    boolean shouldUpdate = layoutDirty || 
+                          (centerOnScreen && hasScreenSizeChanged()) ||
+                          (currentTime - lastLayoutUpdate > LAYOUT_THROTTLE_MS && layoutDirty);
+    
+    if (shouldUpdate) {
       updateLayout();
       layoutDirty = false;
+      lastLayoutUpdate = currentTime;
     }
 
     // Render title
@@ -169,16 +213,10 @@ public class Menu extends UIContainer implements Focusable {
       return;
     }
 
-    // Calculate dimensions
-    int maxItemWidth = title != null ? title.length() : 0;
-    for (UIComponent child : children) {
-      if (child instanceof MenuItem menuItem) {
-        maxItemWidth = Math.max(maxItemWidth, menuItem.getText().length());
-      }
-    }
-
-    int menuWidth = maxItemWidth + (showBorder ? 4 : 2); // padding
-    int menuHeight = children.size() + (title != null ? 3 : 1) + (showBorder ? 2 : 0); // title + items + padding + border
+    // Use cached dimensions calculation
+    calculateMenuDimensions();
+    int menuWidth = cachedMenuWidth;
+    int menuHeight = cachedMenuHeight;
 
     // Update menu size
     setSize(menuWidth, menuHeight);
@@ -209,6 +247,44 @@ public class Menu extends UIContainer implements Focusable {
   }
 
   /**
+   * Focuses the first focusable menu item.
+   *
+   * @return true if focus was set, false if no focusable items exist
+   */
+  private boolean focusFirstItem() {
+    for (UIComponent child : children) {
+      if (child instanceof Focusable focusable && focusable.canFocus()) {
+        return setFocusToChild(child);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Focuses the last focusable menu item.
+   *
+   * @return true if focus was set, false if no focusable items exist
+   */
+  private boolean focusLastItem() {
+    for (int i = children.size() - 1; i >= 0; i--) {
+      UIComponent child = children.get(i);
+      if (child instanceof Focusable focusable && focusable.canFocus()) {
+        return setFocusToChild(child);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Invalidates the current layout, forcing a recalculation on the next render.
+   */
+  private void invalidateLayout() {
+    layoutDirty = true;
+    cachedMenuWidth = -1;
+    cachedMenuHeight = -1;
+  }
+
+  /**
    * Checks if the screen size has changed since the last layout update.
    *
    * @return true if the screen size has changed, false otherwise
@@ -221,5 +297,25 @@ public class Menu extends UIContainer implements Focusable {
       return currentWidth != cachedScreenWidth || currentHeight != cachedScreenHeight;
     }
     return false;
+  }
+
+  /**
+   * Optimized layout calculation with caching to prevent redundant calculations.
+   */
+  private void calculateMenuDimensions() {
+    if (cachedMenuWidth != -1 && cachedMenuHeight != -1 && !layoutDirty) {
+      return; // Use cached values
+    }
+
+    // Calculate dimensions
+    int maxItemWidth = title != null ? title.length() : 0;
+    for (UIComponent child : children) {
+      if (child instanceof MenuItem menuItem) {
+        maxItemWidth = Math.max(maxItemWidth, menuItem.getText().length());
+      }
+    }
+
+    cachedMenuWidth = maxItemWidth + (showBorder ? 4 : 2); // padding
+    cachedMenuHeight = children.size() + (title != null ? 3 : 1) + (showBorder ? 2 : 0);
   }
 }

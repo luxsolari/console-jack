@@ -10,6 +10,7 @@ import java.util.List;
  */
 public abstract class UIContainer extends UIWidget implements InputHandler {
 
+  private static final int MAX_RENDER_DEPTH = 50; // Prevent stack overflow
   protected final List<UIComponent> children = new ArrayList<>();
   protected int focusedIndex = -1;
 
@@ -55,11 +56,8 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
     int index = children.indexOf(child);
     if (index >= 0) {
       children.remove(index);
-      if (focusedIndex >= index && focusedIndex > 0) {
-        focusedIndex--;
-      } else if (focusedIndex >= children.size()) {
-        focusedIndex = children.size() - 1;
-      }
+      // Properly validate and adjust focus index
+      validateAndAdjustFocusIndex();
       return true;
     }
     return false;
@@ -80,6 +78,7 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
    * @return the focused component, or null if no component is focused
    */
   public UIComponent getFocusedChild() {
+    validateAndAdjustFocusIndex();
     if (focusedIndex >= 0 && focusedIndex < children.size()) {
       return children.get(focusedIndex);
     }
@@ -166,15 +165,32 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
 
   @Override
   public void render(int layerIdx) {
-    if (!visible) {
+    render(layerIdx, 0);
+  }
+
+  /**
+   * Renders the container with depth tracking to prevent infinite recursion.
+   *
+   * @param layerIdx the layer index to render on
+   * @param depth the current rendering depth
+   */
+  protected void render(int layerIdx, int depth) {
+    if (!visible || depth >= MAX_RENDER_DEPTH) {
+      if (depth >= MAX_RENDER_DEPTH) {
+        System.err.println("Warning: Maximum render depth exceeded for " + getClass().getSimpleName());
+      }
       return;
     }
 
     doRender(layerIdx);
 
-    // Render all children
+    // Render all children with incremented depth
     for (UIComponent child : children) {
-      child.render(layerIdx);
+      if (child instanceof UIContainer container) {
+        container.render(layerIdx, depth + 1);
+      } else {
+        child.render(layerIdx);
+      }
     }
   }
 
@@ -190,6 +206,44 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
 
     // If child didn't handle it, try container-specific input handling
     return handleContainerInput(keyStroke);
+  }
+
+  /**
+   * Validates and adjusts the focus index to ensure it's within valid bounds.
+   * This prevents index out of bounds exceptions and maintains focus consistency.
+   */
+  private void validateAndAdjustFocusIndex() {
+    if (children.isEmpty()) {
+      focusedIndex = -1;
+      return;
+    }
+
+    // Clamp focus index to valid range
+    if (focusedIndex >= children.size()) {
+      focusedIndex = children.size() - 1;
+    } else if (focusedIndex < -1) {
+      focusedIndex = -1;
+    }
+
+    // If focused index points to a non-focusable component, find the next focusable one
+    if (focusedIndex >= 0 && focusedIndex < children.size()) {
+      UIComponent focused = children.get(focusedIndex);
+      if (!(focused instanceof Focusable focusable) || !focusable.canFocus()) {
+        // Try to find next focusable component
+        boolean foundFocusable = false;
+        for (int i = 0; i < children.size(); i++) {
+          UIComponent child = children.get(i);
+          if (child instanceof Focusable f && f.canFocus()) {
+            focusedIndex = i;
+            foundFocusable = true;
+            break;
+          }
+        }
+        if (!foundFocusable) {
+          focusedIndex = -1;
+        }
+      }
+    }
   }
 
   /**
