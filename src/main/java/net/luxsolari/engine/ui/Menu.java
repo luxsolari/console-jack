@@ -17,6 +17,9 @@ public class Menu extends UIContainer implements Focusable {
   private boolean focused = false;
   private boolean showBorder = true;
   private boolean centerOnScreen = true;
+  private boolean layoutDirty = true; // Track when layout needs update
+  private int cachedScreenWidth = -1;
+  private int cachedScreenHeight = -1;
 
   /**
    * Creates a menu with the specified title.
@@ -51,7 +54,7 @@ public class Menu extends UIContainer implements Focusable {
   public Menu addItem(String text, MenuAction action) {
     MenuItem item = new MenuItem(0, 0, text, action);
     addChild(item);
-    updateLayout();
+    layoutDirty = true; // Mark layout as needing update
     return this;
   }
 
@@ -63,7 +66,7 @@ public class Menu extends UIContainer implements Focusable {
    */
   public Menu setBorder(boolean showBorder) {
     this.showBorder = showBorder;
-    updateLayout();
+    layoutDirty = true; // Mark layout as needing update
     return this;
   }
 
@@ -76,7 +79,7 @@ public class Menu extends UIContainer implements Focusable {
   public Menu setCenterOnScreen(boolean centerOnScreen) {
     this.centerOnScreen = centerOnScreen;
     if (centerOnScreen) {
-      updateLayout();
+      layoutDirty = true; // Mark layout as needing update
     }
     return this;
   }
@@ -141,8 +144,10 @@ public class Menu extends UIContainer implements Focusable {
       return;
     }
 
-    if (centerOnScreen) {
+    // Only update layout if needed or screen size changed
+    if (layoutDirty || (centerOnScreen && hasScreenSizeChanged())) {
       updateLayout();
+      layoutDirty = false;
     }
 
     // Render title
@@ -180,10 +185,13 @@ public class Menu extends UIContainer implements Focusable {
 
     // Position menu on screen if centering is enabled
     if (centerOnScreen) {
+      // Use thread-safe approach with AtomicReference
       Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
       if (screen != null) {
         int screenWidth = screen.getTerminalSize().getColumns();
         int screenHeight = screen.getTerminalSize().getRows();
+        cachedScreenWidth = screenWidth;
+        cachedScreenHeight = screenHeight;
         int centerX = (screenWidth - menuWidth) / 2;
         int centerY = (screenHeight - menuHeight) / 2;
         setPosition(centerX, centerY);
@@ -198,5 +206,20 @@ public class Menu extends UIContainer implements Focusable {
       UIComponent child = children.get(i);
       child.setPosition(itemX, itemY + i);
     }
+  }
+
+  /**
+   * Checks if the screen size has changed since the last layout update.
+   *
+   * @return true if the screen size has changed, false otherwise
+   */
+  private boolean hasScreenSizeChanged() {
+    Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
+    if (screen != null) {
+      int currentWidth = screen.getTerminalSize().getColumns();
+      int currentHeight = screen.getTerminalSize().getRows();
+      return currentWidth != cachedScreenWidth || currentHeight != cachedScreenHeight;
+    }
+    return false;
   }
 }

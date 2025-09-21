@@ -96,10 +96,68 @@ public class MainMenuState implements LoopableState {
   public void end() {
     LOGGER.info("Main menu ended");
     AudioManager.stopBGM();
+    
+    // Clean up menu resources
+    if (mainMenu != null) {
+      mainMenu.unfocus();
+      mainMenu = null;
+    }
   }
 
   private void showOptions() {
-    // Placeholder for options menu - could push an OptionsState or show dialog
-    LOGGER.info("Options menu requested - not implemented yet");
+    // Show a "Coming Soon" message for now
+    LOGGER.info("Options menu requested - coming soon");
+    
+    // Create a temporary dialog to show the message
+    Menu comingSoonDialog = new Menu("Options")
+        .addItem("Coming Soon!", () -> {})
+        .addItem("Back", () -> {
+          // Just close the dialog by doing nothing
+          // The main menu will regain focus
+        })
+        .setBorder(true);
+    
+    // Push a temporary state to show the dialog
+    StateMachineManager.push(new LoopableState() {
+      private boolean active = true;
+      
+      @Override
+      public void start() {
+        comingSoonDialog.focus();
+      }
+      
+      @Override
+      public void handleInput() {
+        KeyStroke ks = InputManager.poll();
+        if (ks != null) {
+          if (ks.getKeyType() == KeyType.Escape || ks.getKeyType() == KeyType.Enter) {
+            active = false;
+            StateMachineManager.pop();
+          } else {
+            comingSoonDialog.handleInput(ks);
+          }
+        }
+      }
+      
+      @Override
+      public void update() {}
+      
+      @Override
+      public void render() {
+        RenderManager.clear(RenderManager.UI_LAYER + 1);
+        comingSoonDialog.render(RenderManager.UI_LAYER + 1);
+      }
+      
+      @Override
+      public void end() {
+        comingSoonDialog.unfocus();
+      }
+      
+      @Override
+      public void pause() {}
+      
+      @Override
+      public void resume() {}
+    });
   }
 }
