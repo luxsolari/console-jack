@@ -109,7 +109,7 @@ public class MainMenuState implements LoopableState {
    */
   private void hideMainMenu() {
     // Ensure all UI layers are completely cleared
-    for (int layer = RenderManager.UI_LAYER; layer <= RenderManager.getLayerCount(); layer++) {
+    for (int layer = RenderManager.UI_LAYER; layer < RenderManager.getLayerCount(); layer++) {
       RenderManager.clear(layer);
     }
   }
