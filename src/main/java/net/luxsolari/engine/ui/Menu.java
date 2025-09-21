@@ -17,13 +17,13 @@ public class Menu extends UIContainer implements Focusable {
   private boolean focused = false;
   private boolean showBorder = true;
   private boolean centerOnScreen = true;
-  private boolean layoutDirty = true; // Track when layout needs update
-  private int cachedScreenWidth = -1;
-  private int cachedScreenHeight = -1;
-  private int cachedMenuWidth = -1;
-  private int cachedMenuHeight = -1;
-  private long lastLayoutUpdate = 0L; // Timestamp of last layout calculation
-  private static final long LAYOUT_THROTTLE_MS = 16L; // ~60 FPS throttling
+  private volatile boolean layoutDirty = true; // Track when layout needs update
+  private volatile int cachedScreenWidth = -1;
+  private volatile int cachedScreenHeight = -1;
+  private volatile int cachedMenuWidth = -1;
+  private volatile int cachedMenuHeight = -1;
+  private volatile long lastLayoutUpdate = 0L; // Timestamp of last layout calculation
+  private static final long LAYOUT_THROTTLE_MS = 125L; // Align with 8 UPS game loop timing
 
   /**
    * Creates a menu with the specified title.
@@ -127,6 +127,23 @@ public class Menu extends UIContainer implements Focusable {
       focusable.unfocus();
     }
   }
+  
+  /**
+   * Completely resets the focus state of this menu and all its children.
+   * This is useful when transitioning between states to ensure a clean focus state.
+   */
+  public void resetFocus() {
+    // Unfocus all children first
+    for (UIComponent child : children) {
+      if (child instanceof Focusable focusable) {
+        focusable.unfocus();
+      }
+    }
+    
+    // Reset focus index
+    focusedIndex = -1;
+    focused = false;
+  }
 
   @Override
   public boolean isFocused() {
@@ -182,11 +199,13 @@ public class Menu extends UIContainer implements Focusable {
       return;
     }
 
-    // Only update layout if needed, screen size changed, or enough time has passed
+    // Only update layout if needed and enough time has passed since last update
     long currentTime = System.currentTimeMillis();
-    boolean shouldUpdate = layoutDirty || 
-                          (centerOnScreen && hasScreenSizeChanged()) ||
-                          (currentTime - lastLayoutUpdate > LAYOUT_THROTTLE_MS && layoutDirty);
+    boolean timeThresholdMet = currentTime - lastLayoutUpdate > LAYOUT_THROTTLE_MS;
+    boolean screenSizeChanged = centerOnScreen && hasScreenSizeChanged();
+    
+    // Optimize condition logic - only check what's necessary
+    boolean shouldUpdate = (layoutDirty && timeThresholdMet) || screenSizeChanged;
     
     if (shouldUpdate) {
       updateLayout();
@@ -226,13 +245,17 @@ public class Menu extends UIContainer implements Focusable {
       // Use thread-safe approach with AtomicReference
       Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
       if (screen != null) {
-        int screenWidth = screen.getTerminalSize().getColumns();
-        int screenHeight = screen.getTerminalSize().getRows();
-        cachedScreenWidth = screenWidth;
-        cachedScreenHeight = screenHeight;
-        int centerX = (screenWidth - menuWidth) / 2;
-        int centerY = (screenHeight - menuHeight) / 2;
-        setPosition(centerX, centerY);
+        // Add null check for getTerminalSize() to prevent NPE
+        var terminalSize = screen.getTerminalSize();
+        if (terminalSize != null) {
+          int screenWidth = terminalSize.getColumns();
+          int screenHeight = terminalSize.getRows();
+          cachedScreenWidth = screenWidth;
+          cachedScreenHeight = screenHeight;
+          int centerX = (screenWidth - menuWidth) / 2;
+          int centerY = (screenHeight - menuHeight) / 2;
+          setPosition(centerX, centerY);
+        }
       }
     }
 
@@ -292,9 +315,12 @@ public class Menu extends UIContainer implements Focusable {
   private boolean hasScreenSizeChanged() {
     Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
     if (screen != null) {
-      int currentWidth = screen.getTerminalSize().getColumns();
-      int currentHeight = screen.getTerminalSize().getRows();
-      return currentWidth != cachedScreenWidth || currentHeight != cachedScreenHeight;
+      var terminalSize = screen.getTerminalSize();
+      if (terminalSize != null) {
+        int currentWidth = terminalSize.getColumns();
+        int currentHeight = terminalSize.getRows();
+        return currentWidth != cachedScreenWidth || currentHeight != cachedScreenHeight;
+      }
     }
     return false;
   }

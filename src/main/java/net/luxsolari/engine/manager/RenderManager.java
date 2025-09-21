@@ -88,6 +88,10 @@ public final class RenderManager {
     }
   }
 
+  public static int getLayerCount() {
+    return RenderSubsystem.MAX_LAYERS;
+  }
+
   /* ======================================================================== */
   /*                              GLYPH HELPERS                               */
   /* ======================================================================== */

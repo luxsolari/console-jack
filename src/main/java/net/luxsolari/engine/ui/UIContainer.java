@@ -13,6 +13,10 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
   private static final int MAX_RENDER_DEPTH = 50; // Prevent stack overflow
   protected final List<UIComponent> children = new ArrayList<>();
   protected int focusedIndex = -1;
+  
+  // Cache for focusable children to avoid repeated list creation
+  private List<UIComponent> focusableChildrenCache = null;
+  private boolean focusableCacheDirty = true;
 
   /**
    * Creates a container with the specified bounds.
@@ -43,6 +47,7 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
    */
   public UIContainer addChild(UIComponent child) {
     children.add(child);
+    focusableCacheDirty = true; // Invalidate cache
     return this;
   }
 
@@ -58,6 +63,7 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
       children.remove(index);
       // Properly validate and adjust focus index
       validateAndAdjustFocusIndex();
+      focusableCacheDirty = true; // Invalidate cache
       return true;
     }
     return false;
@@ -120,6 +126,14 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
   }
 
   /**
+   * Invalidates the focusable children cache.
+   * Call this method when a child's focusable status might have changed.
+   */
+  protected void invalidateFocusableCache() {
+    focusableCacheDirty = true;
+  }
+  
+  /**
    * Sets focus to a specific child component.
    *
    * @param child the component to focus
@@ -150,9 +164,18 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
   }
 
   private List<UIComponent> getFocusableChildren() {
-    return children.stream()
+    // Return cached result if available and valid
+    if (!focusableCacheDirty && focusableChildrenCache != null) {
+      return focusableChildrenCache;
+    }
+    
+    // Generate and cache the result
+    focusableChildrenCache = children.stream()
         .filter(child -> child instanceof Focusable focusable && focusable.canFocus())
         .toList();
+    focusableCacheDirty = false;
+    
+    return focusableChildrenCache;
   }
 
   private int getCurrentFocusableIndex(List<UIComponent> focusableChildren) {
@@ -215,6 +238,7 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
   private void validateAndAdjustFocusIndex() {
     if (children.isEmpty()) {
       focusedIndex = -1;
+      invalidateFocusableCache();
       return;
     }
 

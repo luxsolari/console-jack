@@ -12,6 +12,7 @@ import net.luxsolari.engine.manager.RenderManager;
 public class MenuItem extends UIWidget implements Focusable, InputHandler {
 
   private final String text;
+  private final String focusedText; // Pre-computed text for focused state
   private final MenuAction action;
   private boolean focused = false;
 
@@ -29,8 +30,9 @@ public class MenuItem extends UIWidget implements Focusable, InputHandler {
    * @param action the action to execute when activated
    */
   public MenuItem(int x, int y, String text, MenuAction action) {
-    super(x, y, text.length(), 1);
+    super(x, y, text.length() + 2, 1); // +2 for '>' and '<' markers
     this.text = text;
+    this.focusedText = ">" + text + "<"; // Pre-compute focused text
     this.action = action;
   }
 
@@ -102,9 +104,9 @@ public class MenuItem extends UIWidget implements Focusable, InputHandler {
     TextColor fg = focused ? FOCUSED_FG : NORMAL_FG;
     TextColor bg = focused ? FOCUSED_BG : NORMAL_BG;
 
-    // Add visual padding for focused items
+    // Use pre-computed text for focused state to avoid string allocations
     if (focused) {
-      RenderManager.putString(layerIdx, getX() - 1, getY(), ">" + text + "<", fg, bg);
+      RenderManager.putString(layerIdx, getX() - 1, getY(), focusedText, fg, bg);
     } else {
       RenderManager.putString(layerIdx, getX(), getY(), text, fg, bg);
     }
