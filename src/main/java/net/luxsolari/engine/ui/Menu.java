@@ -23,7 +23,7 @@ public class Menu extends UIContainer implements Focusable {
   private volatile int cachedMenuWidth = -1;
   private volatile int cachedMenuHeight = -1;
   private volatile long lastLayoutUpdate = 0L; // Timestamp of last layout calculation
-  private static final long LAYOUT_THROTTLE_MS = 125L; // Align with 8 UPS game loop timing
+  private static final long LAYOUT_THROTTLE_MS = 125L; // 125ms = 1000ms / 8 UPS; aligns with 8 UPS game loop timing
 
   /**
    * Creates a menu with the specified title.
