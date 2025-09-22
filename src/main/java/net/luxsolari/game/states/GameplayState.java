@@ -17,6 +17,7 @@ import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
+import net.luxsolari.engine.viewport.Anchor;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
@@ -118,11 +119,11 @@ public class GameplayState implements LoopableState {
     Entity cardEntity = entityPool.create();
     int cardCount = entityPool.with(CardSprite.class).size(); // existing cards count
 
-    // Compute initial position consistent with redrawLayers using shared helper
+    // Compute initial position using relative coordinates
     CardLayout layout = computeCardLayout(cardCount + 1);
-    int x = layout.startX + cardCount * layout.cardSpacing;
-    int y = layout.startY;
-    cardEntity.add(new Position(x, y));
+    float relX = layout.getRelativeX(cardCount);
+    float relY = layout.relativeY;
+    cardEntity.add(new Position(relX, relY, Anchor.TOP_LEFT));
     if (card.rank() == Card.Rank.JOKER) {
       cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
     } else {
@@ -148,41 +149,63 @@ public class GameplayState implements LoopableState {
     };
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
 
-    // Reposition cards
+    // Reposition cards using relative coordinates
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
     List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class);
 
     CardLayout layout = computeCardLayout(cardEntities.size());
-    int currentX = layout.startX;
-    for (Entity cardEntity : cardEntities) {
-      cardEntity.add(new Position(currentX, layout.startY));
-      currentX += layout.cardSpacing;
+    for (int i = 0; i < cardEntities.size(); i++) {
+      Entity cardEntity = cardEntities.get(i);
+      float relX = layout.getRelativeX(i);
+      cardEntity.add(new Position(relX, layout.relativeY, Anchor.TOP_LEFT));
     }
   }
 
   // Small helper for consistent layout calculations between creation and redraw
   private CardLayout computeCardLayout(int cardCount) {
-    TerminalSize terminalSize = RenderSubsystem.INSTANCE.mainScreen().get().getTerminalSize();
-    int screenWidth = terminalSize.getColumns();
-    int screenHeight = terminalSize.getRows();
+    if (cardCount <= 0) {
+      return new CardLayout(0.5f, 0.65f, 0.0f, 0); // Center position when no cards
+    }
 
-    int cardSpacing = CardArt.CARD_COLS + 2;
-    int totalCardsWidth = (cardCount <= 0) ? 0 : (cardCount - 1) * cardSpacing + CardArt.CARD_COLS;
-    int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
-    int startY = Math.max(0, (screenHeight / 2) + 5);
+    // Cards are positioned horizontally across the lower portion of the screen
+    // Starting at 65% down the screen (0.65 relative Y)
+    float relativeY = 0.65f;
 
-    return new CardLayout(startX, startY, cardSpacing);
+    // Calculate relative spacing based on card count
+    // For many cards, compress spacing; for few cards, spread them out
+    float totalWidthFactor = Math.min(0.8f, cardCount * 0.15f); // Max 80% of screen width
+    float startX = (1.0f - totalWidthFactor) / 2.0f; // Center the card group
+
+    return new CardLayout(startX, relativeY, totalWidthFactor, cardCount);
   }
 
   private static class CardLayout {
-    final int startX;
-    final int startY;
-    final int cardSpacing;
+    final float startRelativeX;
+    final float relativeY;
+    final float totalWidthFactor;
+    final int cardCount;
 
-    CardLayout(int startX, int startY, int cardSpacing) {
-      this.startX = startX;
-      this.startY = startY;
-      this.cardSpacing = cardSpacing;
+    CardLayout(float startRelativeX, float relativeY, float totalWidthFactor, int cardCount) {
+      this.startRelativeX = startRelativeX;
+      this.relativeY = relativeY;
+      this.totalWidthFactor = totalWidthFactor;
+      this.cardCount = cardCount;
+    }
+
+    /**
+     * Gets the relative X position for the card at the given index.
+     *
+     * @param cardIndex the index of the card (0-based)
+     * @return relative X coordinate (0.0-1.0)
+     */
+    float getRelativeX(int cardIndex) {
+      if (cardCount <= 1) {
+        return 0.5f; // Center single card
+      }
+
+      // Distribute cards evenly across the allocated width
+      float spacing = totalWidthFactor / (cardCount - 1);
+      return startRelativeX + (cardIndex * spacing);
     }
   }
 
