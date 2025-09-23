@@ -35,7 +35,7 @@ public class MainMenuState implements LoopableState {
           this.running = false;
         })
         .addItem("Options", this::showOptions)
-        .addItem("Quit", () -> MasterSubsystem.INSTANCE.stop())
+        .addItem("Quit", MasterSubsystem.INSTANCE::stop)
         .setBorder(true);
 
     mainMenu.focus();
@@ -52,18 +52,18 @@ public class MainMenuState implements LoopableState {
     LOGGER.info("Main menu resumed");
     AudioManager.playBGM("menu_theme", true);
 
-    // Force a complete redraw when resuming to prevent artifacts
+    // Force a complete redrawing when resuming to prevent artifacts
     if (mainMenu != null) {
-      // First clear all layers to ensure no artifacts
+      // First, clear all layers to ensure no artifacts
       RenderManager.clearAll();
 
       // Completely reset the focus state and then focus again
       mainMenu.resetFocus();
       mainMenu.focus();
 
-      // Force a redraw after a short delay to ensure the screen is updated
+      // Force a redrawing after a short delay to ensure the screen is updated
       try {
-        Thread.sleep(50); // Small delay to ensure screen buffer is updated
+        Thread.sleep(50); // Small delay to ensure the screen buffer is updated
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }

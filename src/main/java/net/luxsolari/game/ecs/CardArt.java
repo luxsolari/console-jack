@@ -1,5 +1,7 @@
 package net.luxsolari.game.ecs;
 
+import net.luxsolari.game.display.CardSizeTier;
+
 /** ASCII art templates and constants for card rendering. */
 public final class CardArt {
 
@@ -99,18 +101,103 @@ public final class CardArt {
    * @return A string array representing the card's face art.
    */
   public static String[] fromCard(Card card) {
+    return fromCard(card, CardSizeTier.MEDIUM);
+  }
+
+  /**
+   * Generates a card face sprite based on the provided card and size tier.
+   *
+   * @param card The card to generate a sprite for.
+   * @param tier The size tier to generate art for.
+   * @return A string array representing the card's face art.
+   */
+  public static String[] fromCard(Card card, CardSizeTier tier) {
     String rankLabel = card.rank().label();
     char suitSymbol = card.suit().symbol();
 
-    // Basic template for a card face
+    return switch (tier) {
+      case SMALL -> generateSmallCard(rankLabel, suitSymbol);
+      case MEDIUM -> generateMediumCard(rankLabel, suitSymbol);
+      case LARGE -> generateLargeCard(rankLabel, suitSymbol);
+    };
+  }
+
+  /**
+   * Generates the default card back for the specified tier.
+   *
+   * @param tier The size tier to generate art for.
+   * @return A string array representing the card back.
+   */
+  public static String[] defaultBack(CardSizeTier tier) {
+    return switch (tier) {
+      case SMALL -> generateSmallBack();
+      case MEDIUM -> DEFAULT_BACK;
+      case LARGE -> generateLargeBack();
+    };
+  }
+
+  private static String[] generateSmallCard(String rank, char suit) {
+    // 5x7 card for SMALL tier
+    return new String[] {
+      "┌───┐",
+      String.format("│%-2s │", rank.length() > 1 ? rank.substring(0, 1) : rank),
+      "│ " + suit + " │",
+      String.format("│ %2s│", rank.length() > 1 ? rank.substring(0, 1) : rank),
+      "└───┘"
+    };
+  }
+
+  private static String[] generateMediumCard(String rank, char suit) {
+    // 7x9 card for MEDIUM tier (existing logic)
     return new String[] {
       "┌─────┐",
-      String.format("%-3s   │", rankLabel),
+      String.format("%-3s   │", rank),
       "│     │",
-      String.format("│  %c  │", suitSymbol),
+      String.format("│  %c  │", suit),
       "│     │",
-      String.format("│   %3s", rankLabel),
+      String.format("│   %3s", rank),
       "└─────┘"
+    };
+  }
+
+  private static String[] generateLargeCard(String rank, char suit) {
+    // 10x13 card for LARGE tier
+    return new String[] {
+      "┌────────┐",
+      String.format("│%-3s     │", rank),
+      "│        │",
+      String.format("│   %c    │", suit),
+      "│        │",
+      "│        │",
+      String.format("│    %c   │", suit),
+      "│        │",
+      String.format("│     %3s│", rank),
+      "└────────┘"
+    };
+  }
+
+  private static String[] generateSmallBack() {
+    return new String[] {
+      "┌───┐",
+      "│░░░│",
+      "│░░░│",
+      "│░░░│",
+      "└───┘"
+    };
+  }
+
+  private static String[] generateLargeBack() {
+    return new String[] {
+      "┌────────┐",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "│░░░░░░░░│",
+      "└────────┘"
     };
   }
 }

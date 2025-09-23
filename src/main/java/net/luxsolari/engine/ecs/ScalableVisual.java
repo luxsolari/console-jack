@@ -1,7 +1,7 @@
 package net.luxsolari.engine.ecs;
 
 import com.googlecode.lanterna.TextCharacter;
-import net.luxsolari.engine.viewport.CardSizeTier;
+import net.luxsolari.game.display.CardSizeTier;
 import java.util.Map;
 
 /**

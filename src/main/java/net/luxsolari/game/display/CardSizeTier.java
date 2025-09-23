@@ -1,4 +1,4 @@
-package net.luxsolari.engine.viewport;
+package net.luxsolari.game.display;
 
 /**
  * Defines the different size tiers for card display based on available terminal space.

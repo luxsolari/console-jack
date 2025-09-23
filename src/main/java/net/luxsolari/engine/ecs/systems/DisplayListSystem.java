@@ -12,7 +12,7 @@ import net.luxsolari.engine.ecs.Visual;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
-import net.luxsolari.engine.viewport.CardSizeTier;
+import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.engine.viewport.ViewportManager;
 import net.luxsolari.game.ecs.CardSprite;
 
@@ -33,7 +33,6 @@ public class DisplayListSystem implements EcsSystem {
 
     List<RenderCmd> list = new ArrayList<>();
     ViewportManager viewport = ViewportManager.INSTANCE;
-    CardSizeTier currentTier = viewport.getCardTier();
 
     // Single-glyph visuals with relative positioning
     pool.with(Position.class, Visual.class, Layer.class)
@@ -50,7 +49,7 @@ public class DisplayListSystem implements EcsSystem {
               list.add(new RenderCmd(l.index(), screenX, screenY, v.glyph()));
             });
 
-    // Scalable visuals with tier-aware rendering
+    // Scalable visuals with tier-aware rendering - tier should be provided by game layer
     pool.with(Position.class, ScalableVisual.class, Layer.class)
         .forEach(
             e -> {
@@ -62,8 +61,8 @@ public class DisplayListSystem implements EcsSystem {
               int screenX = viewport.toScreenX(p.relX(), p.anchor());
               int screenY = viewport.toScreenY(p.relY(), p.anchor());
 
-              // Get appropriate visual for current tier
-              TextCharacter glyph = sv.getVisualForTier(currentTier);
+              // For now, use MEDIUM as default - game layer should set appropriate tier
+              TextCharacter glyph = sv.getVisualForTier(CardSizeTier.MEDIUM);
 
               list.add(new RenderCmd(l.index(), screenX, screenY, glyph));
             });

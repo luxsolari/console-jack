@@ -13,12 +13,12 @@ public enum ViewportManager {
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   // Reference resolution (1280x720px window with 20pt font)
-  private static final int REF_WIDTH = 102;
-  private static final int REF_HEIGHT = 31;
+  private static final int REF_WIDTH = 98;
+  private static final int REF_HEIGHT = 30;
 
   // Minimum supported terminal size
-  private static final int MIN_WIDTH = 102;
-  private static final int MIN_HEIGHT = 31;
+  private static final int MIN_WIDTH = REF_WIDTH;
+  private static final int MIN_HEIGHT = REF_HEIGHT;
 
   private volatile int currentWidth = REF_WIDTH;
   private volatile int currentHeight = REF_HEIGHT;
@@ -107,24 +107,6 @@ public enum ViewportManager {
     return meetsMinimum;
   }
 
-  /**
-   * Gets the appropriate card size tier based on current viewport scale.
-   *
-   * @return recommended card size tier
-   */
-  public CardSizeTier getCardTier() {
-    float scaleX = (float) currentWidth / REF_WIDTH;
-    float scaleY = (float) currentHeight / REF_HEIGHT;
-    float scale = Math.min(scaleX, scaleY); // Use the limiting dimension
-
-    if (scale >= 1.5f) {
-      return CardSizeTier.LARGE;
-    } else if (scale >= 1.0f) {
-      return CardSizeTier.MEDIUM;
-    } else {
-      return CardSizeTier.SMALL;
-    }
-  }
 
   /**
    * Gets the current viewport width in columns.
