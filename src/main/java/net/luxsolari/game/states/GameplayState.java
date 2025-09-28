@@ -17,6 +17,9 @@ import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
+import net.luxsolari.engine.viewport.Anchor;
+import net.luxsolari.engine.viewport.ViewportManager;
+import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
@@ -114,19 +117,26 @@ public class GameplayState implements LoopableState {
 
     LOGGER.warning("Creating card: " + card);
 
-    // 2. Create the entity and its components
-    Entity cardEntity = entityPool.create();
-    int cardCount = entityPool.with(CardSprite.class).size(); // existing cards count
+    // 2. Determine appropriate card size based on available space
+    ViewportManager viewport = ViewportManager.INSTANCE;
+    int cardCount = entityPool.with(CardSprite.class).size() + 1; // including new card
+    CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardCount);
+    LOGGER.info("Card tier: " + tier);
 
-    // Compute initial position consistent with redrawLayers using shared helper
-    CardLayout layout = computeCardLayout(cardCount + 1);
-    int x = layout.startX + cardCount * layout.cardSpacing;
-    int y = layout.startY;
-    cardEntity.add(new Position(x, y));
+    // 3. Create the entity and its components
+    Entity cardEntity = entityPool.create();
+
+    // Compute the initial position using relative coordinates
+    CardLayout layout = computeCardLayout(cardCount, tier);
+    float relX = layout.getRelativeX(cardCount - 1); // current card index
+    float relY = layout.relativeY;
+    cardEntity.add(new Position(relX, relY, Anchor.TOP_LEFT));
+
+    // Create card sprite with appropriate tier sizing
     if (card.rank() == Card.Rank.JOKER) {
-      cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(), true));
+      cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(tier), true));
     } else {
-      cardEntity.add(new CardSprite(CardArt.fromCard(card), CardArt.defaultBack(), true));
+      cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
     }
     cardEntity.add(new Layer(CARD_LAYER));
   }
@@ -148,41 +158,95 @@ public class GameplayState implements LoopableState {
     };
     RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
 
-    // Reposition cards
+    // Reposition cards using relative coordinates with tier-aware sizing
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
     List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class);
 
-    CardLayout layout = computeCardLayout(cardEntities.size());
-    int currentX = layout.startX;
-    for (Entity cardEntity : cardEntities) {
-      cardEntity.add(new Position(currentX, layout.startY));
-      currentX += layout.cardSpacing;
+    if (!cardEntities.isEmpty()) {
+      ViewportManager viewport = ViewportManager.INSTANCE;
+      CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardEntities.size());
+      CardLayout layout = computeCardLayout(cardEntities.size(), tier);
+
+      for (int i = 0; i < cardEntities.size(); i++) {
+        Entity cardEntity = cardEntities.get(i);
+        float relX = layout.getRelativeX(i);
+        cardEntity.add(new Position(relX, layout.relativeY, Anchor.TOP_LEFT));
+      }
     }
   }
 
   // Small helper for consistent layout calculations between creation and redraw
-  private CardLayout computeCardLayout(int cardCount) {
-    TerminalSize terminalSize = RenderSubsystem.INSTANCE.mainScreen().get().getTerminalSize();
-    int screenWidth = terminalSize.getColumns();
-    int screenHeight = terminalSize.getRows();
+  private CardLayout computeCardLayout(int cardCount, CardSizeTier tier) {
+    if (cardCount <= 0) {
+      return new CardLayout(0.5f, 0.65f, 0.0f, 0, tier); // Center position when no cards
+    }
 
-    int cardSpacing = CardArt.CARD_COLS + 2;
-    int totalCardsWidth = (cardCount <= 0) ? 0 : (cardCount - 1) * cardSpacing + CardArt.CARD_COLS;
-    int startX = Math.max(0, (screenWidth - totalCardsWidth) / 2);
-    int startY = Math.max(0, (screenHeight / 2) + 5);
+    // Cards are positioned horizontally across the lower portion of the screen
+    // Starting at 65% down the screen (0.65 relative Y)
+    float relativeY = 0.65f;
 
-    return new CardLayout(startX, startY, cardSpacing);
+    // Calculate relative spacing based on card count and tier
+    // Account for actual card width from tier
+    ViewportManager viewport = ViewportManager.INSTANCE;
+    int availableWidth = viewport.getWidth();
+    int cardWidth = tier.width;
+    int spacing = 1;
+
+    // Calculate total width needed
+    int totalCardWidth = cardCount * cardWidth;
+    int totalSpacing = Math.max(0, cardCount - 1) * spacing;
+    int totalWidth = totalCardWidth + totalSpacing;
+
+    // Calculate relative positions
+    float totalWidthFactor = Math.min(0.8f, (float) totalWidth / availableWidth);
+    float startX = (1.0f - totalWidthFactor) / 2.0f; // Center the card group
+
+    return new CardLayout(startX, relativeY, totalWidthFactor, cardCount, tier);
   }
 
   private static class CardLayout {
-    final int startX;
-    final int startY;
-    final int cardSpacing;
+    final float startRelativeX;
+    final float relativeY;
+    final float totalWidthFactor;
+    final int cardCount;
+    final CardSizeTier tier;
 
-    CardLayout(int startX, int startY, int cardSpacing) {
-      this.startX = startX;
-      this.startY = startY;
-      this.cardSpacing = cardSpacing;
+    CardLayout(float startRelativeX, float relativeY, float totalWidthFactor, int cardCount, CardSizeTier tier) {
+      this.startRelativeX = startRelativeX;
+      this.relativeY = relativeY;
+      this.totalWidthFactor = totalWidthFactor;
+      this.cardCount = cardCount;
+      this.tier = tier;
+    }
+
+    /**
+     * Gets the relative X position for the card at the given index.
+     *
+     * @param cardIndex the index of the card (0-based)
+     * @return relative X coordinate (0.0-1.0)
+     */
+    float getRelativeX(int cardIndex) {
+      if (cardCount <= 1) {
+        return 0.5f; // Center single card
+      }
+
+      // Distribute cards evenly across the allocated width, accounting for actual card width
+      ViewportManager viewport = ViewportManager.INSTANCE;
+      int availableWidth = viewport.getWidth();
+      int cardWidth = tier.width;
+      int spacing = 1;
+
+      // Calculate spacing between cards in relative terms
+      float cardWidthRel = (float) cardWidth / availableWidth;
+      float spacingRel = (float) spacing / availableWidth;
+
+      // Position cards with proper spacing
+      float totalSpacing = (cardCount - 1) * spacingRel;
+      float totalCardsWidth = cardCount * cardWidthRel;
+      float totalLayout = totalCardsWidth + totalSpacing;
+
+      float startPos = (1.0f - totalLayout) / 2.0f;
+      return startPos + cardIndex * (cardWidthRel + spacingRel);
     }
   }
 

@@ -28,6 +28,7 @@ import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
 import net.luxsolari.engine.systems.Subsystem;
+import net.luxsolari.engine.viewport.ViewportManager;
 
 /**
  * Render subsystem implemented as an enum singleton (see {@link #INSTANCE}) to guarantee
@@ -134,6 +135,9 @@ public enum RenderSubsystem implements Subsystem {
       this.mainScreen.get().startScreen();
       this.mainScreen.get().setCursorPosition(null); // we don't need a cursor
 
+      // Initialize viewport manager with initial size
+      ViewportManager.INSTANCE.updateSize(screenColumns, screenRows);
+
       this.layers = new ConcurrentHashMap<>(); // initialize the layers map
       for (int i = 0; i < MAX_LAYERS; i++) { // initialize each layer
         this.layers.put(
@@ -206,6 +210,9 @@ public enum RenderSubsystem implements Subsystem {
           this.screenColumns = newSize.getColumns();
           this.screenRows = newSize.getRows();
 
+          // Update viewport manager with new size
+          ViewportManager.INSTANCE.updateSize(screenColumns, screenRows);
+
           // Redraw the background to simulate a game table
           this.mainScreen.get().clear();
           for (int i = 0; i < screenColumns; i++) {
@@ -216,21 +223,26 @@ public enum RenderSubsystem implements Subsystem {
         }
 
         if (running && (elapsedTime >= (RENDER_INTERVAL))) {
-          drawMainScreenBorders();
-          displayRenderStats(deltaTime, sleepTime);
+          // Check if viewport meets minimum size requirements
+          if (!ViewportManager.INSTANCE.meetsMinimumSize()) {
+            drawMinimumSizeWarning();
+          } else {
+            drawMainScreenBorders();
+            displayRenderStats(deltaTime, sleepTime);
 
-          // ---- refresh ECS layers ----
-          for (int i = 0; i <= ECS_LAYER_MAX; i++) {
-            clearLayer(i);
+            // ---- refresh ECS layers ----
+            for (int i = 0; i <= ECS_LAYER_MAX; i++) {
+              clearLayer(i);
+            }
+
+            // ---- draw display list ----
+            for (RenderCmd cmd : displayList.get()) {
+              queueChar(cmd.layer(), cmd.x(), cmd.y(), cmd.glyph());
+            }
+
+            // Layer system rendering goes here
+            renderLayers();
           }
-
-          // ---- draw display list ----
-          for (RenderCmd cmd : displayList.get()) {
-            queueChar(cmd.layer(), cmd.x(), cmd.y(), cmd.glyph());
-          }
-
-          // Layer system rendering goes here
-          renderLayers();
 
           // refresh the screen to apply changes
           this.mainScreen.get().refresh();
@@ -447,5 +459,73 @@ public enum RenderSubsystem implements Subsystem {
   /** Receives the freshly built display list from the logic thread. */
   public void submitDisplayList(List<RenderCmd> list) {
     this.displayList.set(list == null ? List.of() : list);
+  }
+
+  /**
+   * Draws a warning message when the terminal size is below minimum requirements.
+   */
+  private void drawMinimumSizeWarning() {
+    // Clear screen first
+    this.mainScreen.get().clear();
+
+    TextGraphics textGraphics = this.mainScreen.get().newTextGraphics();
+    textGraphics.setForegroundColor(TextColor.ANSI.RED);
+    textGraphics.setBackgroundColor(RenderManager.DEFAULT_BG);
+
+    // Get required and current dimensions
+    int[] minSize = ViewportManager.INSTANCE.getMinimumSize();
+    int currentWidth = ViewportManager.INSTANCE.getWidth();
+    int currentHeight = ViewportManager.INSTANCE.getHeight();
+
+    // Warning message lines
+    String[] warningLines = {
+      "TERMINAL TOO SMALL",
+      "",
+      "Current size: %dx%d".formatted(currentWidth, currentHeight),
+      "Required size: %dx%d".formatted(minSize[0], minSize[1]),
+      "",
+      "Please resize your terminal window",
+      "to continue playing Console Jack"
+    };
+
+    // Calculate centered position for the warning
+    int startY = Math.max(0, (currentHeight - warningLines.length) / 2);
+
+    for (int i = 0; i < warningLines.length; i++) {
+      String line = warningLines[i];
+      if (line.isEmpty()) {
+        continue; // Skip empty lines
+      }
+
+      int startX = Math.max(0, (currentWidth - line.length()) / 2);
+      if (startX + line.length() <= currentWidth && startY + i < currentHeight) {
+        textGraphics.putString(startX, startY + i, line);
+      }
+    }
+
+    // Draw a simple border if there's space
+    if (currentWidth > 10 && currentHeight > 10) {
+      // Draw top and bottom borders
+      for (int x = 1; x < currentWidth - 1; x++) {
+        if (x < currentWidth) {
+          textGraphics.setCharacter(x, 1, Symbols.SINGLE_LINE_HORIZONTAL);
+          textGraphics.setCharacter(x, currentHeight - 2, Symbols.SINGLE_LINE_HORIZONTAL);
+        }
+      }
+
+      // Draw left and right borders
+      for (int y = 1; y < currentHeight - 1; y++) {
+        if (y < currentHeight) {
+          textGraphics.setCharacter(1, y, Symbols.SINGLE_LINE_VERTICAL);
+          textGraphics.setCharacter(currentWidth - 2, y, Symbols.SINGLE_LINE_VERTICAL);
+        }
+      }
+
+      // Draw corners
+      textGraphics.setCharacter(1, 1, Symbols.SINGLE_LINE_TOP_LEFT_CORNER);
+      textGraphics.setCharacter(currentWidth - 2, 1, Symbols.SINGLE_LINE_TOP_RIGHT_CORNER);
+      textGraphics.setCharacter(1, currentHeight - 2, Symbols.SINGLE_LINE_BOTTOM_LEFT_CORNER);
+      textGraphics.setCharacter(currentWidth - 2, currentHeight - 2, Symbols.SINGLE_LINE_BOTTOM_RIGHT_CORNER);
+    }
   }
 }
