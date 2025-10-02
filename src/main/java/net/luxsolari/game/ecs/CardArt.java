@@ -138,40 +138,56 @@ public final class CardArt {
 
   private static String[] generateSmallCard(String rank, char suit) {
     // 5x7 card for SMALL tier
+    // Special vertical layout for Joker to differentiate from Jack
+    if (rank.equals("Joker")) {
+      return new String[] {
+        "┌───┐",
+        "│ J │",
+        "│ O │",
+        "│ K │",
+        "└───┘"
+      };
+    }
+
+    String displayRank = rank.length() > 1 ? rank.substring(0, 1) : rank;
     return new String[] {
       "┌───┐",
-      String.format("│%-2s │", rank.length() > 1 ? rank.substring(0, 1) : rank),
+      String.format("│%-2s │", displayRank),
       "│ " + suit + " │",
-      String.format("│ %2s│", rank.length() > 1 ? rank.substring(0, 1) : rank),
+      String.format("│ %2s│", displayRank),
       "└───┘"
     };
   }
 
   private static String[] generateMediumCard(String rank, char suit) {
     // 7x9 card for MEDIUM tier (existing logic)
+    // Truncate rank if it's too long (e.g., "Joker" -> "Jok")
+    String displayRank = rank.length() > 3 ? rank.substring(0, 3) : rank;
     return new String[] {
       "┌─────┐",
-      String.format("%-3s   │", rank),
+      String.format("│%-3s  │", displayRank),
       "│     │",
       String.format("│  %c  │", suit),
       "│     │",
-      String.format("│   %3s", rank),
+      String.format("│  %3s│", displayRank),
       "└─────┘"
     };
   }
 
   private static String[] generateLargeCard(String rank, char suit) {
     // 10x13 card for LARGE tier
+    // Truncate rank if it's too long (e.g., "Joker" -> "Jok")
+    String displayRank = rank.length() > 3 ? rank.substring(0, 3) : rank;
     return new String[] {
       "┌────────┐",
-      String.format("│%-3s     │", rank),
+      String.format("│%-3s     │", displayRank),
       "│        │",
       String.format("│   %c    │", suit),
       "│        │",
       "│        │",
       String.format("│    %c   │", suit),
       "│        │",
-      String.format("│     %3s│", rank),
+      String.format("│     %3s│", displayRank),
       "└────────┘"
     };
   }

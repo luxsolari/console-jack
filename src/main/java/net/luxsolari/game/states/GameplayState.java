@@ -126,6 +126,9 @@ public class GameplayState implements LoopableState {
     // 3. Create the entity and its components
     Entity cardEntity = entityPool.create();
 
+    // Add the Card component so we can regenerate sprites later
+    cardEntity.add(card);
+
     // Compute the initial position using relative coordinates
     CardLayout layout = computeCardLayout(cardCount, tier);
     float relX = layout.getRelativeX(cardCount - 1); // current card index
@@ -133,11 +136,7 @@ public class GameplayState implements LoopableState {
     cardEntity.add(new Position(relX, relY, Anchor.TOP_LEFT));
 
     // Create card sprite with appropriate tier sizing
-    if (card.rank() == Card.Rank.JOKER) {
-      cardEntity.add(new CardSprite(CardArt.jokerFace(), CardArt.defaultBack(tier), true));
-    } else {
-      cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
-    }
+    cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
     cardEntity.add(new Layer(CARD_LAYER));
   }
 
@@ -160,7 +159,7 @@ public class GameplayState implements LoopableState {
 
     // Reposition cards using relative coordinates with tier-aware sizing
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
-    List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class);
+    List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class, Card.class);
 
     if (!cardEntities.isEmpty()) {
       ViewportManager viewport = ViewportManager.INSTANCE;
@@ -171,6 +170,14 @@ public class GameplayState implements LoopableState {
         Entity cardEntity = cardEntities.get(i);
         float relX = layout.getRelativeX(i);
         cardEntity.add(new Position(relX, layout.relativeY, Anchor.TOP_LEFT));
+
+        // Regenerate CardSprite with new tier if the card data is available
+        Card card = cardEntity.get(Card.class);
+        CardSprite oldSprite = cardEntity.get(CardSprite.class);
+        if (card != null && oldSprite != null) {
+          boolean isFaceUp = oldSprite.isFaceUp();
+          cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), isFaceUp));
+        }
       }
     }
   }
