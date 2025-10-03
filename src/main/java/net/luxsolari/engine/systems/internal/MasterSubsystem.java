@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import net.luxsolari.engine.ecs.EcsSystem;
 import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.systems.DisplayListSystem;
+import net.luxsolari.engine.exceptions.GameLoopException;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
@@ -156,7 +157,8 @@ public enum MasterSubsystem implements Subsystem {
         Thread.sleep(1);
         // Thread.yield();
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        LOGGER.severe("[%s] Game loop encountered an error: %s".formatted(TAG, e.getMessage()));
+        throw new GameLoopException("Game loop encountered an error", e);
       }
     }
   }

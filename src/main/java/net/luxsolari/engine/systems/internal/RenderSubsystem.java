@@ -28,7 +28,7 @@ import net.luxsolari.engine.records.ZLayer;
 import net.luxsolari.engine.records.ZLayerData;
 import net.luxsolari.engine.records.ZLayerPosition;
 import net.luxsolari.engine.systems.Subsystem;
-import net.luxsolari.engine.viewport.ViewportManager;
+import net.luxsolari.engine.manager.ViewportManager;
 
 /**
  * Render subsystem implemented as an enum singleton (see {@link #INSTANCE}) to guarantee

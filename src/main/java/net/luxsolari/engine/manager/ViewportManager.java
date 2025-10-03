@@ -1,6 +1,7 @@
-package net.luxsolari.engine.viewport;
+package net.luxsolari.engine.manager;
 
 import java.util.logging.Logger;
+import net.luxsolari.engine.viewport.Anchor;
 
 /**
  * Viewport manager implemented as an enum singleton to handle coordinate transformation

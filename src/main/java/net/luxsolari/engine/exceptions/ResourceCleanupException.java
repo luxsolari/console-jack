@@ -4,7 +4,7 @@ package net.luxsolari.engine.exceptions;
  * Exception thrown when resources cannot be properly cleaned up.
  * This typically occurs during system shutdown or resource disposal.
  */
-public class ResourceCleanupException extends RuntimeException {
+public class ResourceCleanupException extends EngineException {
   
   /**
    * Creates a new ResourceCleanupException with a message and cause.
