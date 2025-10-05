@@ -13,7 +13,7 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.records.RenderCmd;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.game.display.CardSizeTier;
-import net.luxsolari.engine.viewport.ViewportManager;
+import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.game.ecs.CardSprite;
 
 /**

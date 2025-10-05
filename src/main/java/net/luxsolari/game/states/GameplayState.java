@@ -18,7 +18,7 @@ import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.engine.viewport.Anchor;
-import net.luxsolari.engine.viewport.ViewportManager;
+import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
