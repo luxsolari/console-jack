@@ -5,7 +5,7 @@ package net.luxsolari.engine.exceptions;
  * This includes update cycle failures, timing issues, or thread coordination problems.
  */
 public class GameLoopException extends EngineException {
-  private  static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
   /**
    * Creates a new GameLoopException with a descriptive message.
    *
