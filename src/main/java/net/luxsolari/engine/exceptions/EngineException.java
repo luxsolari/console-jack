@@ -6,6 +6,7 @@ package net.luxsolari.engine.exceptions;
  * All custom exceptions in the engine package should extend this class.
  */
 public class EngineException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 
   /**
    * Creates a new EngineException with a descriptive message.

@@ -5,7 +5,7 @@ package net.luxsolari.engine.exceptions;
  * This includes keyboard input processing, input polling, or input subsystem errors.
  */
 public class InputException extends EngineException {
-
+  private static final long serialVersionUID = 1L;
   /**
    * Creates a new InputException with a descriptive message.
    *

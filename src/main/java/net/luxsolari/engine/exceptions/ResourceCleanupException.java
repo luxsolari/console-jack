@@ -5,7 +5,7 @@ package net.luxsolari.engine.exceptions;
  * This typically occurs during system shutdown or resource disposal.
  */
 public class ResourceCleanupException extends EngineException {
-  
+  private static final long serialVersionUID = 1L;
   /**
    * Creates a new ResourceCleanupException with a message and cause.
    *

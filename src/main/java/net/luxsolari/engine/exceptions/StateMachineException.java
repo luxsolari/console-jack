@@ -5,7 +5,7 @@ package net.luxsolari.engine.exceptions;
  * This includes state transitions, state activation, or state lifecycle errors.
  */
 public class StateMachineException extends EngineException {
-
+  private static final long serialVersionUID = 1L;
   /**
    * Creates a new StateMachineException with a descriptive message.
    *

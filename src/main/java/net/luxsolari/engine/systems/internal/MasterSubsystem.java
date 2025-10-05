@@ -155,10 +155,10 @@ public enum MasterSubsystem implements Subsystem {
         }
 
         Thread.sleep(1);
-        // Thread.yield();
-      } catch (Exception e) {
-        LOGGER.severe("[%s] Game loop encountered an error: %s".formatted(TAG, e.getMessage()));
-        throw new GameLoopException("Game loop encountered an error", e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOGGER.severe("[%s] Update loop interrupted: %s".formatted(TAG, e.getMessage()));
+        throw new GameLoopException("Update loop interrupted", e);
       }
     }
   }
