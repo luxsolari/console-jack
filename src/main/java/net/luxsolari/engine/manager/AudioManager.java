@@ -11,11 +11,10 @@ import net.luxsolari.engine.systems.internal.AudioSubsystem;
  * minimal, stateless API surface.
  */
 public final class AudioManager {
-  private AudioManager() {}
-
   private static final String TAG = AudioManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
+  private AudioManager() {}
   /** Returns {@code true} if the audio subsystem is initialized and ready. */
   public static boolean ready() {
     return AudioSubsystem.INSTANCE.running();

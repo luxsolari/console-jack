@@ -29,14 +29,17 @@ public class MainMenuState implements LoopableState {
     AudioManager.playBGM("menu_theme", true);
 
     // Initialize the main menu
-    mainMenu = new Menu("Console Jack")
-        .addItem("Start Game", () -> {
-          StateMachineManager.replace(new GameplayState());
-          this.running = false;
-        })
-        .addItem("Options", this::showOptions)
-        .addItem("Quit", MasterSubsystem.INSTANCE::stop)
-        .setBorder(true);
+    mainMenu =
+        new Menu("Console Jack")
+            .addItem(
+                "Start Game",
+                () -> {
+                  StateMachineManager.replace(new GameplayState());
+                  this.running = false;
+                })
+            .addItem("Options", this::showOptions)
+            .addItem("Quit", MasterSubsystem.INSTANCE::stop)
+            .setBorder(true);
 
     mainMenu.focus();
   }
@@ -67,9 +70,6 @@ public class MainMenuState implements LoopableState {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
-
-      // Force a redraw
-      redrawLayers();
     }
   }
 
@@ -95,28 +95,12 @@ public class MainMenuState implements LoopableState {
   }
 
   @Override
-  public void update() {
-  }
+  public void update() {}
 
   @Override
   public void render() {
-    redrawLayers();
-  }
-
-  /**
-   * Completely hides the main menu by clearing all layers.
-   * This is used when transitioning to another state that needs a clean screen.
-   */
-  private void hideMainMenu() {
-    // Ensure all UI layers are completely cleared
-    for (int layer = RenderManager.UI_LAYER; layer < RenderManager.getLayerCount(); layer++) {
-      RenderManager.clear(layer);
-    }
-  }
-  
-  private void redrawLayers() {
     // Ensure all UI layers are completely cleared before redrawing
-    hideMainMenu();
+    clearUILayers();
 
     if (!renderReady() || mainMenu == null) {
       return;
@@ -124,6 +108,17 @@ public class MainMenuState implements LoopableState {
 
     // Render the main menu
     mainMenu.render(RenderManager.UI_LAYER);
+  }
+
+  /**
+   * Clears all UI layers to remove any rendering artifacts. Ensures that the UI layers are
+   * completely cleared before rendering.
+   */
+  private void clearUILayers() {
+    // Ensure all UI layers are completely cleared
+    for (int layer = RenderManager.UI_LAYER; layer < RenderManager.getLayerCount(); layer++) {
+      RenderManager.clear(layer);
+    }
   }
 
   @Override
@@ -143,87 +138,92 @@ public class MainMenuState implements LoopableState {
     LOGGER.info("Options menu requested - coming soon");
 
     // Create a temporary dialog to show the message - use a completely separate menu
-    Menu optionsMenu = new Menu("Options")
-        .setCenterOnScreen(true) // Ensure it's centered on screen
-        .addItem("Coming Soon!", () -> {})
-        .addItem("Back", () -> {
-          // Close the dialog and return to main menu
-          StateMachineManager.pop();
-        })
-        .setBorder(true);
+    Menu optionsMenu =
+        new Menu("Options")
+            .setCenterOnScreen(true) // Ensure it's centered on the screen
+            .addItem("Coming Soon!", () -> {})
+            .addItem(
+                "Back",
+                () -> {
+                  // Close the dialog and return to the main menu
+                  StateMachineManager.pop();
+                })
+            .setBorder(true);
 
-    // Define the layer for options menu (much higher than main menu to avoid any overlap)
+    // Define the layer for the option menu (much higher than the main menu to avoid any overlap)
     final int OPTIONS_LAYER = RenderManager.UI_LAYER + 3; // Use a layer with significant separation
 
     // Push a temporary state to show the dialog
-    StateMachineManager.push(new LoopableState() {
-      @Override
-      public void start() {
-        // First hide the main menu completely
-        hideMainMenu();
-        
-        // Then clear all layers to ensure clean state
-        RenderManager.clearAll();
+    StateMachineManager.push(
+        new LoopableState() {
+          @Override
+          public void start() {
+            // First clear UI layers to ensure no artifacts remain
+            clearUILayers();
 
-        // Reset the main menu's focus state for when we return to it
-        if (mainMenu != null) {
-          mainMenu.resetFocus();
-        }
+            // Then clear all layers to ensure clean state
+            RenderManager.clearAll();
 
-        // Reset and focus the options menu
-        optionsMenu.resetFocus();
-        optionsMenu.focus();
-        
-        // Force a render immediately to show the options menu
-        render();
-      }
+            // Reset the main menu's focus state for when we return to it
+            if (mainMenu != null) {
+              mainMenu.resetFocus();
+            }
 
-      @Override
-      public void handleInput() {
-        KeyStroke ks = InputManager.poll();
-        if (ks != null) {
-          if (ks.getKeyType() == KeyType.Escape) {
-            // Escape key returns to main menu
-            StateMachineManager.pop();
-          } else {
-            // Let the options menu handle other inputs
-            optionsMenu.handleInput(ks);
+            // Reset and focus the options menu
+            optionsMenu.resetFocus();
+            optionsMenu.focus();
+
+            // Force a render immediately to show the options menu
+            render();
           }
-        }
-      }
 
-      @Override
-      public void update() {}
+          @Override
+          public void handleInput() {
+            KeyStroke ks = InputManager.poll();
+            if (ks != null) {
+              if (ks.getKeyType() == KeyType.Escape) {
+                // Escape key returns to main menu
+                StateMachineManager.pop();
+              } else {
+                // Let the options menu handle other inputs
+                optionsMenu.handleInput(ks);
+              }
+            }
+          }
 
-      @Override
-      public void render() {
-        // First hide the main menu completely
-        hideMainMenu();
-        
-        // Then clear the options layer to prevent artifacts
-        RenderManager.clear(OPTIONS_LAYER);
-        
-        // Render the options menu on its dedicated layer
-        optionsMenu.render(OPTIONS_LAYER);
-      }
+          @Override
+          public void update() {}
 
-      @Override
-      public void end() {
-        // Clean up the options menu completely
-        optionsMenu.resetFocus();
+          @Override
+          public void render() {
+            // First clear the UI layers to ensure no artifacts remain
+            clearUILayers();
 
-        // Clear all layers to ensure no artifacts remain
-        RenderManager.clearAll();
+            // Then clear the options layer to prevent artifacts
+            RenderManager.clear(OPTIONS_LAYER);
 
-        // We don't need to redraw the main menu here as that will be handled by the resume() method
-        // of the MainMenuState when it becomes active again
-      }
+            // Render the options menu on its dedicated layer
+            optionsMenu.render(OPTIONS_LAYER);
+          }
 
-      @Override
-      public void pause() {}
+          @Override
+          public void end() {
+            // Clean up the options menu completely
+            optionsMenu.resetFocus();
 
-      @Override
-      public void resume() {}
-    });
+            // Clear all layers to ensure no artifacts remain
+            RenderManager.clearAll();
+
+            // We don't need to redraw the main menu here as that will be handled by the resume()
+            // method
+            // of the MainMenuState when it becomes active again
+          }
+
+          @Override
+          public void pause() {}
+
+          @Override
+          public void resume() {}
+        });
   }
 }

@@ -19,7 +19,6 @@ import net.luxsolari.engine.systems.internal.RenderSubsystem;
  * rendering code.
  */
 public final class RenderManager {
-  private RenderManager() {}
 
   // ---------- configuration / theme ----------
   public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE; // white
@@ -36,6 +35,8 @@ public final class RenderManager {
     TextColor.ANSI.BLUE,
     TextColor.ANSI.MAGENTA
   };
+
+  private RenderManager() {}
 
   /* ======================================================================== */
   /*                               LAYER HELPERS                              */
