@@ -10,6 +10,8 @@ import net.luxsolari.engine.viewport.Anchor;
 public final class ViewportManager {
   public static final ViewportManager INSTANCE = new ViewportManager();
 
+  // Private constructor to enforce singleton pattern
+  private ViewportManager() {}
   private static final String TAG = ViewportManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
