@@ -4,11 +4,11 @@ import java.util.logging.Logger;
 import net.luxsolari.engine.viewport.Anchor;
 
 /**
- * Viewport manager implemented as a singleton to handle coordinate transformation from relative
- * positions (0.0-1.0) to absolute screen coordinates.
+ * Viewport manager implemented as an enum singleton to handle coordinate transformation from
+ * relative positions (0.0-1.0) to absolute screen coordinates.
  */
-public final class ViewportManager {
-  public static final ViewportManager INSTANCE = new ViewportManager();
+public enum ViewportManager {
+  INSTANCE;
 
   private static final String TAG = ViewportManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
