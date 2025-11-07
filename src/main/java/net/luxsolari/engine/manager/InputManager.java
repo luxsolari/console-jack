@@ -10,12 +10,12 @@ import net.luxsolari.engine.systems.internal.InputSubsystem;
  * on the internal subsystem implementation. This keeps the subsystem encapsulated while providing a
  * simple, stateless API surface.
  */
-public final class InputManager {
+public enum InputManager {
+  INSTANCE;
 
-  // utility class – no instances
-  private InputManager() {}
-
-  /** Returns {@code true} if the input subsystem is initialized and ready to be polled. */
+  /**
+   * Returns {@code true} if the input subsystem is initialized and ready to be polled.
+   */
   public static boolean ready() {
     return InputSubsystem.INSTANCE.ready();
   }
