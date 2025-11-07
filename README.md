@@ -97,4 +97,4 @@ src/main/java/net/luxsolari/
 3. Test changes with `mvn exec:java`
 4. Verify build with `mvn clean package`
 
-See `IMPROVEMENT_PLAN.md` for planned enhancements and `CLAUDE.md` for detailed development guidance.
+See `docs/IMPROVEMENT_PLAN.md` for planned enhancements and `docs/CLAUDE.md` for detailed development guidance.

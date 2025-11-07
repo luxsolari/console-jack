@@ -10,15 +10,11 @@ import net.luxsolari.engine.systems.internal.AudioSubsystem;
  * the internal subsystem implementation. This keeps the subsystem encapsulated while providing a
  * minimal, stateless API surface.
  */
-@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public final class AudioManager {
-
   private static final String TAG = AudioManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
-  // Utility class - no instances
   private AudioManager() {}
-
   /** Returns {@code true} if the audio subsystem is initialized and ready. */
   public static boolean ready() {
     return AudioSubsystem.INSTANCE.running();
@@ -35,16 +31,14 @@ public final class AudioManager {
   @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void playBGM(String bgmId, boolean loop) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG 
-          + "] Audio subsystem not ready. Ignoring BGM play request for: " + bgmId);
+      LOGGER.warning(
+          "[" + TAG + "] Audio subsystem not ready. Ignoring BGM play request for: " + bgmId);
       return;
     }
     AudioSubsystem.INSTANCE.playBGM(bgmId, loop);
   }
 
-  /**
-   * Stops currently playing background music.
-   */
+  /** Stops currently playing background music. */
   @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void stopBGM() {
     if (!ready()) {
@@ -64,8 +58,8 @@ public final class AudioManager {
   @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
   public static void playSFX(String sfxId) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG 
-          + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      LOGGER.warning(
+          "[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
       return;
     }
     AudioSubsystem.INSTANCE.playSFX(sfxId);
@@ -80,8 +74,8 @@ public final class AudioManager {
    */
   public static void playSFX(String sfxId, float volume, float pan) {
     if (!ready()) {
-      LOGGER.warning("[" + TAG 
-          + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
+      LOGGER.warning(
+          "[" + TAG + "] Audio subsystem not ready. Ignoring SFX play request for: " + sfxId);
       return;
     }
     AudioSubsystem.INSTANCE.playSFX(sfxId, volume, pan);

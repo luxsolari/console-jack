@@ -11,8 +11,6 @@ import net.luxsolari.engine.systems.internal.InputSubsystem;
  * simple, stateless API surface.
  */
 public final class InputManager {
-
-  // utility class – no instances
   private InputManager() {}
 
   /** Returns {@code true} if the input subsystem is initialized and ready to be polled. */

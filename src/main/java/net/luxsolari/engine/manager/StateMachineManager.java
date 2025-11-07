@@ -9,8 +9,6 @@ import net.luxsolari.engine.systems.internal.StateMachineSubsystem;
  * *Manager class in {@code net.luxsolari.engine.manager} is static & stateless.
  */
 public final class StateMachineManager {
-
-  // Utility class – no instances
   private StateMachineManager() {}
 
   /* -------------------------- Queries -------------------------- */
@@ -44,9 +42,7 @@ public final class StateMachineManager {
     StateMachineSubsystem.INSTANCE.push(state);
   }
 
-  /**
-   * Pops the currently active state from the state machine stack.
-   */
+  /** Pops the currently active state from the state machine stack. */
   public static void pop() {
     StateMachineSubsystem.INSTANCE.pop();
   }
@@ -60,9 +56,7 @@ public final class StateMachineManager {
     StateMachineSubsystem.INSTANCE.replace(state);
   }
 
-  /**
-   * Clears all states from the state machine.
-   */
+  /** Clears all states from the state machine. */
   public static void clear() {
     StateMachineSubsystem.INSTANCE.clear();
   }
