@@ -79,5 +79,5 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 
 Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSubsystem.INSTANCE`
 
-- Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use @ARCHITECT_MODE.md ruleset.
-- Enter RIPER mode when commanded with either "Enter RIPER Mode" or "/riper-mode". Use @RIPER_MODE.md ruleset.
+- Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use docs/ARCHITECT_MODE.md ruleset.
+- Enter RIPER mode when commanded with either "Enter RIPER Mode" or "/riper-mode". Use docs/RIPER_MODE.md ruleset.

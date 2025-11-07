@@ -288,7 +288,7 @@ public void cleanUp() {
 
 ## Further Reading
 
-- `ARCHITECTURE.md` - Detailed architecture documentation
-- `DEVELOPER_GUIDE.md` - Comprehensive development guide
-- `IMPROVEMENT_PLAN.md` - Planned enhancements and technical debt
-- `CLAUDE.md` - Additional AI coding agent guidance
+- `docs/ARCHITECTURE.md` - Detailed architecture documentation
+- `docs/DEVELOPER_GUIDE.md` - Comprehensive development guide
+- `docs/IMPROVEMENT_PLAN.md` - Planned enhancements and technical debt
+- `docs/CLAUDE.md` - Additional AI coding agent guidance
