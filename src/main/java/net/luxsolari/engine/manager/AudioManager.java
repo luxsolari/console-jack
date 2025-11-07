@@ -10,8 +10,8 @@ import net.luxsolari.engine.systems.internal.AudioSubsystem;
  * the internal subsystem implementation. This keeps the subsystem encapsulated while providing a
  * minimal, stateless API surface.
  */
-public enum AudioManager {
-  INSTANCE;
+public final class AudioManager {
+  private AudioManager() {}
 
   private static final String TAG = AudioManager.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);

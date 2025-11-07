@@ -8,8 +8,8 @@ import net.luxsolari.engine.systems.internal.StateMachineSubsystem;
  * {@link StateMachineSubsystem#INSTANCE}. This keeps the “Manager” pattern consistent: every
  * *Manager class in {@code net.luxsolari.engine.manager} is static & stateless.
  */
-public enum StateMachineManager {
-  INSTANCE;
+public final class StateMachineManager {
+  private StateMachineManager() {}
 
   /* -------------------------- Queries -------------------------- */
 

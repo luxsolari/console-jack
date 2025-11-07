@@ -18,8 +18,8 @@ import net.luxsolari.engine.systems.internal.RenderSubsystem;
  * strings and box drawing helpers so that individual game states remain free of boiler-plate
  * rendering code.
  */
-public enum RenderManager {
-  INSTANCE;
+public final class RenderManager {
+  private RenderManager() {}
 
   // ---------- configuration / theme ----------
   public static final TextColor DEFAULT_FG = TextColor.ANSI.WHITE; // white
