@@ -1,8 +1,10 @@
 package net.luxsolari.game.states;
 
 import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -14,11 +16,12 @@ import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
+import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
+import net.luxsolari.engine.ui.Label;
 import net.luxsolari.engine.viewport.Anchor;
-import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
@@ -32,12 +35,24 @@ public class GameplayState implements LoopableState {
 
   private Random random;
   private static final int CARD_LAYER = 2;
+  private List<Label> instructionLabels;
 
   @Override
   public void start() {
     LOGGER.info("Gameplay started");
     random = new Random();
     AudioManager.playBGM("menu_theme_2", true);
+
+    // Initialize instruction labels (positioned in render method)
+    instructionLabels = new ArrayList<>();
+    instructionLabels.add(new Label(0, 0, " Gameplay State ",
+        TextColor.ANSI.CYAN, RenderManager.DEFAULT_BG));
+    instructionLabels.add(new Label(0, 0, "Press P or Q or Esc to pause",
+        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
+    instructionLabels.add(new Label(0, 0, "Press 1 to create a card",
+        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
+    instructionLabels.add(new Label(0, 0, "Press 2 to clear cards",
+        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
   }
 
   @Override
@@ -99,6 +114,12 @@ public class GameplayState implements LoopableState {
     RenderManager.clear(RenderManager.UI_LAYER); // Clear the text UI
     RenderManager.clear(CARD_LAYER);
     AudioManager.stopBGM();
+
+    // Clean up instruction labels
+    if (instructionLabels != null) {
+      instructionLabels.clear();
+      instructionLabels = null;
+    }
   }
 
   private void clearCards() {
@@ -147,15 +168,26 @@ public class GameplayState implements LoopableState {
 
     RenderManager.clear(CARD_LAYER);
 
-    // Reposition centered text
+    // Clear and render instruction labels
     RenderManager.clear(RenderManager.UI_LAYER);
-    String[] lines = {
-      " Gameplay state ",
-      "Press P or Q or Esc to pause",
-      "Press 1 to create a card",
-      "Press 2 to clear cards"
-    };
-    RenderManager.drawCenteredTextBlock(RenderManager.UI_LAYER, lines, true);
+    if (instructionLabels != null) {
+      ViewportManager viewport = ViewportManager.INSTANCE;
+      int screenWidth = viewport.getWidth();
+      int screenHeight = viewport.getHeight();
+
+      // Calculate vertical starting position (centered)
+      int totalHeight = instructionLabels.size();
+      int startY = (screenHeight - totalHeight) / 2;
+
+      // Position and render each label
+      for (int i = 0; i < instructionLabels.size(); i++) {
+        Label label = instructionLabels.get(i);
+        int labelWidth = label.getText().length();
+        int centerX = (screenWidth - labelWidth) / 2;
+        label.setPosition(centerX, startY + i);
+        label.render(RenderManager.UI_LAYER);
+      }
+    }
 
     // Reposition cards using relative coordinates with tier-aware sizing
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();

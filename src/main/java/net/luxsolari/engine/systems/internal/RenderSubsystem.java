@@ -104,12 +104,15 @@ public enum RenderSubsystem implements Subsystem {
               .setTerminalEmulatorTitle(TAG);
 
       // Set custom font for the terminal, load font from resources
+
       Font font =
           Font.createFont(
                   Font.PLAIN,
                   Objects.requireNonNull(
-                      getClass().getResourceAsStream("/fonts/InputMono-Regular.ttf")))
+                      getClass().getClassLoader().getResourceAsStream("fonts/InputMono-Regular.ttf"),
+                      "Resource not found: fonts/InputMono-Regular.ttf"))
               .deriveFont(Font.PLAIN, 20);
+
       SwingTerminalFontConfiguration fontConfig =
           new SwingTerminalFontConfiguration(
               true, AWTTerminalFontConfiguration.BoldMode.NOTHING, font);
