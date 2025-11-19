@@ -4,10 +4,17 @@ Console-based, text-graphics implementation of the classic casino blackjack game
 
 Aims to be a "Card RPG" of sorts where you start a career as a frequent player at a local casino, and "move up the ranks" to the top-tier casinos of the world. All of that, in ASCII text-graphics, terminal-emulator-driven glory.
 
-All right, let's cut to the real README now.
-Originally conceived to be an excercise in Java architeture design and advanced Java features (think multithreading, concurrency, file I/O, dequeues, etc), this project is right now pivoting to become a mini-game TUI game engine built over the Lanterna library, with a (planned) card game on top.
+...
+
+...
+
+All right, let's cut to the **real README** now.
+
+Originally conceived to be an excercise in Java architeture design and advanced Java features (think multithreading, concurrency, file I/O, dequeues, etc), this project is right now pivoting to become a _mini TUI game engine_ built over the [Lanterna](https://github.com/mabe02/lanterna) library, with a (planned) card game on top.
+
 I also use this as a tester for learning AI engineering, planning to add some form of AI functionality in the form of game features / mechanics while I learn.
-Currently in active development, the features I'm including as of now are more engine-centered, so game features are still inexistent. If you find the "engine" package interesting or useful for whatever project it is you are cooking, feel free to copy/fork this repo and use it.
+
+Currently in semi-active development (_read: I have a day job, so I work on this whenever I have time and the energy_), the features I'm including as of now are more engine-centered, so game features are still inexistent. If you find the "engine" package interesting or useful for whatever project it is you are cooking, feel free to copy/fork this repo and use it.
 
 ## Quick Start
 
