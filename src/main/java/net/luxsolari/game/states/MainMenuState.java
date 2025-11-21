@@ -1,9 +1,6 @@
 package net.luxsolari.game.states;
 
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
-import net.luxsolari.engine.input.InputCommand;
 import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
@@ -66,7 +63,7 @@ public class MainMenuState implements LoopableState {
 
     // Force a complete redrawing when resuming to prevent artifacts
     if (mainMenu != null) {
-      // First, clear all layers to ensure no artifacts
+      // First, clear all layers to ensure no artifacts remain
       RenderManager.clearAll();
 
       // Completely reset the focus state and then focus again
@@ -89,18 +86,14 @@ public class MainMenuState implements LoopableState {
     }
 
     InputResult input = InputManager.pollCommand();
-    if (input == null || input.command() == null) {
+    if (input == null || !input.hasCommand()) {
       return;
     }
 
-    // Handle state-level commands
-    if (input.command() == InputCommand.QUIT) {
-      MasterSubsystem.INSTANCE.stop();
-      return;
+    switch (input.command()) {
+      case QUIT -> MasterSubsystem.INSTANCE.stop();
+      default -> mainMenu.handleCommand(input.command());
     }
-
-    // Delegate menu commands to the menu
-    mainMenu.handleCommand(input.command());
   }
 
   @Override
@@ -151,13 +144,10 @@ public class MainMenuState implements LoopableState {
         new Menu("Options")
             .setCenterOnScreen(true) // Ensure it's centered on the screen
             .addItem("Coming Soon!", () -> {})
-            .addItem(
-                "Back",
-                () -> {
-                  // Close the dialog and return to the main menu
-                  StateMachineManager.pop();
-                })
-            .setBorder(true);
+            .addItem("Back", () -> {
+                // Close the dialog and return to the main menu
+                StateMachineManager.pop();
+            }).setBorder(true);
 
     // Define the layer for the option menu (much higher than the main menu to avoid any overlap)
     final int OPTIONS_LAYER = RenderManager.UI_LAYER + 3; // Use a layer with significant separation
@@ -165,6 +155,7 @@ public class MainMenuState implements LoopableState {
     // Push a temporary state to show the dialog
     StateMachineManager.push(
         new LoopableState() {
+
           @Override
           public void start() {
             // First clear UI layers to ensure no artifacts remain
@@ -183,25 +174,36 @@ public class MainMenuState implements LoopableState {
             optionsMenu.focus();
 
             // Force a render immediately to show the options menu
-            render();
+            this.render();
           }
 
           @Override
           public void handleInput() {
-            KeyStroke ks = InputManager.poll();
-            if (ks != null) {
-              if (ks.getKeyType() == KeyType.Escape) {
-                // Escape key returns to main menu
+            InputResult input = InputManager.pollCommand();
+
+            if (input == null || !input.hasCommand()) {
+              return;
+            }
+            switch (input.command()) {
+              case BACK -> {
+                // BACK command returns to main menu
                 StateMachineManager.pop();
-              } else {
-                // Let the options menu handle other inputs
-                optionsMenu.handleInput(ks);
+              }
+              case QUIT -> {
+                MasterSubsystem.INSTANCE.stop();
+                return;
+              }
+              default -> {
+                // Let the options menu handle other commands
+                optionsMenu.handleCommand(input.command());
               }
             }
           }
 
           @Override
-          public void update() {}
+          public void update() {
+            // No dynamic updates needed for the options menu at this time
+          }
 
           @Override
           public void render() {
@@ -222,10 +224,6 @@ public class MainMenuState implements LoopableState {
 
             // Clear all layers to ensure no artifacts remain
             RenderManager.clearAll();
-
-            // We don't need to redraw the main menu here as that will be handled by the resume()
-            // method
-            // of the MainMenuState when it becomes active again
           }
 
           @Override
