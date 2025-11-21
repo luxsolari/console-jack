@@ -4,6 +4,7 @@ import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.screen.Screen;
+import net.luxsolari.engine.input.InputCommand;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
 
@@ -191,6 +192,35 @@ public class Menu extends UIContainer implements Focusable {
     }
 
     return false;
+  }
+
+  /**
+   * Handles input commands for menu navigation and actions.
+   * This allows menus to respond to semantic commands rather than raw keystrokes.
+   *
+   * @param command the input command to handle
+   * @return true if the command was handled, false otherwise
+   */
+  public boolean handleCommand(InputCommand command) {
+    if (!isFocused() || command == null) {
+      return false;
+    }
+
+    return switch (command) {
+      case NAVIGATE_UP -> focusPrevious();
+      case NAVIGATE_DOWN -> focusNext();
+      case NAVIGATE_FIRST -> focusFirstItem();
+      case NAVIGATE_LAST -> focusLastItem();
+      case CONFIRM -> {
+        MenuItem selected = getSelectedItem();
+        if (selected != null && selected.getAction() != null) {
+          selected.getAction().execute();
+          yield true;
+        }
+        yield false;
+      }
+      default -> false;
+    };
   }
 
   @Override

@@ -3,6 +3,8 @@ package net.luxsolari.game.states;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
+import net.luxsolari.engine.input.InputCommand;
+import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
@@ -10,6 +12,7 @@ import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.ui.Menu;
+import net.luxsolari.game.input.MainMenuInputContext;
 
 /**
  * Represents the main menu state of the game. This state handles the display and interaction of the
@@ -27,6 +30,9 @@ public class MainMenuState implements LoopableState {
   public void start() {
     LOGGER.info("Main menu started");
     AudioManager.playBGM("menu_theme", true);
+
+    // Set input context
+    InputManager.setContext(new MainMenuInputContext());
 
     // Initialize the main menu
     mainMenu =
@@ -55,6 +61,9 @@ public class MainMenuState implements LoopableState {
     LOGGER.info("Main menu resumed");
     AudioManager.playBGM("menu_theme", true);
 
+    // Re-set input context
+    InputManager.setContext(new MainMenuInputContext());
+
     // Force a complete redrawing when resuming to prevent artifacts
     if (mainMenu != null) {
       // First, clear all layers to ensure no artifacts
@@ -79,19 +88,19 @@ public class MainMenuState implements LoopableState {
       return;
     }
 
-    KeyStroke ks = InputManager.poll();
-    if (ks == null) {
+    InputResult input = InputManager.pollCommand();
+    if (input == null || input.command() == null) {
       return;
     }
 
-    // Handle EOF to quit
-    if (ks.getKeyType() == KeyType.EOF) {
+    // Handle state-level commands
+    if (input.command() == InputCommand.QUIT) {
       MasterSubsystem.INSTANCE.stop();
       return;
     }
 
-    // Delegate input handling to the menu
-    mainMenu.handleInput(ks);
+    // Delegate menu commands to the menu
+    mainMenu.handleCommand(input.command());
   }
 
   @Override

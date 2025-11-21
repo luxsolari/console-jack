@@ -59,7 +59,7 @@ public enum InputSubsystem implements Subsystem {
     while (running) {
       try {
         // Since we waited for initialization, we can now safely get the screen.
-        KeyStroke keyStroke = RenderSubsystem.INSTANCE.mainScreen().get().readInput();
+        KeyStroke keyStroke = RenderSubsystem.INSTANCE.mainScreen().get().pollInput();
         if (keyStroke != null) {
           lock.lock();
           try {
