@@ -71,11 +71,8 @@ public final class InputManager {
 
     InputCommand command = null;
     if (currentContext != null) {
-      System.out.println(currentContext.getClass().getSimpleName() + " resolving keyStroke: " + keyStroke);
       KeyBinding binding = KeyBinding.fromKeyStroke(keyStroke);
-      System.out.println("Resolving binding: " + binding);
       command = currentContext.resolve(binding);
-      System.out.println("Resolved command: " + command);
     }
 
     return new InputResult(keyStroke, command);
