@@ -1,9 +1,6 @@
 package net.luxsolari.game.states;
 
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
-import net.luxsolari.engine.input.InputCommand;
 import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
@@ -33,11 +30,7 @@ public class PauseState implements LoopableState {
     // Initialize the pause menu
     pauseMenu =
         new Menu("Paused")
-            .addItem(
-                "Resume",
-                () -> {
-                  StateMachineManager.pop();
-                })
+            .addItem("Resume", StateMachineManager::pop)
             .addItem(
                 "Quit to Main Menu",
                 () -> {

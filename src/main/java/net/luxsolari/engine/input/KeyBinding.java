@@ -87,24 +87,4 @@ public record KeyBinding(
     return sb.toString();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    KeyBinding that = (KeyBinding) o;
-    return ctrlPressed == that.ctrlPressed
-        && altPressed == that.altPressed
-        && shiftPressed == that.shiftPressed
-        && keyType == that.keyType
-        && Objects.equals(character, that.character);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(keyType, character, ctrlPressed, altPressed, shiftPressed);
-  }
 }
