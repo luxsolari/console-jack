@@ -4,7 +4,7 @@ This directory contains all project documentation for Console Jack.
 
 ## For Developers
 
-- **[CLAUDE.md](CLAUDE.md)** - Guidance for AI coding assistants (Claude Code)
+- **[CLAUDE.md](../CLAUDE.md)** - Guidance for AI coding assistants (Claude Code)
 - **[ARCHITECT_MODE.md](ARCHITECT_MODE.md)** - Architect mode ruleset for comprehensive design planning
 - **[RIPER_MODE.md](RIPER_MODE.md)** - RIPER-5 mode strict operational protocol
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Comprehensive development guide
