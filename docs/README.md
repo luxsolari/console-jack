@@ -4,23 +4,12 @@ This directory contains all project documentation for Console Jack.
 
 ## For Developers
 
-- **[CLAUDE.md](CLAUDE.md)** - Guidance for AI coding assistants (Claude Code)
+- **[CLAUDE.md](../CLAUDE.md)** - Guidance for AI coding assistants (Claude Code)
 - **[ARCHITECT_MODE.md](ARCHITECT_MODE.md)** - Architect mode ruleset for comprehensive design planning
 - **[RIPER_MODE.md](RIPER_MODE.md)** - RIPER-5 mode strict operational protocol
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Comprehensive development guide
-
-## System Guides
-
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed architecture documentation
-- **[STATE_MACHINE_GUIDE.md](STATE_MACHINE_GUIDE.md)** - State management system reference
-- **[ECS_GUIDE.md](ECS_GUIDE.md)** - Entity Component System reference
-- **[RENDERING_GUIDE.md](RENDERING_GUIDE.md)** - Rendering system and Z-layers reference
-- **[INPUT_SYSTEM_GUIDE.md](INPUT_SYSTEM_GUIDE.md)** - Input command and context system reference
-- **[AUDIO_SYSTEM_GUIDE.md](AUDIO_SYSTEM_GUIDE.md)** - Audio playback system reference
 - **[UI_COMPONENTS_GUIDE.md](UI_COMPONENTS_GUIDE.md)** - UI component framework reference
-
-## Planning & Improvements
-
 - **[IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md)** - Planned enhancements and technical debt
 
 ## Technical Documentation

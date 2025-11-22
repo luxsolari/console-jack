@@ -7,6 +7,8 @@ import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.input.KeyBinding;
 import net.luxsolari.engine.systems.internal.InputSubsystem;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Public façade for the internal {@link InputSubsystem}.
  *
@@ -27,7 +29,7 @@ import net.luxsolari.engine.systems.internal.InputSubsystem;
  * </pre>
  */
 public final class InputManager {
-  private static volatile InputContext currentContext = null;
+  private static final AtomicReference<InputContext> currentContext = new AtomicReference<>();
 
   private InputManager() {}
 
@@ -45,7 +47,7 @@ public final class InputManager {
    * @param context the input context to use
    */
   public static void setContext(InputContext context) {
-    currentContext = context;
+    currentContext.set(context);
   }
 
   /**
@@ -54,7 +56,7 @@ public final class InputManager {
    * @return the current context, or null if none set
    */
   public static InputContext getContext() {
-    return currentContext;
+    return currentContext.get();
   }
 
   /**
@@ -70,10 +72,8 @@ public final class InputManager {
     }
 
     InputCommand command = null;
-    if (currentContext != null) {
-      KeyBinding binding = KeyBinding.fromKeyStroke(keyStroke);
-      command = currentContext.resolve(binding);
-    }
+    KeyBinding binding = KeyBinding.fromKeyStroke(keyStroke);
+    command = currentContext.get().resolve(binding);
 
     return new InputResult(keyStroke, command);
   }

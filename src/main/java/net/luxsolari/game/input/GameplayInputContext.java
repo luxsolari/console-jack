@@ -26,7 +26,7 @@ public class GameplayInputContext implements InputContext {
       Map.entry(KeyBinding.of('D'), InputCommand.DOUBLE_DOWN),
       Map.entry(KeyBinding.of('X'), InputCommand.SPLIT),
       Map.entry(KeyBinding.of('R'), InputCommand.SURRENDER),
-      Map.entry(KeyBinding.of(' '), InputCommand.HIT),  // Enter = Hit
+      Map.entry(KeyBinding.of(' '), InputCommand.HIT),  // Space = Hit
 
       // Debug commands
       Map.entry(KeyBinding.of('1'), InputCommand.DEBUG_CREATE_CARD),

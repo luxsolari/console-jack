@@ -41,16 +41,9 @@ build/
 
 ### IDE / Editor folders ###
 .idea/
-.vscode/
 .windsurf/
 .cursor/
 
-## Claude Code ##
-.history/
-/src/main/java/net/luxsolari/game/states/.editorconfig
-docs/tasks.md
-.claude/settings.local.json
-.claude/
-
 ## Serena ##
 .serena/
+/WARP.md
