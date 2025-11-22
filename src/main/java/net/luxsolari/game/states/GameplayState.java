@@ -26,6 +26,9 @@ import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
+import net.luxsolari.engine.input.InputCommand;
+import net.luxsolari.engine.input.InputResult;
+import net.luxsolari.game.input.GameplayInputContext;
 
 /** Simple placeholder gameplay state used to demonstrate state transitions. */
 public class GameplayState implements LoopableState {
@@ -42,6 +45,9 @@ public class GameplayState implements LoopableState {
     LOGGER.info("Gameplay started");
     random = new Random();
     AudioManager.playBGM("menu_theme_2", true);
+
+    // Set input context
+    InputManager.setContext(new GameplayInputContext());
 
     // Initialize instruction labels (positioned in render method)
     instructionLabels = new ArrayList<>();
@@ -63,6 +69,8 @@ public class GameplayState implements LoopableState {
   @Override
   public void resume() {
     LOGGER.info("Gameplay resumed");
+    // Re-set input context
+    InputManager.setContext(new GameplayInputContext());
   }
 
   @Override
@@ -70,28 +78,25 @@ public class GameplayState implements LoopableState {
     if (!renderReady()) {
       return;
     }
-    KeyStroke keyStroke = InputManager.poll();
-    if (keyStroke == null) {
-      return;
-    }
-    if (keyStroke.getKeyType() == KeyType.EOF) {
-      MasterSubsystem.INSTANCE.stop();
+
+    InputResult input = InputManager.pollCommand();
+    if (input == null || input.command() == null) {
       return;
     }
 
-    if (keyStroke.getKeyType() == KeyType.Character) {
-      switch (Character.toUpperCase(keyStroke.getCharacter())) {
-        case 'P', 'Q' ->
-            // P or Q opens pause menu
-            StateMachineManager.push(new PauseState());
-        case '1' -> createRandomCardEntity();
-        case '2' -> clearCards();
-        default -> {}
-      }
-    }
-    if (keyStroke.getKeyType() == KeyType.Escape) {
-      // Esc behaves like P: open pause menu
-      StateMachineManager.push(new PauseState());
+    // Handle commands
+    switch (input.command()) {
+      case QUIT -> MasterSubsystem.INSTANCE.stop();
+      case PAUSE -> StateMachineManager.push(new PauseState());
+      case DEBUG_CREATE_CARD -> createRandomCardEntity();
+      case DEBUG_CLEAR_CARDS -> clearCards();
+      // Future blackjack commands
+      case HIT -> LOGGER.info("Hit command (not yet implemented)");
+      case STAND -> LOGGER.info("Stand command (not yet implemented)");
+      case DOUBLE_DOWN -> LOGGER.info("Double Down command (not yet implemented)");
+      case SPLIT -> LOGGER.info("Split command (not yet implemented)");
+      case SURRENDER -> LOGGER.info("Surrender command (not yet implemented)");
+      default -> {}
     }
   }
 

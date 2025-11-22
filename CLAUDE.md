@@ -81,3 +81,7 @@ Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSu
 
 - Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use docs/ARCHITECT_MODE.md ruleset.
 - Enter RIPER mode when commanded with either "Enter RIPER Mode" or "/riper-mode". Use docs/RIPER_MODE.md ruleset.
+
+## Project Memories
+- Always refer to main docs inside the @docs/ directory and base your work on them.
+- Always check documentation is aligned with changes, refactors or modifications you made to the code. If documentation gaps exist, update relevant docs or create new where appropiate. Make sure all documentation for the projects lives under the @docs/ directory.

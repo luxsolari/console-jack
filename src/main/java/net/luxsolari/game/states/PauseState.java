@@ -1,14 +1,14 @@
 package net.luxsolari.game.states;
 
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import java.util.logging.Logger;
+import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.InputManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.ui.Menu;
+import net.luxsolari.game.input.PauseInputContext;
 
 /**
  * Pause overlay state that displays a menu with options to resume or quit.
@@ -24,14 +24,13 @@ public class PauseState implements LoopableState {
   public void start() {
     LOGGER.info("Pause menu opened");
 
+    // Set input context
+    InputManager.setContext(new PauseInputContext());
+
     // Initialize the pause menu
     pauseMenu =
         new Menu("Paused")
-            .addItem(
-                "Resume",
-                () -> {
-                  StateMachineManager.pop();
-                })
+            .addItem("Resume", StateMachineManager::pop)
             .addItem(
                 "Quit to Main Menu",
                 () -> {
@@ -51,6 +50,9 @@ public class PauseState implements LoopableState {
   @Override
   public void resume() {
     LOGGER.info("Pause menu resumed");
+
+    // Re-set input context
+    InputManager.setContext(new PauseInputContext());
 
     // Force a complete redrawing when resuming to prevent artifacts
     if (pauseMenu != null) {
@@ -76,25 +78,30 @@ public class PauseState implements LoopableState {
       return;
     }
 
-    KeyStroke ks = InputManager.poll();
-    if (ks == null) {
+    InputResult input = InputManager.pollCommand();
+    if (input == null || input.command() == null) {
       return;
     }
 
-    // Handle EOF to quit
-    if (ks.getKeyType() == KeyType.EOF) {
-      MasterSubsystem.INSTANCE.stop();
-      return;
+    // Handle state-level commands
+    switch (input.command()) {
+      case QUIT -> {
+        MasterSubsystem.INSTANCE.stop();
+        return;
+      }
+      case RESUME -> {
+        StateMachineManager.pop();
+        return;
+      }
+      case BACK -> {
+        StateMachineManager.clear();
+        StateMachineManager.push(new MainMenuState());
+        return;
+      }
     }
 
-    // Handle Escape key to resume (pop state)
-    if (ks.getKeyType() == KeyType.Escape) {
-      StateMachineManager.pop();
-      return;
-    }
-
-    // Delegate input handling to the menu
-    pauseMenu.handleInput(ks);
+    // Delegate menu commands to the menu
+    pauseMenu.handleCommand(input.command());
   }
 
   @Override
