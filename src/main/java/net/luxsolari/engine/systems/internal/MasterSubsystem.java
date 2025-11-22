@@ -12,6 +12,7 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.Subsystem;
+import net.luxsolari.engine.ui.UICommandQueue;
 import net.luxsolari.game.states.MainMenuState;
 
 /**
@@ -143,6 +144,8 @@ public enum MasterSubsystem implements Subsystem {
           if (active != null) {
             active.handleInput();
             active.update();
+            // Process all pending UI commands before rendering
+            UICommandQueue.INSTANCE.processAll();
             active.render();
           }
 

@@ -40,9 +40,12 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 ### Threading Model
 
 - **Master Thread**: Runs the main game loop at 8 UPS (125ms per update)
+  - Processes UI command queue via `UICommandQueue.INSTANCE.processAll()` before rendering
 - **Render Thread**: Handles terminal UI rendering using Lanterna
 - **Input Thread**: Processes keyboard/input events
 - **Audio Thread**: Manages audio subsystem
+
+See [Threading Model Update](docs/THREADING_MODEL_UPDATE.md) for detailed architecture.
 
 ### State Management
 
@@ -58,6 +61,21 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 - Systems: `DisplayListSystem` for rendering
 - ECS updates run in the main game loop
 
+### Dynamic UI System
+
+Thread-safe reactive UI modification system supporting:
+- **Observable Properties**: `UIProperty<T>` for reactive data binding
+- **Command Queue**: `UICommandQueue` for thread-safe imperative updates
+- **Bindable Components**: All UI components support `bind()` for automatic updates
+- **Dynamic Management**: Runtime add/remove/modify UI elements
+
+Key APIs:
+- `UICommandQueue.INSTANCE.enqueue(UICommand)` - Queue UI updates from any thread
+- `label.bindText(UIProperty<String>)` - Reactive property binding
+- `menu.removeItem(index)` / `menu.addItem(text, action)` - Dynamic menu management
+
+See [Dynamic UI System Guide](docs/DYNAMIC_UI_SYSTEM.md) for comprehensive documentation.
+
 ### Package Structure
 
 - `net.luxsolari.engine.*`: Core game engine
@@ -65,6 +83,7 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
   - `manager/`: Static utility managers (Input, Audio, Render, StateMachine)
   - `systems/`: Subsystem interfaces and implementations
   - `states/`: Base state interfaces
+  - `ui/`: UI component framework with dynamic modification support
 - `net.luxsolari.game.*`: Game-specific implementation
   - `states/`: Concrete game states (MainMenu, Gameplay, Pause)
   - `ecs/`: Game-specific components
@@ -86,3 +105,5 @@ Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSu
 - Always refer to main docs inside the @docs/ directory and base your work on them.
 - Always check documentation is aligned with changes, refactors or modifications you made to the code. If documentation gaps exist, update relevant docs or create new where appropiate. Make sure all documentation for the projects lives under the @docs/ directory.
 - When making architectural changes or major refactors, always review your work to ensure the documentation is aligned with the codebase.
+- Always follow git workflow branching model (see https://nvie.com/posts/a-successful-git-branching-model/)
+- develop and master are protected branches. When working on features, refactors, fixes, etc. always make sure you create an appropiate branch for the work you'll do.

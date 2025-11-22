@@ -1,5 +1,8 @@
 package net.luxsolari.game.states;
 
+import com.googlecode.lanterna.TextColor;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.AudioManager;
@@ -8,7 +11,9 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
+import net.luxsolari.engine.ui.Label;
 import net.luxsolari.engine.ui.Menu;
+import net.luxsolari.engine.ui.UIProperty;
 import net.luxsolari.game.input.MainMenuInputContext;
 
 /**
@@ -20,8 +25,14 @@ public class MainMenuState implements LoopableState {
 
   private static final String TAG = MainMenuState.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
+  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
   private boolean running = true;
   private Menu mainMenu;
+
+  // Dynamic UI - demonstrates reactive time display
+  private UIProperty<String> welcomeMessage;
+  private Label welcomeLabel;
+  private long lastUpdateTime = 0;
 
   @Override
   public void start() {
@@ -30,6 +41,12 @@ public class MainMenuState implements LoopableState {
 
     // Set input context
     InputManager.setContext(new MainMenuInputContext());
+
+    // Initialize reactive welcome message with current time
+    String initialMessage = "Welcome! Time: " + LocalTime.now().format(TIME_FORMATTER);
+    welcomeMessage = new UIProperty<>(initialMessage);
+    welcomeLabel = new Label(0, 0, "", TextColor.ANSI.CYAN, RenderManager.DEFAULT_BG);
+    welcomeLabel.bindText(welcomeMessage);
 
     // Initialize the main menu
     mainMenu =
@@ -97,7 +114,14 @@ public class MainMenuState implements LoopableState {
   }
 
   @Override
-  public void update() {}
+  public void update() {
+    // Update welcome message every second (demonstrates time-based reactive UI)
+    long currentTime = System.currentTimeMillis();
+    if (currentTime - lastUpdateTime >= 1000 && welcomeMessage != null) {
+      welcomeMessage.setValue("Welcome! Time: " + LocalTime.now().format(TIME_FORMATTER));
+      lastUpdateTime = currentTime;
+    }
+  }
 
   @Override
   public void render() {
@@ -106,6 +130,12 @@ public class MainMenuState implements LoopableState {
 
     if (!renderReady() || mainMenu == null) {
       return;
+    }
+
+    // Render dynamic welcome label at top
+    if (welcomeLabel != null) {
+      welcomeLabel.setPosition(2, 1);
+      welcomeLabel.render(RenderManager.UI_LAYER);
     }
 
     // Render the main menu
@@ -133,6 +163,13 @@ public class MainMenuState implements LoopableState {
       mainMenu.unfocus();
       mainMenu = null;
     }
+
+    // Clean up reactive UI bindings - prevent memory leaks
+    if (welcomeLabel != null) {
+      welcomeLabel.unbindAll();
+      welcomeLabel = null;
+    }
+    welcomeMessage = null;
   }
 
   private void showOptions() {

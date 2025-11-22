@@ -20,12 +20,14 @@ A comprehensive guide to the state management system powering Console Jack's gam
 
 ## Overview
 
-The **State Machine** is the foundational architecture pattern for Console Jack. Every screen, menu, and game mode is implemented as a **state** that manages its own logic, input handling, rendering, and lifecycle.
+The **State Machine** is the foundational architecture pattern for Console Jack. 
+Every screen you see in the game is implemented as a **state** that manages its own logic, input handling, rendering, 
+and lifecycle.
 
 ### Key Benefits
 
 - **Organized Game Flow**: Each screen is encapsulated in its own state
-- **Stack-Based Navigation**: Push/pop states for menus and overlays
+- **Stack-Based Navigation**: Push/pop states for game screens
 - **Clean Transitions**: Automatic pause/resume when overlaying states
 - **Resource Management**: Clear lifecycle hooks for setup and cleanup
 - **Thread-Safe**: Lock-protected state transitions
@@ -111,7 +113,7 @@ public interface LoopableState {
 #### `start()`
 Called once when the state becomes active for the first time.
 
-**Responsibilities**:
+**Responsibilities (non-exhaustive)**:
 - Initialize UI components (menus, labels)
 - Set input context via `InputManager.setContext()`
 - Start background music via `AudioManager.playBGM()`
@@ -142,7 +144,7 @@ public void start() {
 #### `pause()`
 Called when another state is pushed on top of this one.
 
-**Responsibilities**:
+**Responsibilities (non-exhaustive)**:
 - Stop background music (optional)
 - Pause animations
 - Save transient state if needed
@@ -161,7 +163,7 @@ public void pause() {
 #### `resume()`
 Called when an overlaying state is popped and this state becomes active again.
 
-**Responsibilities**:
+**Responsibilities (non-exhaustive)**:
 - Re-set input context (important!)
 - Resume background music
 - Clear and redraw render layers
@@ -190,7 +192,7 @@ public void resume() {
 ```
 
 #### `handleInput()`
-Called every frame by the master game loop.
+Called every render frame by the master game loop.
 
 **Responsibilities**:
 - Check if render system is ready
@@ -221,7 +223,7 @@ public void handleInput() {
 ```
 
 #### `update()`
-Called every frame (8 UPS) for game logic updates.
+Called every update tick (8 UPS) by the master game loop for game logic updates.
 
 **Responsibilities**:
 - Update game state (scores, timers, etc.)
@@ -246,7 +248,7 @@ public void update() {
 ```
 
 #### `render()`
-Called every frame for visual updates.
+Called every render frame for visual updates.
 
 **Responsibilities**:
 - Clear render layers

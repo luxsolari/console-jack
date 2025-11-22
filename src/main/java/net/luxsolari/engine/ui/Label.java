@@ -99,6 +99,39 @@ public class Label extends UIWidget {
     this.backgroundColor = backgroundColor;
   }
 
+  /**
+   * Binds the label text to an observable property.
+   * The label will automatically update when the property value changes.
+   *
+   * @param property the observable text property
+   * @return a subscription that can be used to cancel the binding
+   */
+  public Subscription bindText(UIProperty<String> property) {
+    return bind(property, (component, value) -> ((Label) component).setText(value));
+  }
+
+  /**
+   * Binds the label foreground color to an observable property.
+   * The label will automatically update when the property value changes.
+   *
+   * @param property the observable color property
+   * @return a subscription that can be used to cancel the binding
+   */
+  public Subscription bindForegroundColor(UIProperty<TextColor> property) {
+    return bind(property, (component, value) -> ((Label) component).setForegroundColor(value));
+  }
+
+  /**
+   * Binds the label background color to an observable property.
+   * The label will automatically update when the property value changes.
+   *
+   * @param property the observable color property
+   * @return a subscription that can be used to cancel the binding
+   */
+  public Subscription bindBackgroundColor(UIProperty<TextColor> property) {
+    return bind(property, (component, value) -> ((Label) component).setBackgroundColor(value));
+  }
+
   @Override
   protected void doRender(int layerIdx) {
     if (text != null && !text.isEmpty()) {

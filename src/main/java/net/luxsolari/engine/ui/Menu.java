@@ -64,6 +64,60 @@ public class Menu extends UIContainer implements Focusable {
   }
 
   /**
+   * Removes a menu item at the specified index.
+   *
+   * @param index the index of the item to remove
+   * @return this menu for method chaining
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public Menu removeItem(int index) {
+    if (index < 0 || index >= children.size()) {
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + children.size());
+    }
+    children.remove(index);
+    invalidateLayout();
+    // Adjust focus if necessary
+    if (focusedIndex >= children.size()) {
+      focusedIndex = children.isEmpty() ? -1 : children.size() - 1;
+    }
+    invalidateFocusableCache();
+    return this;
+  }
+
+  /**
+   * Replaces a menu item at the specified index with a new item.
+   *
+   * @param index the index of the item to replace
+   * @param text the new menu item text
+   * @param action the new action to execute when the item is selected
+   * @return this menu for method chaining
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public Menu replaceItem(int index, String text, MenuAction action) {
+    if (index < 0 || index >= children.size()) {
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + children.size());
+    }
+    MenuItem newItem = new MenuItem(0, 0, text, action);
+    children.set(index, newItem);
+    invalidateLayout();
+    invalidateFocusableCache();
+    return this;
+  }
+
+  /**
+   * Removes all menu items from this menu.
+   *
+   * @return this menu for method chaining
+   */
+  public Menu clearItems() {
+    children.clear();
+    focusedIndex = -1;
+    invalidateLayout();
+    invalidateFocusableCache();
+    return this;
+  }
+
+  /**
    * Sets whether to show a border around the menu.
    *
    * @param showBorder true to show border, false to hide

@@ -21,6 +21,7 @@ import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.engine.ui.Label;
+import net.luxsolari.engine.ui.UIProperty;
 import net.luxsolari.engine.viewport.Anchor;
 import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
@@ -40,6 +41,12 @@ public class GameplayState implements LoopableState {
   private static final int CARD_LAYER = 2;
   private List<Label> instructionLabels;
 
+  // Dynamic UI properties - demonstrate reactive binding
+  private UIProperty<Integer> cardCount;
+  private UIProperty<String> statusMessage;
+  private Label cardCountLabel;
+  private Label statusLabel;
+
   @Override
   public void start() {
     LOGGER.info("Gameplay started");
@@ -48,6 +55,20 @@ public class GameplayState implements LoopableState {
 
     // Set input context
     InputManager.setContext(new GameplayInputContext());
+
+    // Initialize reactive UI properties
+    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
+    int initialCardCount = entityPool.with(CardSprite.class).size();
+    cardCount = new UIProperty<>(initialCardCount);
+    statusMessage = new UIProperty<>("Ready");
+
+    // Create labels bound to properties (auto-update when properties change)
+    cardCountLabel = new Label(0, 0, "", TextColor.ANSI.YELLOW, RenderManager.DEFAULT_BG);
+    cardCountLabel.bind(cardCount, (lbl, count) ->
+        ((Label) lbl).setText("Cards: " + count));
+
+    statusLabel = new Label(0, 0, "", TextColor.ANSI.GREEN, RenderManager.DEFAULT_BG);
+    statusLabel.bindText(statusMessage);
 
     // Initialize instruction labels (positioned in render method)
     instructionLabels = new ArrayList<>();
@@ -125,12 +146,30 @@ public class GameplayState implements LoopableState {
       instructionLabels.clear();
       instructionLabels = null;
     }
+
+    // Clean up reactive UI bindings - prevent memory leaks
+    if (cardCountLabel != null) {
+      cardCountLabel.unbindAll();
+      cardCountLabel = null;
+    }
+    if (statusLabel != null) {
+      statusLabel.unbindAll();
+      statusLabel = null;
+    }
+
+    // Clear property references
+    cardCount = null;
+    statusMessage = null;
   }
 
   private void clearCards() {
     RenderManager.clear(CARD_LAYER);
     EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
     entityPool.removeWith(CardSprite.class);
+
+    // Update reactive properties - UI auto-updates
+    cardCount.setValue(0);
+    statusMessage.setValue("Cleared all cards");
   }
 
   private void createRandomCardEntity() {
@@ -145,8 +184,8 @@ public class GameplayState implements LoopableState {
 
     // 2. Determine appropriate card size based on available space
     ViewportManager viewport = ViewportManager.INSTANCE;
-    int cardCount = entityPool.with(CardSprite.class).size() + 1; // including new card
-    CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardCount);
+    int currentCardCount = entityPool.with(CardSprite.class).size() + 1; // including new card
+    CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), currentCardCount);
     LOGGER.info("Card tier: " + tier);
 
     // 3. Create the entity and its components
@@ -156,14 +195,18 @@ public class GameplayState implements LoopableState {
     cardEntity.add(card);
 
     // Compute the initial position using relative coordinates
-    CardLayout layout = computeCardLayout(cardCount, tier);
-    float relX = layout.getRelativeX(cardCount - 1); // current card index
+    CardLayout layout = computeCardLayout(currentCardCount, tier);
+    float relX = layout.getRelativeX(currentCardCount - 1); // current card index
     float relY = layout.relativeY;
     cardEntity.add(new Position(relX, relY, Anchor.TOP_LEFT));
 
     // Create card sprite with appropriate tier sizing
     cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
     cardEntity.add(new Layer(CARD_LAYER));
+
+    // Update reactive properties - UI auto-updates
+    cardCount.setValue(cardCount.getValue() + 1);
+    statusMessage.setValue("Created " + card);
   }
 
   private void redrawLayers() {
@@ -191,6 +234,16 @@ public class GameplayState implements LoopableState {
         int centerX = (screenWidth - labelWidth) / 2;
         label.setPosition(centerX, startY + i);
         label.render(RenderManager.UI_LAYER);
+      }
+
+      // Render dynamic labels at top of screen (reactive UI demonstration)
+      if (cardCountLabel != null) {
+        cardCountLabel.setPosition(2, 1);
+        cardCountLabel.render(RenderManager.UI_LAYER);
+      }
+      if (statusLabel != null) {
+        statusLabel.setPosition(2, 2);
+        statusLabel.render(RenderManager.UI_LAYER);
       }
     }
 

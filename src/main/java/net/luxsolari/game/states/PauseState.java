@@ -8,6 +8,10 @@ import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.internal.MasterSubsystem;
 import net.luxsolari.engine.ui.Menu;
+import net.luxsolari.engine.ui.UICommandQueue;
+import net.luxsolari.engine.ui.UIUpdateCommands;
+import net.luxsolari.engine.ecs.EntityPool;
+import net.luxsolari.game.ecs.CardSprite;
 import net.luxsolari.game.input.PauseInputContext;
 
 /**
@@ -27,19 +31,41 @@ public class PauseState implements LoopableState {
     // Set input context
     InputManager.setContext(new PauseInputContext());
 
-    // Initialize the pause menu
-    pauseMenu =
-        new Menu("Paused")
-            .addItem("Resume", StateMachineManager::pop)
-            .addItem(
-                "Quit to Main Menu",
-                () -> {
-                  StateMachineManager.clear();
-                  StateMachineManager.push(new MainMenuState());
-                })
-            .setBorder(true);
+    // Initialize the pause menu with dynamic context-aware options
+    pauseMenu = new Menu("Paused").setBorder(true);
+
+    // Check game state and build menu dynamically
+    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
+    int cardCount = entityPool.with(CardSprite.class).size();
+
+    // Always add Resume option
+    pauseMenu.addItem("Resume", StateMachineManager::pop);
+
+    // Conditionally add Clear Cards option if cards exist (demonstrates dynamic menu)
+    if (cardCount > 0) {
+      pauseMenu.addItem("Clear Cards (" + cardCount + ")", () -> {
+        // Clear cards and update menu dynamically
+        entityPool.removeWith(CardSprite.class);
+        LOGGER.info("Cleared " + cardCount + " cards from pause menu");
+
+        // Dynamically update menu to remove this option (demonstration of UICommandQueue)
+        UICommandQueue.INSTANCE.enqueue(
+            UIUpdateCommands.removeMenuItem(pauseMenu, 1) // Remove "Clear Cards" option
+        );
+      });
+    }
+
+    // Always add Quit option
+    pauseMenu.addItem(
+        "Quit to Main Menu",
+        () -> {
+          StateMachineManager.clear();
+          StateMachineManager.push(new MainMenuState());
+        });
 
     pauseMenu.focus();
+
+    LOGGER.info("Pause menu built with " + pauseMenu.getChildren().size() + " items");
   }
 
   @Override

@@ -1,13 +1,18 @@
 package net.luxsolari.engine.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Abstract base class for atomic UI components (widgets).
  * Provides common functionality for position, size, and visibility management.
+ * Supports reactive property binding via {@link BindableUIComponent}.
  */
-public abstract class UIWidget implements UIComponent {
+public abstract class UIWidget implements BindableUIComponent {
 
   protected UIBounds bounds;
   protected boolean visible = true;
+  private final List<Subscription> subscriptions = new ArrayList<>();
 
   /**
    * Creates a widget with the specified bounds.
@@ -93,5 +98,29 @@ public abstract class UIWidget implements UIComponent {
     if (visible) {
       doRender(layerIdx);
     }
+  }
+
+  @Override
+  public <T> Subscription bind(UIProperty<T> property, PropertyBinder<? super UIComponent, T> binder) {
+    if (property == null || binder == null) {
+      throw new NullPointerException("Property and binder cannot be null");
+    }
+
+    // Apply initial value via command queue
+    UICommandQueue.INSTANCE.enqueue(() -> binder.applyValue(this, property.getValue()));
+
+    // Subscribe to future changes
+    Subscription sub = property.addListener((oldValue, newValue) -> {
+      binder.applyValue(this, newValue);
+    });
+
+    subscriptions.add(sub);
+    return sub;
+  }
+
+  @Override
+  public void unbindAll() {
+    subscriptions.forEach(Subscription::unsubscribe);
+    subscriptions.clear();
   }
 }

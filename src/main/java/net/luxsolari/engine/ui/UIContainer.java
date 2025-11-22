@@ -79,6 +79,36 @@ public abstract class UIContainer extends UIWidget implements InputHandler {
   }
 
   /**
+   * Inserts a child component at the specified index.
+   *
+   * @param index the index at which to insert the component
+   * @param child the component to insert
+   * @return this container for method chaining
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public UIContainer insertChild(int index, UIComponent child) {
+    if (index < 0 || index > children.size()) {
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + children.size());
+    }
+    children.add(index, child);
+    focusableCacheDirty = true;
+    return this;
+  }
+
+  /**
+   * Removes all child components from this container.
+   * Resets the focus index to -1.
+   *
+   * @return this container for method chaining
+   */
+  public UIContainer clearChildren() {
+    children.clear();
+    focusedIndex = -1;
+    focusableCacheDirty = true;
+    return this;
+  }
+
+  /**
    * Gets the currently focused child component.
    *
    * @return the focused component, or null if no component is focused
