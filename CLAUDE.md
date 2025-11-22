@@ -85,3 +85,4 @@ Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSu
 ## Project Memories
 - Always refer to main docs inside the @docs/ directory and base your work on them.
 - Always check documentation is aligned with changes, refactors or modifications you made to the code. If documentation gaps exist, update relevant docs or create new where appropiate. Make sure all documentation for the projects lives under the @docs/ directory.
+- When making architectural changes or major refactors, always review your work to ensure the documentation is aligned with the codebase.
