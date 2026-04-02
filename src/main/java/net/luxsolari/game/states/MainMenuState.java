@@ -100,6 +100,12 @@ public class MainMenuState implements LoopableState {
   public void update() {}
 
   @Override
+  public void handleViewportResize() {
+    if (mainMenu != null)
+      mainMenu.invalidateLayout();
+  }
+
+  @Override
   public void render() {
     // Ensure all UI layers are completely cleared before redrawing
     clearUILayers();
@@ -203,6 +209,13 @@ public class MainMenuState implements LoopableState {
           @Override
           public void update() {
             // No dynamic updates needed for the options menu at this time
+          }
+
+          @Override
+          public void handleViewportResize() {
+            if (optionsMenu != null) {
+              optionsMenu.invalidateLayout();
+            }
           }
 
           @Override

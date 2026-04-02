@@ -10,6 +10,7 @@ import net.luxsolari.engine.ecs.systems.DisplayListSystem;
 import net.luxsolari.engine.exceptions.GameLoopException;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
+import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.engine.states.LoopableState;
 import net.luxsolari.engine.systems.Subsystem;
 import net.luxsolari.game.states.MainMenuState;
@@ -143,6 +144,10 @@ public enum MasterSubsystem implements Subsystem {
           if (active != null) {
             active.handleInput();
             active.update();
+            // We poll for viewport resizing, if so, we propagate the signal to the state so it handles it
+            if (ViewportManager.INSTANCE.consumeSizeChanged()) {
+              active.handleViewportResize();
+            }
             active.render();
           }
 

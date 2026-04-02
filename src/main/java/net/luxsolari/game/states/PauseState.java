@@ -108,6 +108,13 @@ public class PauseState implements LoopableState {
   public void update() {}
 
   @Override
+  public void handleViewportResize() {
+    if (pauseMenu != null) {
+      pauseMenu.invalidateLayout();
+    }
+  }
+
+  @Override
   public void render() {
     // Ensure all UI layers are completely cleared before redrawing
     clearUILayers();

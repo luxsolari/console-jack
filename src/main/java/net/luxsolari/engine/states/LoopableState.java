@@ -34,6 +34,17 @@ public interface LoopableState {
   void update();
 
   /**
+   * This method handles the propagation of the resize signal sent from MasterSubsystem when the
+   * viewport size dimensions reported from the underlying RenderSubsystem change;
+   * States should override this method to handle the resizing of their representation on screen.
+   * Additionally, States that own UI components should override this method to propagate the invalidation signal.
+   * <p>
+   * Default implementation is empty, so states with now layout-sensitive UI do not need to override this.
+   */
+  default void handleViewportResize() {
+  }
+
+  /**
    * This method will render the state of the game. This happens last, since the game state should
    * be updated before it is rendered.
    */

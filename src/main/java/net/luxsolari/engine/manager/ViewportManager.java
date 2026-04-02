@@ -1,5 +1,6 @@
 package net.luxsolari.engine.manager;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import net.luxsolari.engine.viewport.Anchor;
 
@@ -21,11 +22,10 @@ public enum ViewportManager {
   // Minimum supported terminal size
   private static final int MIN_WIDTH = REF_WIDTH;
   private static final int MIN_HEIGHT = REF_HEIGHT;
-
+  private final AtomicBoolean sizeChanged = new AtomicBoolean(false);
   private volatile int currentWidth = REF_WIDTH;
   private volatile int currentHeight = REF_HEIGHT;
   private volatile boolean meetsMinimum = true;
-  private volatile boolean sizeChanged = false;
 
   /**
    * Updates the current viewport size. Should be called when terminal is resized.
@@ -38,7 +38,7 @@ public enum ViewportManager {
       this.currentWidth = width;
       this.currentHeight = height;
       this.meetsMinimum = (width >= MIN_WIDTH && height >= MIN_HEIGHT);
-      this.sizeChanged = true;
+      this.sizeChanged.set(true);
 
       LOGGER.info(
           "[%s] Viewport updated: %dx%d (meets minimum: %s)"
@@ -140,13 +140,13 @@ public enum ViewportManager {
 
   /**
    * Checks if the viewport size has changed since last check and clears the flag.
+   * Meant to be used by external clients who need to propagate viewport invalidation signals based
+   * on the state of this flag.
    *
    * @return true if size changed since last call
    */
   public boolean consumeSizeChanged() {
-    boolean changed = sizeChanged;
-    sizeChanged = false;
-    return changed;
+    return this.sizeChanged.getAndSet(false);
   }
 
   /**

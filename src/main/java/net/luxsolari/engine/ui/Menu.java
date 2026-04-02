@@ -2,11 +2,9 @@ package net.luxsolari.engine.ui;
 
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.screen.Screen;
 import net.luxsolari.engine.input.InputCommand;
 import net.luxsolari.engine.manager.RenderManager;
-import net.luxsolari.engine.systems.internal.RenderSubsystem;
+import net.luxsolari.engine.manager.ViewportManager;
 
 /**
  * A navigable menu container that displays a list of menu items with a title.
@@ -19,12 +17,8 @@ public class Menu extends UIContainer implements Focusable {
   private boolean showBorder = true;
   private boolean centerOnScreen = true;
   private volatile boolean layoutDirty = true; // Track when layout needs update
-  private volatile int cachedScreenWidth = -1;
-  private volatile int cachedScreenHeight = -1;
   private volatile int cachedMenuWidth = -1;
   private volatile int cachedMenuHeight = -1;
-  private volatile long lastLayoutUpdate = 0L; // Timestamp of last layout calculation
-  private static final long LAYOUT_THROTTLE_MS = 125L; // 125ms = 1000ms / 8 UPS; aligns with 8 UPS game loop timing
 
   /**
    * Creates a menu with the specified title.
@@ -228,19 +222,13 @@ public class Menu extends UIContainer implements Focusable {
     if (children.isEmpty()) {
       return;
     }
-
-    // Only update layout if needed and enough time has passed since last update
-    long currentTime = System.currentTimeMillis();
-    boolean timeThresholdMet = currentTime - lastLayoutUpdate > LAYOUT_THROTTLE_MS;
-    boolean screenSizeChanged = centerOnScreen && hasScreenSizeChanged();
     
     // Optimize condition logic - only check what's necessary
-    boolean shouldUpdate = (layoutDirty && timeThresholdMet) || screenSizeChanged;
+    boolean shouldUpdate = layoutDirty;
     
     if (shouldUpdate) {
       updateLayout();
       layoutDirty = false;
-      lastLayoutUpdate = currentTime;
     }
 
     // Render title
@@ -272,21 +260,11 @@ public class Menu extends UIContainer implements Focusable {
 
     // Position menu on screen if centering is enabled
     if (centerOnScreen) {
-      // Use thread-safe approach with AtomicReference
-      Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
-      if (screen != null) {
-        // Add null check for getTerminalSize() to prevent NPE
-        var terminalSize = screen.getTerminalSize();
-        if (terminalSize != null) {
-          int screenWidth = terminalSize.getColumns();
-          int screenHeight = terminalSize.getRows();
-          cachedScreenWidth = screenWidth;
-          cachedScreenHeight = screenHeight;
-          int centerX = (screenWidth - menuWidth) / 2;
-          int centerY = (screenHeight - menuHeight) / 2;
-          setPosition(centerX, centerY);
-        }
-      }
+      int screenWidth = ViewportManager.INSTANCE.getWidth();
+      int screenHeight = ViewportManager.INSTANCE.getHeight();
+      int centerX = (screenWidth - menuWidth) / 2;
+      int centerY = (screenHeight - menuHeight) / 2;
+      setPosition(centerX, centerY);
     }
 
     // Position menu items
@@ -331,28 +309,10 @@ public class Menu extends UIContainer implements Focusable {
   /**
    * Invalidates the current layout, forcing a recalculation on the next render.
    */
-  private void invalidateLayout() {
+  public void invalidateLayout() {
     layoutDirty = true;
     cachedMenuWidth = -1;
     cachedMenuHeight = -1;
-  }
-
-  /**
-   * Checks if the screen size has changed since the last layout update.
-   *
-   * @return true if the screen size has changed, false otherwise
-   */
-  private boolean hasScreenSizeChanged() {
-    Screen screen = RenderSubsystem.INSTANCE.mainScreen().get();
-    if (screen != null) {
-      var terminalSize = screen.getTerminalSize();
-      if (terminalSize != null) {
-        int currentWidth = terminalSize.getColumns();
-        int currentHeight = terminalSize.getRows();
-        return currentWidth != cachedScreenWidth || currentHeight != cachedScreenHeight;
-      }
-    }
-    return false;
   }
 
   /**
