@@ -1,11 +1,11 @@
 package net.luxsolari.engine.manager;
 
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.internal.StateMachineSubsystem;
+import net.luxsolari.engine.systems.internal.StateMachineCoordinator;
 
 /**
  * Stateless utility facade that exposes the game state machine. All methods simply delegate to
- * {@link StateMachineSubsystem#INSTANCE}. This keeps the “Manager” pattern consistent: every
+ * {@link StateMachineCoordinator#INSTANCE}. This keeps the “Manager” pattern consistent: every
  * *Manager class in {@code net.luxsolari.engine.manager} is static & stateless.
  */
 public final class StateMachineManager {
@@ -19,7 +19,7 @@ public final class StateMachineManager {
    * @return true if states are present, false otherwise
    */
   public static boolean hasStates() {
-    return StateMachineSubsystem.INSTANCE.hasStates();
+    return StateMachineCoordinator.INSTANCE.hasStates();
   }
 
   /**
@@ -28,7 +28,7 @@ public final class StateMachineManager {
    * @return the active game state
    */
   public static LoopableState active() {
-    return StateMachineSubsystem.INSTANCE.active();
+    return StateMachineCoordinator.INSTANCE.active();
   }
 
   /* -------------------------- Commands -------------------------- */
@@ -39,12 +39,12 @@ public final class StateMachineManager {
    * @param state the new state to push
    */
   public static void push(LoopableState state) {
-    StateMachineSubsystem.INSTANCE.push(state);
+    StateMachineCoordinator.INSTANCE.push(state);
   }
 
   /** Pops the currently active state from the state machine stack. */
   public static void pop() {
-    StateMachineSubsystem.INSTANCE.pop();
+    StateMachineCoordinator.INSTANCE.pop();
   }
 
   /**
@@ -53,11 +53,11 @@ public final class StateMachineManager {
    * @param state the new state to replace the current one with
    */
   public static void replace(LoopableState state) {
-    StateMachineSubsystem.INSTANCE.replace(state);
+    StateMachineCoordinator.INSTANCE.replace(state);
   }
 
   /** Clears all states from the state machine. */
   public static void clear() {
-    StateMachineSubsystem.INSTANCE.clear();
+    StateMachineCoordinator.INSTANCE.clear();
   }
 }

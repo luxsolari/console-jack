@@ -3,6 +3,7 @@ package net.luxsolari.engine.ecs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Stores all active {@link Entity} instances and offers very simple component-based queries.
@@ -19,10 +20,10 @@ public class EntityPool {
    *
    * @return newly created entity
    */
-  public Entity create() {
+  public long create() {
     Entity e = new Entity();
     entities.add(e);
-    return e;
+    return e.id();
   }
 
   /**
@@ -62,4 +63,43 @@ public class EntityPool {
             Arrays.stream(types).allMatch(e::has)
     );
   }
+
+  /**
+   * Looks up a single entity by its unique numeric ID.
+   *
+   * <p>Entity IDs are assigned at creation time and never reused within a pool lifetime,
+   * so a successful lookup always refers to the exact entity that was originally created
+   * with that ID. The search is O(n) in the number of pooled entities because the pool
+   * is backed by an unindexed list; prefer caching the returned {@link Entity} reference
+   * in hot paths rather than calling this method on every tick.</p>
+   *
+   * @param id the unique identifier of the entity to retrieve
+   * @return an {@link Optional} containing the matching entity, or
+   * {@link Optional#empty()} if no entity with that ID exists in this pool
+   */
+  public Optional<Entity> getById(long id) {
+    return entities.stream().filter(e -> e.id() == id).findFirst();
+  }
+
+  /**
+   * Removes the entity with the specified id from the pool.
+   * <p>Returns true if an entity was removed, false if no entity with that id was found.</p>
+   *
+   * @param id the id of the entity to remove
+   * @return true if an entity was removed, false otherwise
+   */
+  public boolean removeById(long id) {
+    return entities.removeIf(e -> e.id() == id);
+  }
+
+  /**
+   * Checks if an entity with the specified ID exists in the pool.
+   *
+   * @param id the unique identifier of the entity to check
+   * @return true if an entity with the specified ID exists, false otherwise
+   */
+  public boolean isValid(long id) {
+    return entities.stream().anyMatch(e -> e.id() == id);
+  }
+
 }

@@ -8,17 +8,16 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.states.LoopableState;
 
 /**
- * Internal subsystem that holds the game-state stack. Implemented as an enum singleton, following
- * the same pattern as other subsystems (RenderSubsystem, InputSubsystem, etc.).
+ * Internal coordinator that holds the game-state stack. Implemented as an enum singleton that owns no thread,
+ * and it's driven by {@link net.luxsolari.engine.systems.internal.MasterSubsystem}.
  *
  * <p>All external code should interact with the state machine through the stateless facade {@link
  * net.luxsolari.engine.manager.StateMachineManager}. This class itself should <em>not</em> be
- * referenced directly by gameplay code.
+ * referenced directly by game code.
  */
-public enum StateMachineSubsystem {
+public enum StateMachineCoordinator {
   INSTANCE;
-
-  private static final String TAG = StateMachineSubsystem.class.getSimpleName();
+  private static final String TAG = StateMachineCoordinator.class.getSimpleName();
   private static final Logger LOGGER = Logger.getLogger(TAG);
 
   private final Deque<LoopableState> stack = new ArrayDeque<>();

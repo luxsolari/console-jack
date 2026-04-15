@@ -2,6 +2,7 @@ package net.luxsolari.engine.ecs;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A lightweight, ID-based container of {@link Component}s.
@@ -11,9 +12,8 @@ import java.util.Map;
  */
 public class Entity {
 
-  private static int NEXT_ID = 0;
-
-  private final int id = NEXT_ID++;
+  private static final AtomicLong NEXT_ID = new AtomicLong(0);
+  private final long id = NEXT_ID.getAndIncrement();
   private final Map<Class<? extends Component>, Component> components = new HashMap<>();
 
   /**
@@ -21,7 +21,7 @@ public class Entity {
    *
    * @return unique integer identifier
    */
-  public int id() {
+  public long id() {
     return id;
   }
 
