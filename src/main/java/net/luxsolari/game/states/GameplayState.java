@@ -1,18 +1,13 @@
 package net.luxsolari.game.states;
 
-import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
-import net.luxsolari.engine.ecs.Entity;
-import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
-import net.luxsolari.engine.exceptions.EngineException;
+import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.EntityManager;
 import net.luxsolari.engine.manager.InputManager;
@@ -21,16 +16,12 @@ import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.manager.ViewportManager;
 import net.luxsolari.engine.states.LoopableState;
-import net.luxsolari.engine.systems.internal.MasterSubsystem;
-import net.luxsolari.engine.systems.internal.RenderSubsystem;
 import net.luxsolari.engine.ui.Label;
 import net.luxsolari.engine.viewport.Anchor;
 import net.luxsolari.game.display.CardSizeTier;
 import net.luxsolari.game.ecs.Card;
 import net.luxsolari.game.ecs.CardArt;
 import net.luxsolari.game.ecs.CardSprite;
-import net.luxsolari.engine.input.InputCommand;
-import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.game.input.GameplayInputContext;
 
 /** Simple placeholder gameplay state used to demonstrate state transitions. */
@@ -54,14 +45,16 @@ public class GameplayState implements LoopableState {
 
     // Initialize instruction labels (positioned in render method)
     instructionLabels = new ArrayList<>();
-    instructionLabels.add(new Label(0, 0, " Gameplay State ",
-        TextColor.ANSI.CYAN, RenderManager.DEFAULT_BG));
-    instructionLabels.add(new Label(0, 0, "Press P or Q or Esc to pause",
-        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
-    instructionLabels.add(new Label(0, 0, "Press 1 to create a card",
-        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
-    instructionLabels.add(new Label(0, 0, "Press 2 to clear cards",
-        TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
+    instructionLabels.add(
+        new Label(0, 0, " Gameplay State ", TextColor.ANSI.CYAN, RenderManager.DEFAULT_BG));
+    instructionLabels.add(
+        new Label(
+            0, 0, "Press P or Q or Esc to pause", TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
+    instructionLabels.add(
+        new Label(
+            0, 0, "Press 1 to create a card", TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
+    instructionLabels.add(
+        new Label(0, 0, "Press 2 to clear cards", TextColor.ANSI.WHITE, RenderManager.DEFAULT_BG));
   }
 
   @Override
@@ -145,26 +138,28 @@ public class GameplayState implements LoopableState {
 
     // 2. Determine appropriate card size based on available space
     ViewportManager viewport = ViewportManager.INSTANCE;
-    int cardCount = EntityManager.queryWith(CardSprite.class).size() + 1; // including new card
-    CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardCount);
+    int cardCount = EntityManager.queryIdsWith(CardSprite.class).size() + 1; // including new card
+    CardSizeTier tier =
+        CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardCount);
     LOGGER.info("Card tier: " + tier);
 
     // 3. Create the entity and its components
     long cardEntityId = EntityManager.create();
-    Entity cardEntity = EntityManager.getById(cardEntityId).orElseThrow(() -> new EngineException("Failed to create card entity"));
 
     // Add the Card component so we can regenerate sprites later
-    cardEntity.add(card);
+    EntityManager.addComponent(cardEntityId, card);
 
     // Compute the initial position using relative coordinates
     CardLayout layout = computeCardLayout(cardCount, tier);
     float relX = layout.getRelativeX(cardCount - 1); // current card index
     float relY = layout.relativeY;
-    cardEntity.add(new Position(relX, relY, Anchor.TOP_LEFT));
+    EntityManager.addComponent(cardEntityId, new Position(relX, relY, Anchor.TOP_LEFT));
 
     // Create card sprite with appropriate tier sizing
-    cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
-    cardEntity.add(new Layer(CARD_LAYER));
+    EntityManager.addComponent(
+        cardEntityId,
+        new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), true));
+    EntityManager.addComponent(cardEntityId, new Layer(CARD_LAYER));
   }
 
   private void redrawLayers() {
@@ -196,25 +191,34 @@ public class GameplayState implements LoopableState {
     }
 
     // Reposition cards using relative coordinates with tier-aware sizing
-    List<Entity> cardEntities = EntityManager.queryWith(CardSprite.class, Position.class, Card.class);
+    List<Long> cardIds = EntityManager.queryIdsWith(CardSprite.class, Position.class, Card.class);
 
-    if (!cardEntities.isEmpty()) {
+    if (!cardIds.isEmpty()) {
       ViewportManager viewport = ViewportManager.INSTANCE;
-      CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardEntities.size());
-      CardLayout layout = computeCardLayout(cardEntities.size(), tier);
+      CardSizeTier tier =
+          CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardIds.size());
+      CardLayout layout = computeCardLayout(cardIds.size(), tier);
 
-      for (int i = 0; i < cardEntities.size(); i++) {
-        Entity cardEntity = cardEntities.get(i);
+      for (int i = 0; i < cardIds.size(); i++) {
+        long id = cardIds.get(i);
         float relX = layout.getRelativeX(i);
-        cardEntity.add(new Position(relX, layout.relativeY, Anchor.TOP_LEFT));
+        EntityManager.addComponent(id, new Position(relX, layout.relativeY, Anchor.TOP_LEFT));
 
-        // Regenerate CardSprite with new tier if the card data is available
-        Card card = cardEntity.get(Card.class);
-        CardSprite oldSprite = cardEntity.get(CardSprite.class);
-        if (card != null && oldSprite != null) {
-          boolean isFaceUp = oldSprite.isFaceUp();
-          cardEntity.add(new CardSprite(CardArt.fromCard(card, tier), CardArt.defaultBack(tier), isFaceUp));
-        }
+        EntityManager.getComponent(id, Card.class)
+            .ifPresent(
+                card -> {
+                  EntityManager.getComponent(id, CardSprite.class)
+                      .ifPresent(
+                          oldSprite -> {
+                            boolean isFaceUp = oldSprite.isFaceUp();
+                            EntityManager.addComponent(
+                                id,
+                                new CardSprite(
+                                    CardArt.fromCard(card, tier),
+                                    CardArt.defaultBack(tier),
+                                    isFaceUp));
+                          });
+                });
       }
     }
   }
@@ -255,7 +259,12 @@ public class GameplayState implements LoopableState {
     final int cardCount;
     final CardSizeTier tier;
 
-    CardLayout(float startRelativeX, float relativeY, float totalWidthFactor, int cardCount, CardSizeTier tier) {
+    CardLayout(
+        float startRelativeX,
+        float relativeY,
+        float totalWidthFactor,
+        int cardCount,
+        CardSizeTier tier) {
       this.startRelativeX = startRelativeX;
       this.relativeY = relativeY;
       this.totalWidthFactor = totalWidthFactor;
@@ -293,5 +302,4 @@ public class GameplayState implements LoopableState {
       return startPos + cardIndex * (cardWidthRel + spacingRel);
     }
   }
-
 }
