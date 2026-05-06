@@ -12,8 +12,11 @@ import net.luxsolari.engine.ecs.Entity;
 import net.luxsolari.engine.ecs.EntityPool;
 import net.luxsolari.engine.ecs.Layer;
 import net.luxsolari.engine.ecs.Position;
+import net.luxsolari.engine.exceptions.EngineException;
 import net.luxsolari.engine.manager.AudioManager;
+import net.luxsolari.engine.manager.EntityManager;
 import net.luxsolari.engine.manager.InputManager;
+import net.luxsolari.engine.manager.MasterManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.manager.ViewportManager;
@@ -86,7 +89,7 @@ public class GameplayState implements LoopableState {
 
     // Handle commands
     switch (input.command()) {
-      case QUIT -> MasterSubsystem.INSTANCE.stop();
+      case QUIT -> MasterManager.stop();
       case PAUSE -> StateMachineManager.push(new PauseState());
       case DEBUG_CREATE_CARD -> createRandomCardEntity();
       case DEBUG_CLEAR_CARDS -> clearCards();
@@ -129,13 +132,10 @@ public class GameplayState implements LoopableState {
 
   private void clearCards() {
     RenderManager.clear(CARD_LAYER);
-    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
-    entityPool.removeWith(CardSprite.class);
+    EntityManager.removeWith(CardSprite.class);
   }
 
   private void createRandomCardEntity() {
-    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
-
     // 1. Create a random card
     Card.Rank rank = Card.Rank.values()[random.nextInt(Card.Rank.values().length)];
     Card.Suit suit = Card.Suit.values()[random.nextInt(Card.Suit.values().length)];
@@ -145,12 +145,13 @@ public class GameplayState implements LoopableState {
 
     // 2. Determine appropriate card size based on available space
     ViewportManager viewport = ViewportManager.INSTANCE;
-    int cardCount = entityPool.with(CardSprite.class).size() + 1; // including new card
+    int cardCount = EntityManager.queryWith(CardSprite.class).size() + 1; // including new card
     CardSizeTier tier = CardSizeTier.getBestFit(viewport.getWidth(), viewport.getHeight(), cardCount);
     LOGGER.info("Card tier: " + tier);
 
     // 3. Create the entity and its components
-    Entity cardEntity = entityPool.create();
+    long cardEntityId = EntityManager.create();
+    Entity cardEntity = EntityManager.getById(cardEntityId).orElseThrow(() -> new EngineException("Failed to create card entity"));
 
     // Add the Card component so we can regenerate sprites later
     cardEntity.add(card);
@@ -195,8 +196,7 @@ public class GameplayState implements LoopableState {
     }
 
     // Reposition cards using relative coordinates with tier-aware sizing
-    EntityPool entityPool = MasterSubsystem.INSTANCE.getEntityPool();
-    List<Entity> cardEntities = entityPool.with(CardSprite.class, Position.class, Card.class);
+    List<Entity> cardEntities = EntityManager.queryWith(CardSprite.class, Position.class, Card.class);
 
     if (!cardEntities.isEmpty()) {
       ViewportManager viewport = ViewportManager.INSTANCE;

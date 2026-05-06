@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 import net.luxsolari.engine.input.InputResult;
 import net.luxsolari.engine.manager.AudioManager;
 import net.luxsolari.engine.manager.InputManager;
+import net.luxsolari.engine.manager.MasterManager;
 import net.luxsolari.engine.manager.RenderManager;
 import net.luxsolari.engine.manager.StateMachineManager;
 import net.luxsolari.engine.states.LoopableState;
@@ -41,7 +42,7 @@ public class MainMenuState implements LoopableState {
                   this.running = false;
                 })
             .addItem("Options", this::showOptions)
-            .addItem("Quit", MasterSubsystem.INSTANCE::stop)
+            .addItem("Quit", MasterManager::stop)
             .setBorder(true);
 
     mainMenu.focus();
