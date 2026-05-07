@@ -45,33 +45,6 @@ public enum ViewportManager {
               .formatted(TAG, width, height, meetsMinimum));
     }
   }
-
-  /**
-   * Converts relative X coordinate to absolute screen coordinate.
-   *
-   * @param relX relative X coordinate (0.0-1.0)
-   * @param anchor positioning anchor for offset calculation
-   * @return absolute screen X coordinate
-   */
-  public int toScreenX(float relX, Anchor anchor) {
-    int baseX = Math.round(relX * currentWidth);
-    // Apply anchor offset - anchor provides the offset factor for centering/alignment
-    return Math.max(0, Math.min(currentWidth - 1, baseX));
-  }
-
-  /**
-   * Converts relative Y coordinate to absolute screen coordinate.
-   *
-   * @param relY relative Y coordinate (0.0-1.0)
-   * @param anchor positioning anchor for offset calculation
-   * @return absolute screen Y coordinate
-   */
-  public int toScreenY(float relY, Anchor anchor) {
-    int baseY = Math.round(relY * currentHeight);
-    // Apply anchor offset - anchor provides the offset factor for centering/alignment
-    return Math.max(0, Math.min(currentHeight - 1, baseY));
-  }
-
   /**
    * Converts relative X coordinate to absolute screen coordinate with element width consideration.
    *

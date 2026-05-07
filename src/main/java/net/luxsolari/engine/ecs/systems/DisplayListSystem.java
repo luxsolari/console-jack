@@ -43,8 +43,8 @@ public class DisplayListSystem implements EcsSystem {
               Layer l = e.get(Layer.class);
 
               // Convert relative position to absolute screen coordinates
-              int screenX = viewport.toScreenX(p.relX(), p.anchor());
-              int screenY = viewport.toScreenY(p.relY(), p.anchor());
+              int screenX = viewport.toScreenX(p.relX(), p.anchor(), 1);
+              int screenY = viewport.toScreenY(p.relY(), p.anchor(), 1);
 
               list.add(new RenderCmd(l.index(), screenX, screenY, v.glyph()));
             });
@@ -58,8 +58,9 @@ public class DisplayListSystem implements EcsSystem {
               Layer l = e.get(Layer.class);
 
               // Convert relative position to absolute screen coordinates
-              int screenX = viewport.toScreenX(p.relX(), p.anchor());
-              int screenY = viewport.toScreenY(p.relY(), p.anchor());
+              // TODO - replace 1, 1 with sv.cols(tier) and sv.rows(tier) once ScalableVisual carries real dimensions.
+              int screenX = viewport.toScreenX(p.relX(), p.anchor(), 1);
+              int screenY = viewport.toScreenY(p.relY(), p.anchor(), 1);
 
               // For now, use MEDIUM as default - game layer should set appropriate tier
               TextCharacter glyph = sv.getVisualForTier(CardSizeTier.MEDIUM);
