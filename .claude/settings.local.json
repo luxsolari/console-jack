@@ -5,7 +5,17 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "PowerShell(ls \"$env:APPDATA\\\\Claude\" -ErrorAction SilentlyContinue; ls \"$env:USERPROFILE\\\\.claude\" -ErrorAction SilentlyContinue)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\" -ErrorAction SilentlyContinue)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\data\" -ErrorAction SilentlyContinue)",
+      "PowerShell(\\(Get-Content \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\installed_plugins.json\" | ConvertFrom-Json\\).plugins | Where-Object { $_ -match \"github\" } | Select-Object -First 3)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\github\\\\unknown\" -ErrorAction SilentlyContinue)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.claude\\\\plugins\\\\data\\\\hookify-claude-plugins-official\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(python3 --version)",
+      "Bash(chmod +x *)"
     ],
     "deny": [],
     "ask": []
