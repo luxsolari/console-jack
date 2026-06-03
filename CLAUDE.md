@@ -29,13 +29,23 @@ Console Jack is a console-based, text-graphics implementation of the classic cas
 
 ### Core Design Pattern
 
-The application uses the **enum singleton pattern** (Effective Java, Item 3) for core subsystems. Access subsystems via:
+The application uses a two-layer access model:
 
-- `RenderSubsystem.INSTANCE`
-- `InputSubsystem.INSTANCE`
-- `AudioSubsystem.INSTANCE`
-- `MasterSubsystem.INSTANCE`
-- `StateMachineSubsystem.INSTANCE`
+**Public manager facades** (game code uses these — static utility classes):
+- `EntityManager` — create/destroy entities, register ECS systems
+- `MasterManager` — engine lifecycle control (e.g. graceful shutdown)
+- `StateMachineManager` — state push/pop/replace operations
+- `RenderManager` — rendering commands and utilities
+- `InputManager` — input event distribution
+- `AudioManager` — sound playback control
+
+**Internal coordinators / subsystems** (engine internals — do not access from game code):
+- `MasterSubsystem.INSTANCE` — main game loop (enum singleton)
+- `RenderSubsystem.INSTANCE` — Lanterna rendering (enum singleton)
+- `InputSubsystem.INSTANCE` — keyboard input (enum singleton)
+- `AudioSubsystem.INSTANCE` — audio management (enum singleton)
+- `EntityCoordinator.INSTANCE` — ECS pool and system registry (enum singleton)
+- `StateMachineCoordinator.INSTANCE` — state machine implementation (enum singleton)
 
 ### Threading Model
 
@@ -53,10 +63,11 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 
 ### ECS (Entity Component System)
 
-- `EntityPool`: Manages game entities
-- Components: `Position`, `Visual`, `Card`, `CardArt`, `CardSprite`
+- `EntityManager`: Public API for creating/destroying entities and registering systems
+- `EntityCoordinator`: Internal singleton managing `EntityPool` and ordered system list
+- Components: `Position`, `Visual`, `ScalableVisual`, `Layer`, `Card`, `CardArt`, `CardSprite`
 - Systems: `DisplayListSystem` for rendering
-- ECS updates run in the main game loop
+- ECS updates run in the main game loop via `EntityCoordinator`
 
 ### Package Structure
 
@@ -77,7 +88,7 @@ The application uses the **enum singleton pattern** (Effective Java, Item 3) for
 
 ## Entry Point
 
-Main class: `net.luxsolari.game.Main` - Initializes logging and starts `MasterSubsystem.INSTANCE`
+Main class: `net.luxsolari.game.Main` - Delegates to `MainEngine.bootstrap()`, which loads logging config and starts `MasterSubsystem.INSTANCE.run()`
 
 - Enter architect mode when commanded with either "Enter Architect Mode" or "/architect-mode". Use docs/ARCHITECT_MODE.md ruleset.
 - Enter RIPER mode when commanded with either "Enter RIPER Mode" or "/riper-mode". Use docs/RIPER_MODE.md ruleset.

@@ -36,7 +36,7 @@ The **State Machine** is the foundational architecture pattern for Console Jack.
 ```
 MasterSubsystem (Game Loop)
     ↓
-StateMachineSubsystem (LIFO Stack)
+StateMachineCoordinator (LIFO Stack)
     ↓
 StateMachineManager (Public Facade)
     ↓
@@ -1267,7 +1267,7 @@ public void handleInput() {
 - **Developer Guide**: See `DEVELOPER_GUIDE.md` for development workflow
 
 **Source Code References**:
-- State machine implementation: `src/main/java/net/luxsolari/engine/systems/internal/StateMachineSubsystem.java`
+- State machine implementation: `src/main/java/net/luxsolari/engine/systems/internal/StateMachineCoordinator.java`
 - State manager facade: `src/main/java/net/luxsolari/engine/manager/StateMachineManager.java`
 - State interface: `src/main/java/net/luxsolari/engine/states/LoopableState.java`
 - Example states: `src/main/java/net/luxsolari/game/states/`

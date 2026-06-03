@@ -34,22 +34,27 @@ Each major concern runs in its own thread to prevent blocking:
 
 ### Layer 1: Engine Core (`net.luxsolari.engine`)
 
-#### Subsystems (`systems/internal/`)
-Core subsystems that form the foundation:
+#### Subsystems & Coordinators (`systems/internal/`)
+Internal engine components — **game code must not access these directly**:
 
 - **`MasterSubsystem`**: Orchestrates the main game loop at 8 UPS
 - **`RenderSubsystem`**: Manages Lanterna terminal rendering
 - **`InputSubsystem`**: Handles keyboard input events
 - **`AudioSubsystem`**: Manages sound effects and background music
-- **`StateMachineSubsystem`**: Coordinates game state transitions
+- **`StateMachineCoordinator`**: Coordinates game state transitions (replaces the former `StateMachineSubsystem`)
+- **`EntityCoordinator`**: Manages the shared `EntityPool` and ordered ECS system list
 
 #### Managers (`manager/`)
-Static facades providing centralized access:
+Static facade classes — **the public API surface for game code**:
 
+- **`EntityManager`**: Primary API for creating/destroying entities and registering ECS systems
+- **`MasterManager`**: Engine lifecycle control (graceful shutdown)
 - **`StateMachineManager`**: State push/pop/replace operations
 - **`RenderManager`**: Rendering commands and utilities
 - **`InputManager`**: Input event distribution
 - **`AudioManager`**: Sound playback control
+
+> **Design rule**: game code (states, components) calls managers only. Managers delegate to the internal coordinators/subsystems. This boundary lets engine internals change without touching game-side call sites.
 
 #### ECS Framework (`ecs/`)
 Entity Component System implementation:
