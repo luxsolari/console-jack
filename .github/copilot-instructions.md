@@ -108,7 +108,7 @@ public class DisplayListSystem implements EcsSystem {
 mvn compile              # Compile only
 mvn exec:java            # Run during development
 mvn clean package        # Build JAR with dependencies
-java -jar target/java-packageable-base-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/console-jack-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ### Platform Packaging

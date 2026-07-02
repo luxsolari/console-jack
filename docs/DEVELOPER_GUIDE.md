@@ -47,7 +47,7 @@ mvn clean compile
 mvn clean package
 
 # Test the packaged version
-java -jar target/java-packageable-base-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/console-jack-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ## Build Commands Reference
@@ -69,7 +69,7 @@ mvn exec:java -Dexec.args="--debug"  # Pass arguments
 ```bash
 mvn package                   # Create JAR with dependencies
 mvn clean package             # Clean build
-java -jar target/java-packageable-base-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/console-jack-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ### Platform-Specific Builds

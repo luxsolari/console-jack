@@ -13,7 +13,7 @@ Console Jack is a console-based, text-graphics implementation of the classic cas
 - `mvn compile` - Compile the project
 - `mvn exec:java` - Run the application directly
 - `mvn clean package` - Build JAR with dependencies
-- `java -jar target/java-packageable-base-1.0-SNAPSHOT-jar-with-dependencies.jar` - Run the packaged JAR
+- `java -jar target/console-jack-1.0-SNAPSHOT-jar-with-dependencies.jar` - Run the packaged JAR
 
 ### Platform-Specific Packaging
 

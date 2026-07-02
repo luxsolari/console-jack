@@ -9,6 +9,11 @@ This directory contains all project documentation for Console Jack.
 - **[RIPER_MODE.md](RIPER_MODE.md)** - RIPER-5 mode strict operational protocol
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Comprehensive development guide
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed architecture documentation
+- **[ECS_GUIDE.md](ECS_GUIDE.md)** - Entity Component System guide
+- **[RENDERING_GUIDE.md](RENDERING_GUIDE.md)** - Rendering system guide
+- **[INPUT_SYSTEM_GUIDE.md](INPUT_SYSTEM_GUIDE.md)** - Input system guide
+- **[AUDIO_SYSTEM_GUIDE.md](AUDIO_SYSTEM_GUIDE.md)** - Audio system guide
+- **[STATE_MACHINE_GUIDE.md](STATE_MACHINE_GUIDE.md)** - State machine guide
 - **[UI_COMPONENTS_GUIDE.md](UI_COMPONENTS_GUIDE.md)** - UI component framework reference
 - **[IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md)** - Planned enhancements and technical debt
 
