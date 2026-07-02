@@ -1,5 +1,7 @@
 # Console Jack
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Console-based, text-graphics implementation of the classic casino blackjack game.
 
 Aims to be a "Card RPG" of sorts where you start a career as a frequent player at a local casino, and "move up the ranks" to the top-tier casinos of the world. All of that, in ASCII text-graphics, terminal-emulator-driven glory.
@@ -25,7 +27,7 @@ Currently in semi-active development (_read: I have a day job, so I work on this
 ### Running the Game
 ```bash
 # Clone and build
-git clone <repository-url>
+git clone https://github.com/luxsolari/console-jack
 cd console-jack
 mvn compile
 
@@ -39,7 +41,7 @@ mvn exec:java
 mvn clean package
 
 # Run the packaged version
-java -jar target/java-packageable-base-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/console-jack-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ## Tech Stack
@@ -109,4 +111,4 @@ src/main/java/net/luxsolari/
 3. Test changes with `mvn exec:java`
 4. Verify build with `mvn clean package`
 
-See `docs/IMPROVEMENT_PLAN.md` for planned enhancements and `docs/CLAUDE.md` for detailed development guidance.
+See [`docs/README.md`](docs/README.md) for the full documentation index — architecture, engine guides, and `CLAUDE.md` for AI-assistant development guidance.

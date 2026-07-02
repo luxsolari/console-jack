@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.luxsolari</groupId>
-    <artifactId>java-packageable-base</artifactId>
+    <artifactId>console-jack</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
